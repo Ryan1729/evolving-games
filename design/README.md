@@ -98,3 +98,43 @@ We can make the display purely a function of the state, which given we are devel
 
 One option would be to use the framebuffer as the game state. This is definitely the easiest option but the resulting game displays would almost certainly be unreadable. However, making the entire game state visible at all times does suggest a certain ease of insight into the state which may be useful in the first version. A simple to implement method to limit the unreadability of the state (though not completely remove it) would be to use only a limited amount of colours, say 8. We can use enums to represent the colours and use a trivial display function which just maps the enums to colours in the framebuffer.
 
+Before devoting time to developing a framebuffer based "uber state" it seems prudent to take a moment to roughly calculate how many games we can expect to generate from such a state.
+
+To begin with, let's calculate an upper bound by ignoring any length restrictions.
+
+We will make some further simplifying assumptions as well.
+* There are a fixed number of inputs, all of which can be undertaken on any turn.
+* Each of these inputs will correspond to a function from the state to a new state.
+* We can enumerate the possible states.
+
+We will define some shorthand.
+* |A| ≡ the number of actions
+* |S| ≡ the number of possible states
+* |S -> S| ≡ the number of possible functions from the state to a new state
+
+
+Given these assumptions since every function corresponding to an action can be chosen independently, we can say that the total will be |S -> S|<sup>|A|</sup>.
+|A| is known, so we just need to calculate |S -> S| from known quantities. |S| is known and it is all we need to calculate |S -> S|. 
+Without loss of generality, assume |S| = 2, we will call the two possible states 0 and 1. Note that a function from state to state can only set portions of the state to particular values or leave them as they are. From here we construct a truth table using L to stand for leaving a portion of the state as it is.
+
+| 0 | 1 |
+| - | - |
+| 0 | 0 |
+| 0 | 1 |
+| 0 | L |
+| 1 | 0 |
+| 1 | 1 |
+| 1 | L |
+| L | 0 |
+| L | 1 |
+| L | L |
+
+(The two columns represent the possible inputs and each of the data rows represents a distinct function.)
+
+Notice there are 9 = 3<sup>2</sup> functions and notice that if there was a additional possible state there would be 4<sup>3</sup> = 2<sup>2<sup>3</sup></sup> = 2<sup>8</sup> = 256 possible functions.
+
+Therefore |S -> S| ≡ (|S| + 1)<sup>|S|</sup> and therefore the upper bound on games we can generate using this method (subject to the above assumptions) is ((|S| + 1)<sup>|S|</sup>)<sup>|A|</sup>.
+
+Using the value of 8 colours from before and assuming we only allow 8 states (we make all of the pixels always the same colour) and we use the 8 NES buttons as input then we can make at most ((8 + 1)<sup>8</sup>)<sup>8</sup> = (9<sup>8</sup>)<sup>8</sup> = 43046721<sup>8</sup> = 11790184577738583171520872861412518665678211592275841109096961 ≈ 1.18 × 10<sup>61</sup>
+
+
