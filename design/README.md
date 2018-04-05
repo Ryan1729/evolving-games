@@ -134,4 +134,16 @@ Therefore |S -> S| ≡ |S|<sup>|S|</sup> and therefore the upper bound on games 
 
 Using the value of 8 colours from before and assuming we only allow 8 states (we make all of the pixels always the same colour) and we use the 8 NES buttons as input then we can make at most (8<sup>8</sup>)<sup>8</sup> = 16777216<sup>8</sup> = 6277101735386680763835789423207666416102355444464034512896 ≈ 6.28 × 10<sup>57</sup>
 
+This is a vast overestimate. 
 
+As mentioned before, we want to filter out games with uncovered or latent trees  below a given length. The above formula includes games that can never leave their initial state! Whether or not it gives us an easy way to count how many there are, we would like a way to construct rulesets without constructing rulesets which produce insufficiently long trees.
+
+One way to do that would be to start with a ruleset that is above the required length and refuse to add any edges that decrease the length below the threshold. 
+
+For a given state, what is the longest game tree that can be produced? Answer: The game tree with no branches, that is, a line.
+
+If we were to start with that tree and count the length and compare it to our target length, we could perform operations which decreased the length by known amounts and stop doing so before we decrease it too far.
+
+The first tree editing operation that comes to my mind, given we are starting with a line, is to choose a node, call it n1, and then another node above it (closer to the root), call that one n2. Then detach n1 from its parent and reattach it to n2.
+
+While we want the generation algorithm not to produce certain types of trees, we would like it to be able to generate every possible tree that fits our inclusion criteria, if possible. Can we produce every possible tree with repeated applications of this operation? Since, for reasons outlined above, we want to start with the rules that generate the tree, rather than the tree itself, the question we should be asking first is can we generate a transition function or some other change to a transition function which produces a tree with that operation applied?
