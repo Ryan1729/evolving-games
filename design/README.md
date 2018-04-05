@@ -147,3 +147,9 @@ If we were to start with that tree and count the length and compare it to our ta
 The first tree editing operation that comes to my mind, given we are starting with a line, is to choose a node, call it n1, and then another node above it (closer to the root), call that one n2. Then detach n1 from its parent and reattach it to n2.
 
 While we want the generation algorithm not to produce certain types of trees, we would like it to be able to generate every possible tree that fits our inclusion criteria, if possible. Can we produce every possible tree with repeated applications of this operation? Since, for reasons outlined above, we want to start with the rules that generate the tree, rather than the tree itself, the question we should be asking first is can we generate a transition function or some other change to a transition function which produces a tree with that operation applied?
+
+Another question we should answer first is "What kind of transition function produces the line tree?".
+
+Assuming there is already a total ordering to the state possibilities, the line transition function can just return the next state in the order. The tree editing operation would amount to changing the order. This could be implemented by an if statement that checks if the state is n2 and if it have one of the actions jump the state to n1 instead of advancing by one.
+
+Something else of note: the maximum number of children of a given state is the number of actions (|A|). If we found an arbitrary transition function with n possilbe actions could we transform it into a transition function with a tree of length n? Is there a dual relationship here?
