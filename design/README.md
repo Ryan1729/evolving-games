@@ -152,4 +152,62 @@ Another question we should answer first is "What kind of transition function pro
 
 Assuming there is already a total ordering to the state possibilities, the line transition function can just return the next state in the order. The tree editing operation would amount to changing the order. This could be implemented by an if statement that checks if the state is n2 and if it have one of the actions jump the state to n1 instead of advancing by one.
 
-Something else of note: the maximum number of children of a given state is the number of actions (|A|). If we found an arbitrary transition function with n possilbe actions could we transform it into a transition function with a tree of length n? Is there a dual relationship here?
+We would like a way to represent these kinds of edits that is easier to manipulate than code. For each state we need to be able to answer the question "What state does pressing each of the buttons result in?". We could have an enum like the following:
+
+```rust
+enum Transition {
+    Next,
+    ThisOne(State)
+    Terminal,
+}
+```
+
+And there would be one of these stored for every possible state. 
+
+This would require at maximum branching slightly more than one state's worth of storage (call that "sizeof(S)") per action, per state possibility, so O(sizeof(S) * |A| * |S|) storage. Assuming no restrictions on valid states, |S| is 2<sup>8 * sizeof(S)</sup>, so in those cases the formula becomes O(sizeof(S) * |A| * 2<sup>8 * sizeof(S)</sup>) which in almost all cases is essentially O(2<sup>sizeof(S)</sup>), which is a lot!
+
+Let's say we only want to dedicate at most one gigabyte (which for the purposes of this document is 2<sup>30</sup> bytes :|) to the transition function.
+
+So we can solve the following equation to figure out the maximum size our state can be: 2<sup>30</sup> =  sizeof(S) * |A| * 2<sup>8 * sizeof(S)</sup>
+
+
+2<sup>30</sup> =  sizeof(S) * |A| * 2<sup>8 * sizeof(S)</sup>
+
+2<sup>30</sup> / (sizeof(S) * |A|) = 2<sup>8 * sizeof(S)</sup>
+
+1 / (sizeof(S) * |A|) = 2<sup>8 * sizeof(S)</sup> / 2<sup>30</sup>
+
+1 / (sizeof(S) * |A|) = 2<sup>(8 * sizeof(S)) - 30</sup>
+
+log2(1 / (sizeof(S) * |A|)) = 8 * sizeof(S) - 30
+
+log2(1) - log2(sizeof(S) * |A|) = 8 * sizeof(S) - 30
+
+0 - log2(sizeof(S) * |A|) = 8 * sizeof(S) - 30
+
+30 = 8 * sizeof(S) + log2(sizeof(S) * |A|)
+
+
+If we assume |A| is 8 then this becomes
+
+30 = 8 * sizeof(S) + log2(8 * sizeof(S))
+
+And if I plug "30 = 8 * S + log2(8 * S) solve for S" into wolfram alpha it says it's approximately 3.1671 suggesting that if we made the state an entire 32-bit (4 bytes) integer then we would need over a gig to store it!
+
+Let's confirm it to be sure I didn't make an algebra mistake. starting with our formula: 2<sup>30</sup> =  sizeof(S) * |A| * 2<sup>8 * sizeof(S)</sup>
+
+if we drop the left hand side then if this is right when we replace sizeof(S) with 4 and |A| with 8 then we should get more than 2<sup>30</sup>.
+
+4 * 8 * 2<sup>8 * 4</sup>
+32 * 2<sup>32</sup>
+2<sup>5</sup> * 2<sup>32</sup>
+2<sup>37</sup>
+
+Which pretty clearly exceeds a 2<sup>30</sup>.
+
+So we need to find a more compact representation.
+
+
+
+
+
