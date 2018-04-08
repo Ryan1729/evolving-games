@@ -207,7 +207,122 @@ Which pretty clearly exceeds a 2<sup>30</sup>.
 
 So we need to find a more compact representation.
 
+It might be more productive to start from at least a single known game and examine how to mutate it and generalize a generation formula from there.
+
+Let's try single player Nim. It's simple and it already has scaling built-in. (Is the scaling a feature or a bug?)
+
+We can also make some simple variations to see how they effect the tree. XOR Nim for example. Or <del>floating</del> fixed point Nim.
+
+We don't need to make the rest of these, we just need to make the transition function, which is traditionally called `update`.
+
+To be clear, the rules of single player Nim I'm imagining are as follows.
+
+The total starts at n. On your turn you can select a number less than or equal to the current total and decrease the total by that amount. When the total reaches 0, the game is over.
+
+I didn't say it would be a fun game!
+
+If we we will assume that n is 255 and that input is another u8 then the code is simply the following:
+
+```rust
+fn update(state: &mut u8, input: u8) -> bool {
+    if input <= state {
+        state -= input;
+    }
+    
+    state == 0
+}
+```
+
+if we imagine that there is a 2 bit type called `u2` then we can write this nearly identical code.
+
+```rust
+fn update(state: &mut u2, input: u2) -> bool {
+    if input <= state {
+        state -= input;
+    }
+    
+    state == 0
+}
+```
 
 
+this tree is small enough that mapping the entire thing is practical.
 
+We can make a truth table (where we write the numbers in binary):
+
+| state | input | result state |
++-------+-------+--------------+
+| 0 | 0 | 0 |
+| 0 | 1 | 0 |
+| 0 | 10 | 0 |
+| 0 | 11 | 0 |
+| 1 | 0 | 1 |
+| 1 | 1 | 0 |
+| 1 | 10 | 1 |
+| 1 | 11 | 1 |
+| 10 | 0 | 10 |
+| 10 | 1 | 1 |
+| 10 | 10 | 0 |
+| 10 | 11 | 10 |
+| 11 | 0 | 11 |
+| 11 | 1 | 10 |
+| 11 | 10 | 1 |
+| 11 | 11 | 0 |
+
+We can also make a `.tgf` file
+
+```
+0 0
+1 1
+2 10
+3 11
+#
+0 0 0
+0 0 1
+0 0 10
+0 0 11
+1 1 0
+1 0 1
+1 1 10
+1 1 11
+2 2 0
+2 1 1
+2 0 10
+2 2 11
+3 3 0
+3 2 1
+3 1 10
+3 0 11
+```
+
+and render it:
+
+![single_player_nim.png](single_player_nim.PNG?raw=true)
+
+Just by modifying the type, we can produce an infinite family of game trees.
+
+Reminder: this long path originated from this paragraph:
+
+> Thought experiment: what if we just came up with an arbitrary finite state machine representation and let it evolve?
+> We would need to check that each game is winnable, so the surviving games would probably mostly just have the first state as an accept state. So disallow that.
+> Then there would probably be a bunch of "press right to win" games. So we would need to ensure the path from the initial state is at least length 8 or something.
+> Then I suppose, it would just generate random chains with a shape determined by the starting conditions.
+
+So lets say we successfully generated rulesets that produce nicely formed game trees, then what are we expecting to happen? We're hoping that we'll be able to take those games, play them, then figure out why they're not fun, (it's unreasonable to expect the first ones to be fun,) then adjust as necessary to make them more fun.
+
+In that case, since the amount of possible games seems unreasonably plentiful, we don't need to capture every possible well formed game tree in the initial set before we start winnowing down. Even if we run out of games, we can use the knowledge we gain winnowing the smaller set to winnow down the complete set and more quickly get to the parts outside of the original set, and find new games.
+
+So we can just find an update function that represents some game tree which would fit our criteria and start from there.
+
+Let's try starting with a specific tree that fits our criteria assuming a length of 8 and 4 inputs. This tree needs to very simple to describe in code which usually correlates well with being easy to describe in words.
+
+Branches out with all 4 branches to new states each time and counting from the bottom row only, the even-numbered bottom nodes are in the accept set.
+
+After describing that in code, it will hopefully be instructive to modify it to produce a tree of length 9 only in the places that were accept states in the previous one. 
+
+More ideas: some nodes should point to the same nodes one level down. Have one or two accept states and truncate all dead ends to the state after the dooming choice.
+
+This is again feeling link a lot of work. Say I had a fixed asymmetrical tree and I randomized which input did what on each node and pretended that was the full space generator, what would the next step be?
+
+I think the next step would be making the game more comprehensible. The easiest first step would be to display the code while playing. The next step would be making the rules easier to internalize.
 
