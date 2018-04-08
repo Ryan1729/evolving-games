@@ -326,3 +326,52 @@ This is again feeling link a lot of work. Say I had a fixed asymmetrical tree an
 
 I think the next step would be making the game more comprehensible. The easiest first step would be to display the code while playing. The next step would be making the rules easier to internalize.
 
+The two broad approaches for making the rules easier to internalize I can think of off the top of my head are to restrict the rules to those that are easy to understand, or to produce a new system of signs which are optimized for reading as opposed to code which is meant to facilitate reading and writing. Note these approaches are not mutually exclusive.
+
+Before I take the first approach, I would want to be reasonably sure that none (or at least very few) of the possible rulesets I would be "throwing away" are interesting. If I exclusively took the second approach, given I have a fall-back to the code when something is produced that my set of signs has not accounted for, I would not be forced to "throw away" any possibilities, at the cost of a reduced amount of clarity. Therefore the decision to take the second approach can be postponed until it is deemed necessary.
+
+It would be very easy to simply generate |A| manipulations of the state and make an update function that merely switched on the input, but that would be throwing away the possibility of context sensitivity.
+
+One way to include context sensitivity would be to, instead of generating updates predicated only on the input, if I also generate random state predicates (I presumably need to do this for the winning condition anyway) and combine them together like so:
+
+```rust
+if state_pred1(state) && input.was_pressed(Button::A) {
+    //mutate the state
+}
+```
+
+This presents the potential problem that all of the state predicates could be false. We could work around this by storing all of the state predicate results and having a mutation happen if they are all false.
+
+The question now becomes, what, if any, update functions can this method *not* produce?
+
+If we only allow one if statement per input type, then it couldn't produce something equivalent to the following:
+
+```rust
+if input.was_pressed(Button::A) {
+    if state_pred1(state) {
+        //mutate the state
+    } else {
+        //mutate the state in a different way.
+    }
+}
+```
+
+The simple solution to that is to generate that form since it can express the previous scheme as well! (assuming we ether allow an empty else block or there are part of the state which are not part of any predicate and thus do not affect the outcome of the game.)
+
+But if we generate that form then we cannot represent things like this:
+
+```rust
+if input.was_pressed(Button::A) {
+    if state_pred1(state) {
+        //mutate the state
+    } else if state_pred2(state) {
+        //mutate the state in a different way.
+    } else {
+        //mutate the state in another different way.
+    }
+}
+```
+
+Given we generate a variable number of elses, and that we cover the entire space of possible state predicates, then I think we can represent any transition graph (with a maximum out-degree of |A|,) this way. The maximum amount of elses should probably be a generator parameter. We can call it |else| in case we need to refer to it later.
+
+The best game testing experience would be clicking a button and instantly having a new game to play. Unfortunately generating and evaluating rust at runtime is difficult, so instead the best path forward seems to be generating rust files and saving them where the watcher will see them and recompile. Optionally we might want to keep at least the last few generated files in case we decide to go back to one after pressing the generate button. It might be easier to just move whatever file was there before to a `.gitignore`d folder. Since there does not currently seem to be a nice way to specify an AST and produce a rust file from it, it looks like we'll have to roll our own. Our implementation can be specialized to our needs though, so it won't have to support anything more complicated than if statements and state predicates.
