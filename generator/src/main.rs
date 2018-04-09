@@ -4,73 +4,57 @@ use std::io::Write;
 
 fn main() {
     let filename = "../player/src/game.rs";
-    println!("overwriting {}", filename);
+    let path = Path::new(filename);
+    println!("overwriting {:?}", path.as_os_str());
 
     let code = "use common::*;
 
-impl GameState {
-    fn isAvatar(&self, id: usize) -> bool {
-        self.entities[id].contains(Component::Player) && self.player_types[id] == PlayerType::Avatar
-    }
-}
+    #[inline]
+    pub fn update_and_render(state: &mut Framebuffer, input: Input) {
+        let mut clearColour = 0;
 
-#[inline]
-pub fn update_and_render(state: &mut GameState, framebuffer: &mut Framebuffer, input: Input) {
-    for i in 0..GameState::ENTITY_COUNT {
-        if state.mode == Mode::MoveAvatar && state.isAvatar(i) {
-            let appearance = &mut state.appearances[i];
+        if input.pressed_this_frame(Button::Left) {
+            clearColour = BLUE;
+        }
 
-            if appearance.is_offset() {
-                appearance.reduce_offset(8);
-                continue;
-            }
+        if input.pressed_this_frame(Button::Right) {
+            clearColour = GREEN;
+        }
 
-            let (mut x, mut y) = state.positions[i];
+        if input.pressed_this_frame(Button::Up) {
+            clearColour = RED;
+        }
 
-            if input.pressed_this_frame(Button::Left) && x > 0 {
-                x = x.saturating_sub(1);
-                appearance.offset.0 = CELL_WIDTH as isize;
-            }
+        if input.pressed_this_frame(Button::Down) {
+            clearColour = YELLOW;
+        }
 
-            if input.pressed_this_frame(Button::Right) && x < BOARD_WIDTH - 1 {
-                x = x.saturating_add(1);
-                appearance.offset.0 = -(CELL_WIDTH as isize)
-            }
+        if input.pressed_this_frame(Button::Select) {
+            clearColour = PURPLE;
+        }
 
-            if input.pressed_this_frame(Button::Up) && y > 0 {
-                y = y.saturating_sub(1);
-                appearance.offset.1 = CELL_WIDTH as isize;
-            }
+        if input.pressed_this_frame(Button::Start) {
+            clearColour = GREY;
+        }
 
-            if input.pressed_this_frame(Button::Down) && y < BOARD_HEIGHT - 1 {
-                y = y.saturating_add(1);
-                appearance.offset.1 = -(CELL_WIDTH as isize);
-            }
+        if input.pressed_this_frame(Button::A) {
+            clearColour = WHITE;
+        }
 
-            state.positions[i] = (x, y);
+        if input.pressed_this_frame(Button::B) {
+            clearColour = BLACK;
+        }
+
+        if (clearColour != 0) {
+            state.clearTo(clearColour);
         }
     }
-
-    framebuffer.clear();
-
-    for i in 0..GameState::ENTITY_COUNT {
-        let entity = state.entities[i];
-        if entity.contains(Component::Position | Component::Appearance) {
-            let pos = state.positions[i];
-
-            let appearance = &mut state.appearances[i];
-            appearance.render_positioned(framebuffer, pos);
-        }
-    }
-}
-    ";
-
-    println!("{:?}", Path::new(filename).as_os_str());
+";
 
     let mut file = OpenOptions::new()
         .write(true)
         .truncate(true)
-        .open(Path::new(filename))
+        .open(path)
         .unwrap();
 
     if let Err(error) = file.write_all(code.as_bytes()) {

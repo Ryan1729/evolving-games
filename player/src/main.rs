@@ -341,7 +341,7 @@ impl PinkyWeb {
 
 impl State {
     pub fn frame(&mut self) {
-        update_and_render(&mut self.game_state, &mut self.framebuffer, self.input);
+        update_and_render(&mut self.framebuffer, self.input);
 
         self.input.previous_gamepad = self.input.gamepad;
     }

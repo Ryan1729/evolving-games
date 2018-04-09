@@ -123,6 +123,12 @@ impl Framebuffer {
         }
     }
 
+    pub fn clearTo(&mut self, colour: u32) {
+        for i in 0..self.buffer.len() {
+            self.buffer[i] = colour;
+        }
+    }
+
     //see http://members.chello.at/~easyfilter/bresenham.html
     pub fn draw_crisp_circle(&mut self, xMid: usize, yMid: usize, radius: usize, colour: u32) {
         if xMid < radius || yMid < radius {

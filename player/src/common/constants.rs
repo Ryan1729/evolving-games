@@ -21,6 +21,8 @@ pub const YELLOW: u32 = 0xFF37B9FF;
 pub const PURPLE: u32 = 0xFF543353;
 pub const GREY: u32 = 0xFF8B7D5A;
 pub const GRAY: u32 = GREY;
+pub const WHITE: u32 = 0xFFEEEEEE;
+pub const BLACK: u32 = 0xFF222222;
 
 pub const FLOOR: u32 = PURPLE;
 
