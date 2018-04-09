@@ -68,10 +68,13 @@ fn main() {
         .open(path)
         .unwrap();
 
-    if let Err(error) = file.write_all(code.as_bytes()) {
+    let bytes = code.as_bytes();
+
+    if let Err(error) = file.write_all(bytes) {
         println!("{}", error);
     } else {
-        println!("Overwrote {} successfully.", filename);
+        let len = bytes.len();
+        println!("Overwrote {} successfully with {} bytes.", filename, len);
     }
 }
 
@@ -82,6 +85,7 @@ use common::*;
 
 #[inline]
 pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
+    let buffer = &mut state.buffer;
     if input.pressed_this_frame(Button::Left) {{
         {}
     }}
@@ -152,7 +156,7 @@ impl fmt::Display for MutationEntry {
 
         write!(
             f,
-            "state[{}] = match state[{}] {{
+            "buffer[{}] = match buffer[{}] {{
             BLUE => {},
             GREEN => {},
             RED => {},
@@ -161,6 +165,7 @@ impl fmt::Display for MutationEntry {
             GREY => {},
             WHITE => {},
             BLACK => {},
+            other => other
         }};",
             index,
             index,
@@ -256,7 +261,7 @@ impl From<usize> for Colour {
 }
 
 fn generate_state_mutation<R: Rng + Sized>(rng: &mut R) -> Mutation {
-    let state_subset_size = rng.gen_range(0, SCREEN_LENGTH);
+    let state_subset_size = rng.gen_range(0, 128);
     let mut map = HashMap::with_capacity(state_subset_size);
 
     //Apparently due to a Robert Floyd.

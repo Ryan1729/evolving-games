@@ -389,7 +389,7 @@ impl Framebuffer {
 impl Default for Framebuffer {
     fn default() -> Self {
         let mut buffer = Vec::new();
-        buffer.resize(SCREEN_WIDTH * SCREEN_HEIGHT, 0);
+        buffer.resize(SCREEN_WIDTH * SCREEN_HEIGHT, BLACK);
 
         Framebuffer { buffer }
     }
