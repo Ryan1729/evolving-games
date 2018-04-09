@@ -45,7 +45,7 @@ fn main() {
             clearColour = BLACK;
         }
 
-        if (clearColour != 0) {
+        if clearColour != 0 {
             state.clearTo(clearColour);
         }
     }
