@@ -3,6 +3,7 @@
 //in pixels
 pub const SCREEN_WIDTH: usize = 256;
 pub const SCREEN_HEIGHT: usize = 240;
+pub const SCREEN_LENGTH: usize = SCREEN_WIDTH * SCREEN_HEIGHT;
 
 // reportedly colourblind friendly colours
 // https://twitter.com/ea_accessible/status/968595073184092160
