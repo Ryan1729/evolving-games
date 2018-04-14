@@ -378,4 +378,13 @@ The best game testing experience would be clicking a button and instantly having
 
 
 Returning to this set of notes after beginning an implementation, I'm now wondering what a state mutation should consist of. That is, what is a datatype that can represent all possible mutations, which is easier to select a random instance of, than a string of code.
-Given a state which consists of a series of n sections of the same type that can be in one of k states, we can just pick a random subset of the sections and for each one, choose one of the possible section to section functions and apply it to that section..
+Given a state which consists of a series of n sections of the same type that can be in one of k states, we can just pick a random subset of the sections and for each one, choose one of the possible section to section functions and apply it to that section.
+
+After implementing the "pick a random subset and assign a transformation function to each element of it" scheme above. 
+
+It works but it produces transition graphs with insufficiently long latent trees. One way to increase the length of the generated trees is to impose an order on the colours and only allow increasing colours and not decreasing them. Does imposing an order on the colours like this restrict the space of games we can represent? If it does is that acceptable? What if we only partially order the colours (that is make some of them the same rank,) does that restrict the space less?
+
+A better idea than imposing an order on the colours is imposing an order on the states themselves, since that is what we do not want to repeat. Imagine the state being treated as a large base |C| number (where |C| is the number of colours), and the actions only increase the state number. We're fine with that even though particular sections may have the same values over and over again. 
+
+Is there anything we would also like to be potentially generated that does not fit the base |C| number mould? 
+
