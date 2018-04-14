@@ -251,7 +251,7 @@ this tree is small enough that mapping the entire thing is practical.
 We can make a truth table (where we write the numbers in binary):
 
 | state | input | result state |
-+-------+-------+--------------+
+|-------|-------|--------------|
 | 0 | 0 | 0 |
 | 0 | 1 | 0 |
 | 0 | 10 | 0 |
