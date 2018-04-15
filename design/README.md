@@ -535,6 +535,13 @@ It appears that the amount of state we currently have allocated for the game is 
 
 To restate the problem, we used to have the problem of the game graphs having too many cycles, and the latent trees being too short, so we started interpreting the state as a number and  only adding numbers to them. This removed all the cycles and made the latent trees much longer, but now they are too long!. We have been trying to make the trees longer for a while so being able to go the other way may lead to some interesting and/or effective ways forward.
 
+So we could very easily just add random cycles to make the latent trees shorter, but can we spend the tree length on something more interesting? Besides the excessive length, another problem with the current version is that the games are not comprehensible. Can we use the fact that we have excess depth to increase comprehensibility? I don't see a way to at the moment. If we were to go ahead and make state predicates, then what do we expect would happen? Well one thing that would happen is the possible states would be cut down. Possibly dramatically.
+
+So then it seems like we should go ahead and make state predicates then. We can quickly define more shorthand 
+* |S -> Bool| ≡ the number of possible state predicates
+
+Again, being able to cover the whole possible space of a given type of generated artifact seems desirable. A predicate on a set, partitions the set into two subsets, the "true" set and the "false" set. Alternatively, one can view it as a single subset of the original set. The elements that are not included are what would be in the "false" set. So a state predicate can be represented as a subset of the set of possible states. This means that there are 2<sup>|S|</sup> possible predicates. As discussed before, we have restricted the number of possible states from the amount to cover the entire screen, to just enough to give each pixel on the top row a different colour. But that still leaves us with 240 sections which can be any one of 8 colours so |S| = 8<sup>240</sup> ≈ 5.51 × 10<sup>216</sup>. Therefore |S -> Bool| = 2<sup>8<sup>240</sup></sup> ≈ 10<sup>10<sup>216</sup></sup>.
+
 
 
 
