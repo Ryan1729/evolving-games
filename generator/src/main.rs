@@ -117,6 +117,13 @@ pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
     if input.pressed_this_frame(Button::B) {{
         {}
     }}
+
+    for y in 0..SCREEN_HEIGHT {{
+        let left_side_value = buffer[y * SCREEN_WIDTH];
+        for x in 1..SCREEN_WIDTH {{
+            buffer[y * SCREEN_WIDTH + x] = left_side_value;
+        }}
+    }}
 }}
 ",
         generate_state_mutation(rng),
@@ -154,6 +161,8 @@ impl fmt::Display for MutationEntry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let MutationEntry(index, transform) = *self;
 
+        let left_side_index = index * SCREEN_WIDTH;
+
         write!(
             f,
             "buffer[{}] = match buffer[{}] {{
@@ -167,8 +176,8 @@ impl fmt::Display for MutationEntry {
             BLACK => {},
             other => other
         }};",
-            index,
-            index,
+            left_side_index,
+            left_side_index,
             u32::from(transform[usize::from(Blue)]),
             u32::from(transform[usize::from(Green)]),
             u32::from(transform[usize::from(Red)]),
@@ -261,7 +270,7 @@ impl From<usize> for Colour {
 }
 
 fn generate_state_mutation<R: Rng + Sized>(rng: &mut R) -> Mutation {
-    let state_subset_size = rng.gen_range(0, 128);
+    let state_subset_size = rng.gen_range(0, SCREEN_HEIGHT);
     let mut map = HashMap::with_capacity(state_subset_size);
 
     //Apparently due to a Robert Floyd.
