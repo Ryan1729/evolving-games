@@ -322,7 +322,7 @@ After describing that in code, it will hopefully be instructive to modify it to 
 
 More ideas: some nodes should point to the same nodes one level down. Have one or two accept states and truncate all dead ends to the state after the dooming choice.
 
-This is again feeling link a lot of work. Say I had a fixed asymmetrical tree and I randomized which input did what on each node and pretended that was the full space generator, what would the next step be?
+This is again feeling like a lot of work. Say I had a fixed asymmetrical tree and I randomized which input did what on each node and pretended that was the full space generator, what would the next step be?
 
 I think the next step would be making the game more comprehensible. The easiest first step would be to display the code while playing. The next step would be making the rules easier to internalize.
 
@@ -386,5 +386,9 @@ It works but it produces transition graphs with insufficiently long latent trees
 
 A better idea than imposing an order on the colours is imposing an order on the states themselves, since that is what we do not want to repeat. Imagine the state being treated as a large base |C| number (where |C| is the number of colours), and the actions only increase the state number. We're fine with that even though particular sections may have the same values over and over again. 
 
-Is there anything we would also like to be potentially generated that does not fit the base |C| number mould? 
+Is there anything we would also like to be potentially generated that does not fit the base |C| number mould? We might want some cycles in our graph which still allows us to uncover a latent tree. So we could choose a subset of the state and only impose an order on that part, while still changing other parts. I think any ordering would be isomorphic to a base |C| number, given we disregard what would appear on the screen. Probably we would want what on screen to be only slightly different when there is a small difference in the state's numerical interpretation, so we should probably use something like a Gray code for that. Perusing [the Gray Code Wikipedia article](https://en.wikipedia.org/wiki/Gray_code) suggests that we want to use an n-ary Gray code, possibly a balanced n-ary Gray code at that. Actually, I'm not sure that we care about whether exactly one digit changes between adjacent states. I think we might want instead for small changes to produce small changes in the output and large changes to produce large changes in the output. So the distance between 0 and the maximum state should involve changing all the sections, and adding n to the state should change some number of sections, call it s<sub>n</sub>, which should be >= s<sub>n - 1</sub> and <= s<sub>n + 1</sub>. Choosing a numbering system like this may be important to making the state more comprehensible, but we can postpone implementing this until later.
+
+If we go ahead with this base |C| number idea, we would like every possible operation on numbers which results in an increasing value to be potentially generated. For a given state, the set of all possible operations which result in an increasing value can be represented as the set of all possible results of those operations. It doesn't matter if the operation form 2 to 4 was doubling or adding 2. The result is the same. We could just add a random amount to the current amount with saturating arithmetic semantics. That would allow us to have a consistent rule without a special predicate for each case, (just one predicate for every case). Would that give a skewed distribution as the game went on, (the end of the game coming at a weird time)? And is that something we should deal with afterwards or a reason to do something altogether different that saturating semantics?
+
+
 
