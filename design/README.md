@@ -552,6 +552,17 @@ So the currently most fruitful approach for generating a predicate seems to be:
 
 Since we have already done sampling a random subset of the state, the most complicated or at least most unknown part is selecting a binary tree with a given number of leaves.
 
+An algorithm for generating a binary tree with a given amount of nodes suggested by the above image, (available in the public domain [here](https://en.wikipedia.org/wiki/File:Binary_tree_in_array.svg)) showing a way to store a binary tree in an array is as follows:
 
+* Take the number of desired nodes and round up to the nearest power of two. 
+    * This is the number of leaf nodes in the smallest complete binary tree which can hold our desired number of leaf nodes.
+* Because a complete binary tree has 2n - 1 nodes where n is the number of leaf nodes, we know that the array to hold the tree should have length 2n - 1.
+* Shuffle the nodes and deal them into random parts of the bottom n nodes of the array. Some slots will not contain nodes. This is normal.
+
+Once we have a binary tree evaluate it in the following way:
+* evaluate NOR over each pair of nodes and put them into their parent's slot. (we will define the result of a value NOR with an absent value to be equal to the first value)
+* repeat the last step on the next higher level of the tree until a single value is determined
+
+Optionally, we could reduce the amount of memory needed by storing a collection of value index pairs instead of a length 2n - 1 length array.
 
 
