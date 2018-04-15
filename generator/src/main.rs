@@ -118,10 +118,9 @@ pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
         {}
     }}
 
-    for y in 0..SCREEN_HEIGHT {{
-        let left_side_value = buffer[y * SCREEN_WIDTH];
-        for x in 1..SCREEN_WIDTH {{
-            buffer[y * SCREEN_WIDTH + x] = left_side_value;
+    for y in 1..SCREEN_HEIGHT {{
+        for x in 0..SCREEN_WIDTH {{
+            buffer[y * SCREEN_WIDTH + x] = buffer[x];
         }}
     }}
 }}
@@ -161,8 +160,6 @@ impl fmt::Display for MutationEntry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let MutationEntry(index, transform) = *self;
 
-        let left_side_index = index * SCREEN_WIDTH;
-
         write!(
             f,
             "buffer[{}] = match buffer[{}] {{
@@ -176,8 +173,8 @@ impl fmt::Display for MutationEntry {
             BLACK => {},
             other => other
         }};",
-            left_side_index,
-            left_side_index,
+            index,
+            index,
             u32::from(transform[usize::from(Blue)]),
             u32::from(transform[usize::from(Green)]),
             u32::from(transform[usize::from(Red)]),
