@@ -392,4 +392,149 @@ If we go ahead with this base |C| number idea, we would like every possible oper
 
 I think we could skew things towards smaller increments as we get closer to the end of the state space if we want to, but no matter what, if we make the states not repeat, we will eventually run out. We could also reserve part of the state space for only when a certain predicate is true or something too. So we can adjust things late if we need to so it seems to make sense to go ahead and interpret the state as a number and have each state mutation and add a random number to it.
 
+Now having implemented it, I notice that it does certainly only produces trees, and they are at least 8 nodes deep. The thing is, that even restricting the number of possible state sections to the width of the screen, the trees are *too* deep! Given we use 8 colours and use 240 sections, there are 8<sup>240</sup> ≈ 5.51 × 10<sup>216</sup> possible states. So even if we add billions to the state with button press we would still have trees which are too deep to reach the end of in a human's lifetime. 
+
+We can, of course simply add large enough numbers to shorten the tree down, but this is essentially identical to using even less sections of the state in almost all cases. How much state should we use? In this case since we are displaying all and only the game state we need no extra memory for graphics so if we want to try to compare the state we use to a directly human authored game then we should only count the state related to the game state.
+
+A RAM map of Super Mario Bros is available [here](https://datacrystal.romhacking.net/wiki/Super_Mario_Bros.:RAM_map) under the terms of the [GNU FDL](https://www.gnu.org/copyleft/fdl.html). I would reproduce it here and highlight which portions I consider to be game state but the aforementioned license is too burdensome for that. Instead, I will merely list the addresses I consider game state and the total number of bytes in the following table:
+
+|Address section|
+|0x0000|
+|0x0002|
+|0x0003|
+|0x0005|
+|0x000E|
+|0x000F-0x0013|
+|0x0014|
+|0x0016/A|
+|0x001B|
+|0x001D|
+|0x001E|
+|0x0023|
+|0x0024/5|
+|0x002A-0x0032|
+|0x0030/2|
+|0x0033|
+|0x0039|
+|0x0045|
+|0x0046/A|
+|0x004B|
+|0x0057|
+|0x0058/C|
+|0x006D|
+|0x006E-0x0072|
+|0x0086|
+|0x0087/B|
+|0x008C|
+|0x008D|
+|0x00D5|
+|0x009F|
+|0x00A0/4|
+|0x00A2/3|
+|0x00B5|
+|0x00B6/A|
+|0x00BB|
+|0x00CE |
+|0x00CF-0x00D3 |
+|0x00D4 |
+|0x00A6 |
+|0x00A7 |
+|0x00D6 |
+|0x00D7 |
+|0x03AD |
+|0x03AE-0x03B2 |
+|0x03B3 |
+|0x03B8 |
+|0x03B9/D |
+|0x03BE |
+|0x03AF |
+|0x03BA |
+|0x0400 |
+|0x0433 |
+|0x043A |
+|0x043B |
+|0x0450 |
+|0x0456 |
+|0x0490 |
+|0x0491 |
+|0x04AC |
+|0x04B0 |
+|0x04C4 |
+|0x04C8 |
+|0x04D0 |
+|0x04E0 |
+|0x0500-0x069F |
+|0x06CE |
+|0x06D6 |
+|0x06D9 |
+|0x06DE |
+|0x0700 |
+|0x0701 |
+|0x0704 |
+|0x0705 |
+|0x0709 |
+|0x070A |
+|0x0714 |
+|0x071A |
+|0x071B |
+|0x071C |
+|0x071D |
+|0x071E |
+|0x0722 |
+|0x0723 |
+|0x0743 |
+|0x0747 |
+|0x0750 |
+|0x0754 |
+|0x0755 |
+|0x0756 |
+|0x075A |
+|0x075E |
+|0x075F |
+|0x0760 |
+|0x0775 |
+|0x077F |
+|0x0782 |
+|0x0783 |
+|0x0784 |
+|0x0785 |
+|0x0786 |
+|0x0787 |
+|0x0789 |
+|0x078A |
+|0x078F |
+|0x0790 |
+|0x0791 |
+|0x0792 |
+|0x0795 |
+|0x079E |
+|0x079F |
+|0x07A0 |
+|0x07A2 |
+|-------|
+|Total  |
+|-------|
+| 580 B |
+
+
+Note that the map was only mostly complete at the time I looked at it (April 2018).
+
+Here are some reasons why I counted what I did. 
+* Things like the level data pointer, (to the cartridge memory,) were not counted because they could theoretically be represented in the code directly. Besides, the generated games will probably not need the same concept of a level anyway.
+* This might not need to be said but score was not counted because score doesn't affect anything gameplay wise.
+* I don't know what YMF_Dummy means. I left it out.
+* I interpreted the description of 0x0500-0x069F to mean that it was the currently visible tiles used, for collision purposes.
+* Game mode is left out because it is more "application state". A game without a title screen etc. would still essentially be the same game.
+* Luigi stuff is also left out. Poor Luigi.
+* There was some borderline stuff that I wasn't sure whether it was graphics only or not as well as some stuff which was apparently duplicated. I kept most of that stuff in.
+
+So, the total is 580 bytes. In order to compare 240 sections with 8 colours in each to that, we need to convert both the sections and the bytes to bits. Each section has 8 = 2<sup>3</sup> possibilities, which corresponds to 3 bits. So the total number of bits in the sections is 240 * 3 bits = 720 bits. The Mario ROM on the other hand has 580 bytes = 580 * 8 bits = 4640 bits. A difference of 644%. Something to note about this comparison, is the Mario ROM does not use every single bit of the bytes it uses.,  however in practice I don't expect the generated games to do so either. However, having 3 bit sections means that if, say a section is used as a boolean, then only 2 bits are unused rather than 7, meaning that the sections are likely to have fewer unused states, within the restriction of the 8 colours. Because we represent the colours with `u32`s, the actual memory usage is quite a bit higher in the generated case. But then again Mario has additional storage for graphics which is not true in the generated case. I'm assuming that this all mostly balances out, but that may be incorrect. 
+
+It appears that the amount of state we currently have allocated for the game is not an excessive amount so we need to do something other than merely reduce the state.
+
+
+To restate the problem, we used to have the problem of the game graphs having too many cycles, and the latent trees being too short, so we started interpreting the state as a number and  only adding numbers to them. This removed all the cycles and made the latent trees much longer, but now they are too long!. We have been trying to make the trees longer for a while so being able to go the other way may lead to some interesting and/or effective ways forward.
+
+
+
 
