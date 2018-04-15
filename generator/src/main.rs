@@ -83,6 +83,43 @@ fn generate_update_function<R: Rng + Sized>(rng: &mut R) -> String {
         "
 use common::*;
 
+fn add_one_to_buffer(buffer: &mut [u32], mut i: usize) {{
+    loop {{
+        buffer[i] = match buffer[i] {{
+            BLUE => GREEN,
+            GREEN => RED,
+            RED => YELLOW,
+            YELLOW => PURPLE,
+            PURPLE => GREY,
+            GREY => WHITE,
+            WHITE => BLACK,
+            BLACK => BLUE,
+            other => other,
+        }};
+
+        if buffer[i] != BLUE || i == 0 {{
+            break;
+        }}
+
+        i -= 1;
+    }}
+}}
+
+fn add_n_to_buffer(buffer: &mut [u32], mut n: u32) {{
+    let len = buffer.len();
+    for i in (0..len).rev() {{
+        for _ in 0..(n & 0b111) {{
+            add_one_to_buffer(buffer, i);
+        }}
+
+        n >>= 3;
+
+        if n == 0 {{
+            break;
+        }}
+    }}
+}}
+
 #[inline]
 pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
     let buffer = &mut state.buffer;
@@ -162,7 +199,7 @@ impl fmt::Display for MutationEntry {
 
         write!(
             f,
-            "buffer[{}] = match buffer[{}] {{
+            "let n = match buffer[{}] {{
             BLUE => {},
             GREEN => {},
             RED => {},
@@ -171,9 +208,11 @@ impl fmt::Display for MutationEntry {
             GREY => {},
             WHITE => {},
             BLACK => {},
-            other => other
-        }};",
-            index,
+            _ => 0
+        }};
+
+        add_n_to_buffer(&mut buffer[0..SCREEN_WIDTH], n);
+        ",
             index,
             u32::from(transform[usize::from(Blue)]),
             u32::from(transform[usize::from(Green)]),
@@ -189,7 +228,7 @@ impl fmt::Display for MutationEntry {
 
 const COLOUR_COUNT: usize = 8;
 
-type PixelTransform = [Colour; COLOUR_COUNT];
+type PixelTransform = [u32; COLOUR_COUNT];
 
 #[derive(Clone, Copy)]
 enum Colour {
@@ -267,7 +306,7 @@ impl From<usize> for Colour {
 }
 
 fn generate_state_mutation<R: Rng + Sized>(rng: &mut R) -> Mutation {
-    let state_subset_size = rng.gen_range(0, SCREEN_HEIGHT);
+    let state_subset_size = rng.gen_range(0, SCREEN_WIDTH);
     let mut map = HashMap::with_capacity(state_subset_size);
 
     //Apparently due to a Robert Floyd.
@@ -287,12 +326,10 @@ fn generate_state_mutation<R: Rng + Sized>(rng: &mut R) -> Mutation {
 use rand::distributions::{Range, Sample};
 
 fn generate_pixel_transform<R: Rng + Sized>(rng: &mut R) -> PixelTransform {
-    let mut result = [Blue; COLOUR_COUNT];
-
-    let mut colour_range = Range::new(0, COLOUR_COUNT);
+    let mut result = [0; COLOUR_COUNT];
 
     for i in 0..COLOUR_COUNT {
-        result[i] = Colour::from(colour_range.sample(rng));
+        result[i] = rng.gen_range(0, SCREEN_WIDTH as u32);
     }
 
     result
