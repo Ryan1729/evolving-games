@@ -542,6 +542,16 @@ So then it seems like we should go ahead and make state predicates then. We can 
 
 Again, being able to cover the whole possible space of a given type of generated artifact seems desirable. A predicate on a set, partitions the set into two subsets, the "true" set and the "false" set. Alternatively, one can view it as a single subset of the original set. The elements that are not included are what would be in the "false" set. So a state predicate can be represented as a subset of the set of possible states. This means that there are 2<sup>|S|</sup> possible predicates. As discussed before, we have restricted the number of possible states from the amount to cover the entire screen, to just enough to give each pixel on the top row a different colour. But that still leaves us with 240 sections which can be any one of 8 colours so |S| = 8<sup>240</sup> ≈ 5.51 × 10<sup>216</sup>. Therefore |S -> Bool| = 2<sup>8<sup>240</sup></sup> ≈ 10<sup>10<sup>216</sup></sup>.
 
+One way to approach sampling from such a large set is similarly to the way we did so with a different set before: by choosing a random subset of it and then operationg on the sections individually and then combining them. Combining the mutations was easy since merely choosing a random order for the mutations, (which was achieved simply by choosing sections independently,) selected from the possible ways to combine them. Predicates are atemporal, but they can be combined with any one of the 16 possible boolean functions of two parameters, (though always-true and always false are fairly uninteresting.) The boolean function NOR (that is compute the boolean OR of two booleans and then return the result negated) can be combined with copies of itself to form any boolean function. This is also true of NAND. So theoretically, if we combine predicates with random combinations of NORs then we can generate any possible combination of them. In practice, unless we repeat the same predicate to make it more prevalent, I suspect making exact other logic gates will be quite rare. But generating similar enough predicates that we get nearly the same effect seems reasonably likely. Given a set of predicates how can we select from every possible way to combine them with NORs? This is equivalent to selecting one of the possible binary trees with that many leaves, (where a shared parent node two given nodes the result of applying NOR to the two children,) and randomly assigning the predicates to the leaves.
+
+So the currently most fruitful approach for generating a predicate seems to be:
+* pick a random subset of the state. 
+* for each section in that subset, choose a random predicate over that section. 
+    * Since section have only 8 possibilities, there are only 2<sup>8</sup> = 256 possible predicates so we can choose from them directly.
+* combine each of those predicates with NOR as described above.
+
+Since we have already done sampling a random subset of the state, the most complicated or at least most unknown part is selecting a binary tree with a given number of leaves.
+
 
 
 
