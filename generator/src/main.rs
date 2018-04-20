@@ -1,8 +1,10 @@
 use std::fs::OpenOptions;
 use std::path::Path;
-use std::io::Write;
+use std::io::Write as IOWrite;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Write;
 
 extern crate rand;
 use rand::{Rng, SeedableRng, XorShiftRng};
@@ -70,7 +72,7 @@ fn main() {
 
     let bytes = code.as_bytes();
 
-    if let Err(error) = file.write_all(bytes) {
+    if let Err(error) = IOWrite::write_all(&mut file, bytes) {
         println!("{}", error);
     } else {
         let len = bytes.len();
@@ -120,6 +122,10 @@ fn add_n_to_buffer(buffer: &mut [u32], mut n: u32) {{
     }}
 }}
 
+fn nor(b1: bool, b2: bool) -> bool {{
+    !(b1 || b2)
+}}
+
 #[inline]
 pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
     let buffer = &mut state.buffer;
@@ -162,18 +168,79 @@ pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
     }}
 }}
 ",
-        generate_state_mutation(rng),
-        generate_state_mutation(rng),
-        generate_state_mutation(rng),
-        generate_state_mutation(rng),
-        generate_state_mutation(rng),
-        generate_state_mutation(rng),
-        generate_state_mutation(rng),
-        generate_state_mutation(rng),
+        gen_button_response(rng),
+        gen_button_response(rng),
+        gen_button_response(rng),
+        gen_button_response(rng),
+        gen_button_response(rng),
+        gen_button_response(rng),
+        gen_button_response(rng),
+        gen_button_response(rng),
     )
 }
 
-use std::fmt;
+const STATE_PREDICATE_LENGTH_UPPER_BOUND: usize =
+    (SCREEN_WIDTH / 2) //Average amount of nodes pe expression
+    * (
+        5 //"nor()".len()
+        + SECTION_PREDICATE_LENGTH_UPPER_BOUND
+    )
+    + 14 //ELSE_IF.len() - 6
+    ;
+
+macro_rules! IF {
+    () => {
+        "if {} {{\n\t{}\n}}"
+    };
+}
+
+macro_rules! ELSE_IF {
+    () => {
+        "else if {} {{\n\t{}\n}}"
+    };
+}
+
+macro_rules! ELSE {
+    () => {
+        "else {{\n\t{}\n}}\n"
+    };
+}
+
+fn gen_button_response<R: Rng + Sized>(rng: &mut R) -> String {
+    let pred_count = rng.gen_range(1, 4);
+
+    let mut predicates = Vec::with_capacity(pred_count);
+
+    for _ in 0..pred_count {
+        predicates.push(generate_state_predicate(rng));
+    }
+
+    let mut result = String::with_capacity(
+        pred_count
+        * STATE_PREDICATE_LENGTH_UPPER_BOUND
+        + 11  //ELSE.len() - 4
+        + (pred_count + 1)
+        * STATE_MUTATION_LENGTH_UPPER_BOUND,
+    );
+
+    write!(result, IF!(), predicates[0], generate_state_mutation(rng)).unwrap();
+
+    for i in 1..pred_count {
+        write!(
+            result,
+            ELSE_IF!(),
+            predicates[i],
+            generate_state_mutation(rng)
+        ).unwrap();
+    }
+
+    write!(result, ELSE!(), generate_state_mutation(rng)).unwrap();
+
+    result
+}
+
+//TODO could be tighter
+const STATE_MUTATION_LENGTH_UPPER_BOUND: usize = SCREEN_WIDTH * 512;
 
 type FramebufferIndex = usize;
 
@@ -192,6 +259,8 @@ impl fmt::Display for Mutation {
 }
 
 struct MutationEntry(FramebufferIndex, PixelTransform);
+
+const MAXIMUM_U32_CHAR_LENGTH: usize = 10;
 
 impl fmt::Display for MutationEntry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -306,7 +375,7 @@ impl From<usize> for Colour {
 }
 
 fn generate_state_mutation<R: Rng + Sized>(rng: &mut R) -> Mutation {
-    let state_subset_size = rng.gen_range(0, SCREEN_WIDTH);
+    let state_subset_size = rng.gen_range(0, SCREEN_WIDTH / 2);
     let mut map = HashMap::with_capacity(state_subset_size);
 
     //Apparently due to a Robert Floyd.
@@ -323,8 +392,6 @@ fn generate_state_mutation<R: Rng + Sized>(rng: &mut R) -> Mutation {
     Mutation { map }
 }
 
-use rand::distributions::{Range, Sample};
-
 fn generate_pixel_transform<R: Rng + Sized>(rng: &mut R) -> PixelTransform {
     let mut result = [0; COLOUR_COUNT];
 
@@ -333,4 +400,160 @@ fn generate_pixel_transform<R: Rng + Sized>(rng: &mut R) -> PixelTransform {
     }
 
     result
+}
+
+struct StatePredicate(Vec<Option<SectionPredicate>>);
+
+fn generate_state_predicate<R: Rng + Sized>(rng: &mut R) -> StatePredicate {
+    let section_predicates = generate_section_predicates(rng);
+
+    // Insert up to twice the current nodes worth of blanks,
+    // so all possible combinations are possible
+    let max_nodes = next_power_of_2(section_predicates.len()) * 2;
+
+    let mut result = vec![None; max_nodes];
+
+    debug_assert!(section_predicates.len() <= max_nodes);
+
+    for s in section_predicates.into_iter() {
+        let mut index = rng.gen_range(0, max_nodes);
+
+        loop {
+            if result[index].is_none() {
+                result[index] = Some(s);
+                break;
+            }
+
+            index += 1;
+            index &= max_nodes - 1;
+        }
+    }
+
+    StatePredicate(result)
+}
+
+impl fmt::Display for StatePredicate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut strings: Vec<String> = Vec::with_capacity(self.0.len() / 2);
+        for nodes in self.0.chunks(2) {
+            //TODO evaluate whether the default to false here skews things.
+            strings.push(match (nodes[0], nodes[1]) {
+                (Some(p1), Some(p2)) => format!("nor({}, {})", p1, p2),
+                (Some(p), None) | (None, Some(p)) => format!("{}", p),
+                (None, None) => "false".to_string(),
+            });
+        }
+
+        while strings.len() > 1 {
+            let new_len = strings.len() / 2;
+            for i in 0..new_len {
+                strings[i] = format!("nor({}, {})", strings[2 * i], strings[2 * i + 1]);
+            }
+
+            unsafe { strings.set_len(new_len) };
+        }
+
+        let result = strings.pop();
+
+        match result {
+            Some(p) => write!(f, "{}", p).unwrap(),
+            None => write!(f, "false").unwrap(),
+        };
+
+        Ok(())
+    }
+}
+
+// https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+fn next_power_of_2(mut x: usize) -> usize {
+    //The basic idea here is fill in all the bits below the highest set bit
+    //and then add one, making a power of two. We do this by taking the
+    //highest set bit, (the only one we know we have) and progressively
+    //ORing with the lower bits of the number. Once we do the first OR,
+    //then we know there are two set bits at the top, so we can set the
+    //next two below it at once. Then we know the top 4 are set and so on.
+    x = x.wrapping_sub(1); //This subtraction makes, for instance, 8 map to 8 instead of 16.
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+    x.wrapping_add(1)
+}
+
+#[derive(Copy, Clone)]
+struct SectionPredicate(usize, [bool; COLOUR_COUNT]);
+
+const SECTION_PREDICATE_LENGTH_UPPER_BOUND: usize =
+    15 // "match buffer[{}] {{ ".len() - 4
+    + MAXIMUM_U32_CHAR_LENGTH
+    + 5 //"false".len()
+    + 6 // "{} => {}, ".len() - 4
+    + 13//"_ => false, }}".len() - 1
+    ;
+impl fmt::Display for SectionPredicate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let &SectionPredicate(index, results) = self;
+        write!(f, "match buffer[{}] {{ ", index)?;
+
+        for i in 0..COLOUR_COUNT {
+            write!(
+                f,
+                "{} => {}, ",
+                u32::from(Colour::from(i)),
+                //Theoretically Display for bools could change
+                if results[i] { "true" } else { "false" }
+            )?;
+        }
+
+        write!(f, "_ => false, }}")?;
+
+        Ok(())
+    }
+}
+
+fn generate_section_predicates<R: Rng + Sized>(rng: &mut R) -> Vec<SectionPredicate> {
+    let state_subset_size = rng.gen_range(0, SCREEN_WIDTH / 8);
+    //we don't want duplicates.
+    let mut map = HashMap::with_capacity(state_subset_size);
+
+    //Apparently due to a Robert Floyd.
+    //see https://stackoverflow.com/a/2394292/4496839
+    for j in 1..state_subset_size {
+        let current_index = rng.gen_range(0, j);
+        if map.contains_key(&current_index) {
+            map.insert(j, generate_section_predicate(rng, j));
+        } else {
+            map.insert(
+                current_index,
+                generate_section_predicate(rng, current_index),
+            );
+        }
+    }
+
+    let mut result: Vec<SectionPredicate> = map.drain().map(|(_, p)| p).collect();
+    //We want a consistent order so the result is determined only by the RNG.
+    result.sort_by(|&SectionPredicate(i1, _), &SectionPredicate(i2, _)| i1.cmp(&i2));
+
+    //But we don't want the order to be the same every time.
+    rng.shuffle(&mut result);
+
+    result
+}
+
+fn generate_section_predicate<R: Rng + Sized>(rng: &mut R, state_index: usize) -> SectionPredicate {
+    SectionPredicate(
+        state_index,
+        [
+            rng.gen(),
+            rng.gen(),
+            rng.gen(),
+            rng.gen(),
+            rng.gen(),
+            rng.gen(),
+            rng.gen(),
+            rng.gen(),
+        ],
+    )
 }

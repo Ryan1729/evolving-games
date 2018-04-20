@@ -565,4 +565,14 @@ Once we have a binary tree evaluate it in the following way:
 
 Optionally, we could reduce the amount of memory needed by storing a collection of value index pairs instead of a length 2n - 1 length array.
 
+On second thought, since we only care about constructing the the code to evaluate the tree, we can do something else:
+* Take the number of desired nodes and round up to the nearest power of two, then double it.
+* Make an array that size.
+* Shuffle the nodes and deal them into random unoccupied parts of the array. Clearly, some slots will not contain nodes.
+* For each pair of nodes, evaluate NOR over them, (in this case that means constructing that part of the string,) and place the result in the p-th section of the array where p is the number of the current pair (starting at zero).
+* Repeat the last step over the first half of the array iterated over previously, (since the evaluated form of values dealt into the rest will already be in the left half,) until one value is left.
+* Return that value.
+
+Having implemented that, the games play essentially the same as before, but buttons sometimes don't do anything. Essentially, we have just cut off random branches of the tree, but we have not changed the depth. In fact, since we have had to reduce some generation constantss to get a reasonable compile time, we have probably increased the depth of the tree! We need another approach to reducing the game tree depth.
+
 
