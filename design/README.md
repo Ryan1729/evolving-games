@@ -575,4 +575,21 @@ On second thought, since we only care about constructing the the code to evaluat
 
 Having implemented that, the games play essentially the same as before, but buttons sometimes don't do anything. Essentially, we have just cut off random branches of the tree, but we have not changed the depth. In fact, since we have had to reduce some generation constantss to get a reasonable compile time, we have probably increased the depth of the tree! We need another approach to reducing the game tree depth.
 
+I still feel that just making the state get incremented faster would be wasting a resource. If we did that though, what would be the next avenue after that?
+
+One aspect that we could adjust from there, (or from here,) is making the game more understandable, while not trivial. While later we might want to try choosing a random way to simply at generation time, for now, let's try to find a way to simplify that does not exclude any games we are likely to want. While making things simpler does not always make them more understandable, it does often enough that it is worth trying.
+
+Here are some ways that we can make things simpler:
+
+* make things stay the same for longer (less change)
+* less state in general
+* identify (in the math sense of "make identical") aspects of the game (less distinct things)
+* TODO more
+
+An idea that I think falls in the camp of identifying aspects of the game is to apply predicates and mutations not over single sections of the state but over ranges. A state predicate over a range checks whether the predicate is true for either *every* or *any* section in the range. *Every* seems more interesting right now, but any might be good later. Applying a state mutation over a range means applying the mutation to every section within that range. I suppose we could try to make an analogous variant similar to the predicate any, where we apply the mutation to only one section of the range, but doing so randomly would be against the current spirit of this project. We would want it to depend only on the state. So I guess we could interpret the range as instrutions on which section inside it to mutate somehow. Maybe treat it as a base |C| number of sections to move over, modulo the length of the range?
+
+A potential pitfall of using ranges is that it imposes a one-dimensionality on the state. But treating the state as a number already did that. If we find ourselves in a dead end we might try removing that one-dimensionality.
+
+
+
 
