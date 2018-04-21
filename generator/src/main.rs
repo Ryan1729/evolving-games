@@ -99,7 +99,7 @@ fn add_one_to_buffer(buffer: &mut [u32], mut i: usize) {{
             other => other,
         }};
 
-        if buffer[i] != BLUE || i == 0 {{
+        if buffer[i] != BLACK || i == 0 {{
             break;
         }}
 
@@ -258,8 +258,8 @@ impl fmt::Display for Mutation {
 
         write!(
             f,
-            "for i in {}..{} {{
-                let n = match buffer[i] {{
+            "//for i in ({}..).rev() {{
+                let n = match buffer[{}] {{
                 BLUE => {},
                 GREEN => {},
                 RED => {},
@@ -272,7 +272,7 @@ impl fmt::Display for Mutation {
             }};
 
             add_n_to_buffer(&mut buffer[{0}..{1}], n);
-        }}
+        //}}
         ",
             start,
             one_past_end,
