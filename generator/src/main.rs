@@ -242,47 +242,40 @@ fn gen_button_response<R: Rng + Sized>(rng: &mut R) -> String {
 //TODO could be tighter
 const STATE_MUTATION_LENGTH_UPPER_BOUND: usize = SCREEN_WIDTH * 512;
 
-type FramebufferIndex = usize;
-
 struct Mutation {
-    pub map: HashMap<FramebufferIndex, PixelTransform>,
+    pub start: usize,
+    pub one_past_end: usize,
+    pub transform: PixelTransform,
 }
 
 impl fmt::Display for Mutation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for (&fi, &pt) in self.map.iter() {
-            write!(f, "{}\n", MutationEntry(fi, pt))?;
-        }
-
-        Ok(())
-    }
-}
-
-struct MutationEntry(FramebufferIndex, PixelTransform);
-
-const MAXIMUM_U32_CHAR_LENGTH: usize = 10;
-
-impl fmt::Display for MutationEntry {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let MutationEntry(index, transform) = *self;
+        let Mutation {
+            start,
+            one_past_end,
+            transform,
+        } = *self;
 
         write!(
             f,
-            "let n = match buffer[{}] {{
-            BLUE => {},
-            GREEN => {},
-            RED => {},
-            YELLOW => {},
-            PURPLE => {},
-            GREY => {},
-            WHITE => {},
-            BLACK => {},
-            _ => 0
-        }};
+            "for i in {}..{} {{
+                let n = match buffer[i] {{
+                BLUE => {},
+                GREEN => {},
+                RED => {},
+                YELLOW => {},
+                PURPLE => {},
+                GREY => {},
+                WHITE => {},
+                BLACK => {},
+                _ => 0
+            }};
 
-        add_n_to_buffer(&mut buffer[0..SCREEN_WIDTH], n);
+            add_n_to_buffer(&mut buffer[{0}..{1}], n);
+        }}
         ",
-            index,
+            start,
+            one_past_end,
             u32::from(transform[usize::from(Blue)]),
             u32::from(transform[usize::from(Green)]),
             u32::from(transform[usize::from(Red)]),
@@ -291,9 +284,13 @@ impl fmt::Display for MutationEntry {
             u32::from(transform[usize::from(Grey)]),
             u32::from(transform[usize::from(White)]),
             u32::from(transform[usize::from(Black)]),
-        )
+        )?;
+
+        Ok(())
     }
 }
+
+const MAXIMUM_U32_CHAR_LENGTH: usize = 10;
 
 const COLOUR_COUNT: usize = 8;
 
@@ -375,21 +372,14 @@ impl From<usize> for Colour {
 }
 
 fn generate_state_mutation<R: Rng + Sized>(rng: &mut R) -> Mutation {
-    let state_subset_size = rng.gen_range(0, SCREEN_WIDTH / 2);
-    let mut map = HashMap::with_capacity(state_subset_size);
+    let start = rng.gen_range(0, SCREEN_WIDTH);
+    let one_past_end = rng.gen_range(start, SCREEN_WIDTH);
 
-    //Apparently due to a Robert Floyd.
-    //see https://stackoverflow.com/a/2394292/4496839
-    for j in 1..state_subset_size {
-        let current_index = rng.gen_range(0, j);
-        if map.contains_key(&current_index) {
-            map.insert(j, generate_pixel_transform(rng));
-        } else {
-            map.insert(current_index, generate_pixel_transform(rng));
-        }
+    Mutation {
+        start,
+        one_past_end,
+        transform: generate_pixel_transform(rng),
     }
-
-    Mutation { map }
 }
 
 fn generate_pixel_transform<R: Rng + Sized>(rng: &mut R) -> PixelTransform {
