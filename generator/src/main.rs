@@ -258,8 +258,8 @@ impl fmt::Display for Mutation {
 
         write!(
             f,
-            "//for i in ({}..).rev() {{
-                let n = match buffer[{}] {{
+            "for i in ({}..{}).rev() {{
+                let n = match buffer[i] {{
                 BLUE => {},
                 GREEN => {},
                 RED => {},
@@ -272,7 +272,7 @@ impl fmt::Display for Mutation {
             }};
 
             add_n_to_buffer(&mut buffer[{0}..{1}], n);
-        //}}
+        }}
         ",
             start,
             one_past_end,
