@@ -142,7 +142,7 @@ struct GameSpec {
 
 fn generate_update_function<R: Rng + Sized>(rng: &mut R) -> Result<String> {
     generate_spec(rng).and_then(|spec: GameSpec| {
-        println!("{:?}", spec);
+        println!("{:#?}", spec);
         //TODO Separate seed for these RNG calls?
         render_spec(rng, spec)
     })
@@ -207,43 +207,129 @@ fn generate_goal<R: Rng + Sized>(rng: &mut R) -> Goal {
 //We are using the "what kind of things are there" definition of ontology.
 #[derive(Debug)]
 struct Ontology {
-    entity_move_kinds: Vec<EntityMoveKind>,
+    entity_animacies: Vec<EntityAnimacy>,
+    entity_controls: Vec<Option<EntityControl>>,
 }
 
 fn generate_ontology<R: Rng + Sized>(rng: &mut R, goal: Goal) -> Ontology {
-    let minimum_entity_types_needed = goal.minimum_entity_types_needed();
+    let entity_animacies = generate_entity_animacies(rng, goal);
 
-    let entity_move_kinds_len =
-        rng.gen_range(minimum_entity_types_needed, minimum_entity_types_needed * 2);
+    let entity_controls = generate_entity_controls(rng, &entity_animacies);
 
-    debug_assert!(entity_move_kinds_len >= 1);
+    Ontology {
+        entity_animacies,
+        entity_controls,
+    }
+}
 
-    let mut entity_move_kinds = Vec::with_capacity(entity_move_kinds_len as _);
+fn generate_entity_controls<R: Rng + Sized>(
+    rng: &mut R,
+    entity_animacies: &Vec<EntityAnimacy>,
+) -> Vec<Option<EntityControl>> {
+    let controls_len = entity_animacies.len();
 
-    entity_move_kinds.push(PlayerControlled);
+    debug_assert!(controls_len >= 1);
 
-    for _ in 1..entity_move_kinds_len {
-        entity_move_kinds.push(generate_entity_move_kind(rng));
+    let mut controls = Vec::with_capacity(controls_len);
+
+    for e in entity_animacies.iter() {
+        let contol = match *e {
+            Inanimate => None,
+            //I could try to encode this relationship between Animacy and Controls in the type by
+            //merging those two types, but that smells like unnecessary coupling.
+            _ => Some(generate_entity_control(rng)),
+        };
+
+        controls.push(contol);
     }
 
-    Ontology { entity_move_kinds }
+    controls
+}
+
+fn generate_entity_control<R: Rng + Sized>(rng: &mut R) -> EntityControl {
+    EntityControl {
+        movement: generate_move_control(rng),
+        a: generate_action(rng),
+        b: generate_action(rng),
+        select: generate_action(rng),
+    }
 }
 
 #[derive(Debug)]
-enum EntityMoveKind {
-    PlayerControlled,
-    Stationary,
-    Mobile,
+struct EntityControl {
+    movement: MoveControl,
+    a: Action,
+    b: Action,
+    select: Action,
 }
-use EntityMoveKind::*;
 
-const ENTITY_MOVE_KIND_COUNT: u8 = 3;
+#[derive(Debug)]
+enum MoveControl {
+    Orthogonal,
+    Diagonal,
+}
+use MoveControl::*;
 
-fn generate_entity_move_kind<R: Rng + Sized>(rng: &mut R) -> EntityMoveKind {
-    match rng.gen_range(0, ENTITY_MOVE_KIND_COUNT) {
+const MOVE_CONTROL_COUNT: u8 = 2;
+
+fn generate_move_control<R: Rng + Sized>(rng: &mut R) -> MoveControl {
+    match rng.gen_range(0, MOVE_CONTROL_COUNT) {
+        0 => Orthogonal,
+        _ => Diagonal,
+    }
+}
+
+//Moreso than any other game element, this set of possibilities will need to be expaneded
+#[derive(Debug)]
+enum Action {
+    SwapPlayerControlToNext(u8),
+    CopySelf,
+}
+use Action::*;
+
+const ACTION_COUNT: u8 = 2;
+
+fn generate_action<R: Rng + Sized>(rng: &mut R) -> Action {
+    match rng.gen_range(0, MOVE_CONTROL_COUNT) {
+        0 => SwapPlayerControlToNext(rng.gen()),
+        _ => CopySelf,
+    }
+}
+
+fn generate_entity_animacies<R: Rng + Sized>(rng: &mut R, goal: Goal) -> Vec<EntityAnimacy> {
+    let minimum_entity_types_needed = goal.minimum_entity_types_needed();
+
+    let entity_animacies_len =
+        rng.gen_range(minimum_entity_types_needed, minimum_entity_types_needed * 2);
+
+    debug_assert!(entity_animacies_len >= 1);
+
+    let mut entity_animacies = Vec::with_capacity(entity_animacies_len as _);
+
+    entity_animacies.push(PlayerControlled);
+
+    for _ in 1..entity_animacies_len {
+        entity_animacies.push(generate_entity_animacy(rng));
+    }
+
+    entity_animacies
+}
+
+#[derive(Debug)]
+enum EntityAnimacy {
+    PlayerControlled,
+    Inanimate,
+    Animate,
+}
+use EntityAnimacy::*;
+
+const ENTITY_ANIMACY_COUNT: u8 = 3;
+
+fn generate_entity_animacy<R: Rng + Sized>(rng: &mut R) -> EntityAnimacy {
+    match rng.gen_range(0, ENTITY_ANIMACY_COUNT) {
         0 => PlayerControlled,
-        1 => Stationary,
-        _ => Mobile,
+        1 => Inanimate,
+        _ => Animate,
     }
 }
 
@@ -329,9 +415,9 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
 }
 
 fn render_grid_game<R: Rng + Sized>(
-    _rng: &mut R,
-    _spec: GameSpec,
-    _grid_dimensions: (u8, u8),
+    rng: &mut R,
+    spec: GameSpec,
+    grid_dimensions: (u8, u8),
 ) -> Result<RenderableGame> {
     err!(NotImplemented)
 }
