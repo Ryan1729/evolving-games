@@ -394,3 +394,39 @@ impl Default for Framebuffer {
         Framebuffer { buffer }
     }
 }
+
+#[inline]
+pub fn next_colour(colour: u32) -> u32 {
+    match colour {
+        BLUE => GREEN,
+        GREEN => RED,
+        RED => YELLOW,
+        YELLOW => PURPLE,
+        PURPLE => GREY,
+        GREY => WHITE,
+        WHITE => BLACK,
+        BLACK => BLUE,
+        other => other,
+    }
+}
+
+use std::cmp::min;
+
+pub fn draw_winning_screen(framebuffer: &mut Framebuffer) {
+    let mut colour = BLUE;
+    let mut w = SCREEN_WIDTH;
+    let mut h = SCREEN_HEIGHT;
+
+    for corner in 0..(min(SCREEN_WIDTH, SCREEN_HEIGHT) - 80) / 2 {
+        framebuffer.draw_rect(corner, corner, w, h, colour);
+
+        if w > 2 {
+            w -= 2;
+        }
+        if h > 2 {
+            h -= 2;
+        }
+
+        colour = next_colour(colour);
+    }
+}

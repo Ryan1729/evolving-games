@@ -1,5 +1,6 @@
 pub mod rendering;
 pub use rendering::Framebuffer;
+pub use rendering::draw_winning_screen;
 
 pub mod constants;
 pub use constants::*;

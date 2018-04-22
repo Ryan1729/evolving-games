@@ -58,11 +58,17 @@ fn main() {
 
     println!("{:?}\n", rng.next_u32());
 
+    let code = match generate_update_function(&mut rng) {
+        Err(error) => {
+            println!("{}", error);
+            return;
+        }
+        Ok(c) => c,
+    };
+
     let filename = "../player/src/game.rs";
     let path = Path::new(filename);
     println!("Overwriting {:?}.", path.as_os_str());
-
-    let code = generate_update_function(&mut rng);
 
     let mut file = OpenOptions::new()
         .write(true)
@@ -80,103 +86,254 @@ fn main() {
     }
 }
 
-fn generate_update_function<R: Rng + Sized>(rng: &mut R) -> String {
-    format!(
-        "
-use common::*;
+#[derive(Debug)]
+struct Error {
+    line: u32,
+    file: &'static str,
+    kind: ErrorKind,
+}
 
-fn add_one_to_buffer(buffer: &mut [u32], mut i: usize) {{
-    loop {{
-        buffer[i] = match buffer[i] {{
-            BLUE => GREEN,
-            GREEN => RED,
-            RED => YELLOW,
-            YELLOW => PURPLE,
-            PURPLE => GREY,
-            GREY => WHITE,
-            WHITE => BLACK,
-            BLACK => BLUE,
-            other => other,
-        }};
+macro_rules! err {
+    ($kind: expr) => {
+        Err(Error {
+            line: line!(),
+            file: file!(),
+            kind: $kind,
+        })
+    };
+}
 
-        if buffer[i] != BLACK || i == 0 {{
-            break;
+#[derive(Debug)]
+enum ErrorKind {
+    NotImplemented,
+}
+use ErrorKind::*;
+
+impl fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{} error occurred at line {} in {}",
+            self.kind, self.line, self.file
+        )
+    }
+}
+
+impl std::error::Error for Error {
+    fn description(&self) -> &str {
+        "https://github.com/rust-lang/rfcs/pull/2230"
+    }
+}
+
+type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Debug)]
+struct GameSpec {
+    grid_dimensions: Option<(u8, u8)>,
+    goal: Goal,
+    ontology: Ontology,
+}
+
+fn generate_update_function<R: Rng + Sized>(rng: &mut R) -> Result<String> {
+    generate_spec(rng).and_then(|spec: GameSpec| {
+        println!("{:?}", spec);
+        //TODO Separate seed for these RNG calls?
+        render_spec(rng, spec)
+    })
+}
+
+fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
+    let grid_dimensions = (
+        rng.gen_range(0, SCREEN_WIDTH) as u8,
+        rng.gen_range(0, SCREEN_HEIGHT) as u8,
+    );
+
+    let goal = generate_goal(rng);
+
+    let ontology = generate_ontology(rng, goal);
+
+    Ok(GameSpec {
+        grid_dimensions: Some(grid_dimensions),
+        goal,
+        ontology,
+    })
+}
+
+#[derive(Clone, Copy, Debug)]
+enum Goal {
+    AddSomeNumberOfXsToTheGrid,
+    MoveAllXsToALocation,
+    FreeAllTrappedXs,
+    TransformAllXsIntoYs,
+    MakeAllXsTouchTheGroupofXs,
+    MakeAllXsTouchAtLeastOneY,
+}
+use Goal::*;
+
+impl Goal {
+    fn minimum_entity_types_needed(&self) -> u8 {
+        //We always need at least one player controlled entity
+        match *self {
+            AddSomeNumberOfXsToTheGrid => 1,
+            MoveAllXsToALocation => 1,
+            FreeAllTrappedXs => 1,
+            //X _cannot_ be the same as Y
+            TransformAllXsIntoYs => 2,
+            MakeAllXsTouchTheGroupofXs => 1,
+            //X _can_ be the same as Y
+            MakeAllXsTouchAtLeastOneY => 2,
+        }
+    }
+}
+const GOAL_COUNT: u8 = 4;
+
+fn generate_goal<R: Rng + Sized>(rng: &mut R) -> Goal {
+    match rng.gen_range(0, GOAL_COUNT) {
+        0 => AddSomeNumberOfXsToTheGrid,
+        1 => MoveAllXsToALocation,
+        2 => FreeAllTrappedXs,
+        3 => TransformAllXsIntoYs,
+        4 => MakeAllXsTouchTheGroupofXs,
+        _ => MakeAllXsTouchAtLeastOneY,
+    }
+}
+
+//We are using the "what kind of things are there" definition of ontology.
+#[derive(Debug)]
+struct Ontology {
+    entity_move_kinds: Vec<EntityMoveKind>,
+}
+
+fn generate_ontology<R: Rng + Sized>(rng: &mut R, goal: Goal) -> Ontology {
+    let minimum_entity_types_needed = goal.minimum_entity_types_needed();
+
+    let entity_move_kinds_len =
+        rng.gen_range(minimum_entity_types_needed, minimum_entity_types_needed * 2);
+
+    debug_assert!(entity_move_kinds_len >= 1);
+
+    let mut entity_move_kinds = Vec::with_capacity(entity_move_kinds_len as _);
+
+    entity_move_kinds.push(PlayerControlled);
+
+    for _ in 1..entity_move_kinds_len {
+        entity_move_kinds.push(generate_entity_move_kind(rng));
+    }
+
+    Ontology { entity_move_kinds }
+}
+
+#[derive(Debug)]
+enum EntityMoveKind {
+    PlayerControlled,
+    Stationary,
+    Mobile,
+}
+use EntityMoveKind::*;
+
+const ENTITY_MOVE_KIND_COUNT: u8 = 3;
+
+fn generate_entity_move_kind<R: Rng + Sized>(rng: &mut R) -> EntityMoveKind {
+    match rng.gen_range(0, ENTITY_MOVE_KIND_COUNT) {
+        0 => PlayerControlled,
+        1 => Stationary,
+        _ => Mobile,
+    }
+}
+
+const BUTTON_COUNT: usize = 8;
+
+struct RenderableGame {
+    button_responses: [&'static str; BUTTON_COUNT],
+}
+
+impl RenderableGame {
+    fn render(self) -> String {
+        let RenderableGame { button_responses } = self;
+
+        format!(
+            "
+    use common::*;
+
+    #[inline]
+    pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
+        if input.pressed_this_frame(Button::Left) {{
+            {}
         }}
 
-        i -= 1;
-    }}
-}}
-
-fn add_n_to_buffer(buffer: &mut [u32], mut n: u32) {{
-    let len = buffer.len();
-    for i in (0..len).rev() {{
-        for _ in 0..(n & 0b111) {{
-            add_one_to_buffer(buffer, i);
+        if input.pressed_this_frame(Button::Right) {{
+            {}
         }}
 
-        n >>= 3;
+        if input.pressed_this_frame(Button::Up) {{
+            {}
+        }}
 
-        if n == 0 {{
-            break;
+        if input.pressed_this_frame(Button::Down) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::Select) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::Start) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::A) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::B) {{
+            {}
         }}
     }}
-}}
+    ",
+            button_responses[0],
+            button_responses[1],
+            button_responses[2],
+            button_responses[3],
+            button_responses[4],
+            button_responses[5],
+            button_responses[6],
+            button_responses[7],
+        )
+    }
+}
 
-fn nor(b1: bool, b2: bool) -> bool {{
-    !(b1 || b2)
-}}
+fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<String> {
+    let result = if let Some(grid_dimensions) = spec.grid_dimensions {
+        render_grid_game(rng, spec, grid_dimensions)
+    } else {
+        render_guess_game(rng)
+    };
 
-#[inline]
-pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
-    let buffer = &mut state.buffer;
-    if input.pressed_this_frame(Button::Left) {{
-        {}
-    }}
+    result.map(RenderableGame::render)
+}
 
-    if input.pressed_this_frame(Button::Right) {{
-        {}
-    }}
+fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
+    let mut button_responses = [""; BUTTON_COUNT];
 
-    if input.pressed_this_frame(Button::Up) {{
-        {}
-    }}
+    let winning_index = rng.gen_range(0, BUTTON_COUNT);
 
-    if input.pressed_this_frame(Button::Down) {{
-        {}
-    }}
+    button_responses[winning_index] = "draw_winning_screen(state);";
 
-    if input.pressed_this_frame(Button::Select) {{
-        {}
-    }}
+    Ok(RenderableGame { button_responses })
+}
 
-    if input.pressed_this_frame(Button::Start) {{
-        {}
-    }}
-
-    if input.pressed_this_frame(Button::A) {{
-        {}
-    }}
-
-    if input.pressed_this_frame(Button::B) {{
-        {}
-    }}
-
-    for y in 1..SCREEN_HEIGHT {{
-        for x in 0..SCREEN_WIDTH {{
-            buffer[y * SCREEN_WIDTH + x] = buffer[x];
-        }}
-    }}
-}}
-",
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-    )
+fn render_grid_game<R: Rng + Sized>(
+    _rng: &mut R,
+    _spec: GameSpec,
+    _grid_dimensions: (u8, u8),
+) -> Result<RenderableGame> {
+    err!(NotImplemented)
 }
 
 const STATE_PREDICATE_LENGTH_UPPER_BOUND: usize =
@@ -188,55 +345,25 @@ const STATE_PREDICATE_LENGTH_UPPER_BOUND: usize =
     + 14 //ELSE_IF.len() - 6
     ;
 
+#[allow(unused_macros)]
 macro_rules! IF {
     () => {
         "if {} {{\n\t{}\n}}"
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! ELSE_IF {
     () => {
         "else if {} {{\n\t{}\n}}"
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! ELSE {
     () => {
         "else {{\n\t{}\n}}\n"
     };
-}
-
-fn gen_button_response<R: Rng + Sized>(rng: &mut R) -> String {
-    let pred_count = rng.gen_range(1, 4);
-
-    let mut predicates = Vec::with_capacity(pred_count);
-
-    for _ in 0..pred_count {
-        predicates.push(generate_state_predicate(rng));
-    }
-
-    let mut result = String::with_capacity(
-        pred_count
-        * STATE_PREDICATE_LENGTH_UPPER_BOUND
-        + 11  //ELSE.len() - 4
-        + (pred_count + 1)
-        * STATE_MUTATION_LENGTH_UPPER_BOUND,
-    );
-
-    write!(result, IF!(), predicates[0], generate_state_mutation(rng)).unwrap();
-
-    for i in 1..pred_count {
-        write!(
-            result,
-            ELSE_IF!(),
-            predicates[i],
-            generate_state_mutation(rng)
-        ).unwrap();
-    }
-
-    write!(result, ELSE!(), generate_state_mutation(rng)).unwrap();
-
-    result
 }
 
 //TODO could be tighter
