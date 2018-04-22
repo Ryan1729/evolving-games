@@ -254,7 +254,7 @@ fn generate_entity_control<R: Rng + Sized>(rng: &mut R) -> EntityControl {
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 struct EntityControl {
     movement: MoveControl,
     a: Action,
@@ -262,7 +262,7 @@ struct EntityControl {
     select: Action,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 enum MoveControl {
     Orthogonal,
     Diagonal,
@@ -279,7 +279,7 @@ fn generate_move_control<R: Rng + Sized>(rng: &mut R) -> MoveControl {
 }
 
 //Moreso than any other game element, this set of possibilities will need to be expaneded
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 enum Action {
     SwapPlayerControlToNext(u8),
     CopySelf,
@@ -356,30 +356,32 @@ struct InitialState {
 impl fmt::Display for InitialState {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let InitialState {
-            positions,
-            appearances,
-            varieties,
+            ref positions,
+            ref appearances,
+            ref varieties,
         } = *self;
 
         debug_assert!(positions.len() == appearances.len() && appearances.len() == varieties.len());
 
-        for i in positions.len() {
+        for i in 0..positions.len() {
             write!(
                 f,
-                "    positions[{}] = {};
+                "    positions[{}] = ({}, {});
     appearances[{0}] = {};
     varieties[{0}] = {};
 ",
-                i, positions[i], appearances[i], varieties[i],
+                i, positions[i].0, positions[i].1, appearances[i], varieties[i],
             )?;
         }
+
+        Ok(())
     }
 }
 
 fn get_cell_dimensions(gw: u8, gh: u8) -> (u8, u8) {
     (
-        (gw as _ / SCREEN_WIDTH) as _,
-        (gh as _ / SCREEN_HEIGHT) as _,
+        (gw as usize / SCREEN_WIDTH) as _,
+        (gh as usize / SCREEN_HEIGHT) as _,
     )
 }
 
@@ -528,7 +530,7 @@ impl RenderableGame {
             }}
         }}
 ",
-            render_initial_state(initial_state)
+            initial_state
         );
 
         RenderedGame {
@@ -585,8 +587,8 @@ struct InputResponder {
 impl fmt::Display for InputResponder {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let InputResponder {
-            button_responses,
-            variety,
+            ref button_responses,
+            ref variety,
         } = *self;
 
         write!(
@@ -655,18 +657,35 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
 
     let winning_index = rng.gen_range(0, BUTTON_COUNT);
 
-    match winning_index {
-        up: &'static str,
-        down: &'static str,
-        left: &'static str,
-        right: &'static str,
-        a: String,
-        b: String,
-        start: &'static str,
-        select: String,
-    }
+    let winner = "draw_winning_screen(state);".to_string();
 
-    button_responses[winning_index] = "draw_winning_screen(state);";
+    match winning_index {
+        0 => {
+            button_responses.up = winner;
+        }
+        1 => {
+            button_responses.down = winner;
+        }
+        2 => {
+            button_responses.left = winner;
+        }
+        3 => {
+            button_responses.right = winner;
+        }
+        4 => {
+            button_responses.a = winner;
+        }
+        5 => {
+            button_responses.b = winner;
+        }
+        6 => {
+            button_responses.start = winner;
+        }
+        7 => {
+            button_responses.select = winner;
+        }
+        _ => {}
+    }
 
     let responder = InputResponder {
         button_responses,
@@ -711,7 +730,9 @@ fn render_grid_game<R: Rng + Sized>(
         varieties.push(i as Variety);
 
         input_responders.push(InputResponder {
-            button_responses: controls_to_button_responses(entity_controls[i]),
+            button_responses: spec.entity_controls[i]
+                .map(controls_to_button_responses)
+                .unwrap_or_else(|| Default::default()),
             variety: i as Variety,
         });
     }
@@ -723,6 +744,7 @@ fn render_grid_game<R: Rng + Sized>(
     };
 
     Ok(RenderableGame {
+        input_responders,
         initial_state,
         grid_dimensions: Some(grid_dimensions),
     })
@@ -730,13 +752,13 @@ fn render_grid_game<R: Rng + Sized>(
 
 #[derive(Default)]
 struct ButtonResponses {
-    up: &'static str,
-    down: &'static str,
-    left: &'static str,
-    right: &'static str,
+    up: String,
+    down: String,
+    left: String,
+    right: String,
     a: String,
     b: String,
-    start: &'static str,
+    start: String,
     select: String,
 }
 
@@ -749,27 +771,35 @@ fn controls_to_button_responses(controls: EntityControl) -> ButtonResponses {
     match controls.movement {
         Orthogonal => {
             up = "let mut pos = state.positions[id];
-pos.1 = pos.1.saturating_sub(1);\n";
+pos.1 = pos.1.saturating_sub(1);\n"
+                .to_string();
             down = "let mut pos = state.positions[id];
-pos.1 = pos.1.saturating_add(1);\n";
+pos.1 = pos.1.saturating_add(1);\n"
+                .to_string();
             left = "let mut pos = state.positions[id];
-pos.0 = pos.0.saturating_sub(1);\n";
+pos.0 = pos.0.saturating_sub(1);\n"
+                .to_string();
             right = "let mut pos = state.positions[id];
-pos.0 = pos.0.saturating_add(1);\n";
+pos.0 = pos.0.saturating_add(1);\n"
+                .to_string();
         }
         Diagonal => {
             up = "let mut pos = state.positions[id];
 pos.0 = pos.0.saturating_add(1);
-pos.1 = pos.1.saturating_sub(1);\n";
+pos.1 = pos.1.saturating_sub(1);\n"
+                .to_string();
             down = "let mut pos = state.positions[id];
 pos.0 = pos.0.saturating_sub(1);
-pos.1 = pos.1.saturating_add(1);\n";
+pos.1 = pos.1.saturating_add(1);\n"
+                .to_string();
             left = "let mut pos = state.positions[id];
 pos.0 = pos.0.saturating_sub(1);
-pos.1 = pos.1.saturating_sub(1);\n";
+pos.1 = pos.1.saturating_sub(1);\n"
+                .to_string();
             right = "let mut pos = state.positions[id];
 pos.0 = pos.0.saturating_add(1);
-pos.1 = pos.1.saturating_add(1);\n";
+pos.1 = pos.1.saturating_add(1);\n"
+                .to_string();
         }
     }
 
@@ -777,7 +807,7 @@ pos.1 = pos.1.saturating_add(1);\n";
     let b = action_to_button_responses(controls.b);
     let select = action_to_button_responses(controls.select);
 
-    let start = "";
+    let start = "".to_string();
 
     ButtonResponses {
         up,
