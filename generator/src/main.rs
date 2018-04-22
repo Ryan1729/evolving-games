@@ -133,12 +133,16 @@ impl std::error::Error for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Debug)]
 struct GameSpec {
     grid_dimensions: Option<(u8, u8)>,
+    goal: Goal,
+    ontology: Ontology,
 }
 
 fn generate_update_function<R: Rng + Sized>(rng: &mut R) -> Result<String> {
     generate_spec(rng).and_then(|spec: GameSpec| {
+        println!("{:?}", spec);
         //TODO Separate seed for these RNG calls?
         render_spec(rng, spec)
     })
@@ -150,9 +154,97 @@ fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
         rng.gen_range(0, SCREEN_HEIGHT) as u8,
     );
 
+    let goal = generate_goal(rng);
+
+    let ontology = generate_ontology(rng, goal);
+
     Ok(GameSpec {
         grid_dimensions: Some(grid_dimensions),
+        goal,
+        ontology,
     })
+}
+
+#[derive(Clone, Copy, Debug)]
+enum Goal {
+    AddSomeNumberOfXsToTheGrid,
+    MoveAllXsToALocation,
+    FreeAllTrappedXs,
+    TransformAllXsIntoYs,
+    MakeAllXsTouchTheGroupofXs,
+    MakeAllXsTouchAtLeastOneY,
+}
+use Goal::*;
+
+impl Goal {
+    fn minimum_entity_types_needed(&self) -> u8 {
+        //We always need at least one player controlled entity
+        match *self {
+            AddSomeNumberOfXsToTheGrid => 1,
+            MoveAllXsToALocation => 1,
+            FreeAllTrappedXs => 1,
+            //X _cannot_ be the same as Y
+            TransformAllXsIntoYs => 2,
+            MakeAllXsTouchTheGroupofXs => 1,
+            //X _can_ be the same as Y
+            MakeAllXsTouchAtLeastOneY => 2,
+        }
+    }
+}
+const GOAL_COUNT: u8 = 4;
+
+fn generate_goal<R: Rng + Sized>(rng: &mut R) -> Goal {
+    match rng.gen_range(0, GOAL_COUNT) {
+        0 => AddSomeNumberOfXsToTheGrid,
+        1 => MoveAllXsToALocation,
+        2 => FreeAllTrappedXs,
+        3 => TransformAllXsIntoYs,
+        4 => MakeAllXsTouchTheGroupofXs,
+        _ => MakeAllXsTouchAtLeastOneY,
+    }
+}
+
+//We are using the "what kind of things are there" definition of ontology.
+#[derive(Debug)]
+struct Ontology {
+    entity_move_kinds: Vec<EntityMoveKind>,
+}
+
+fn generate_ontology<R: Rng + Sized>(rng: &mut R, goal: Goal) -> Ontology {
+    let minimum_entity_types_needed = goal.minimum_entity_types_needed();
+
+    let entity_move_kinds_len =
+        rng.gen_range(minimum_entity_types_needed, minimum_entity_types_needed * 2);
+
+    debug_assert!(entity_move_kinds_len >= 1);
+
+    let mut entity_move_kinds = Vec::with_capacity(entity_move_kinds_len as _);
+
+    entity_move_kinds.push(PlayerControlled);
+
+    for _ in 1..entity_move_kinds_len {
+        entity_move_kinds.push(generate_entity_move_kind(rng));
+    }
+
+    Ontology { entity_move_kinds }
+}
+
+#[derive(Debug)]
+enum EntityMoveKind {
+    PlayerControlled,
+    Stationary,
+    Mobile,
+}
+use EntityMoveKind::*;
+
+const ENTITY_MOVE_KIND_COUNT: u8 = 3;
+
+fn generate_entity_move_kind<R: Rng + Sized>(rng: &mut R) -> EntityMoveKind {
+    match rng.gen_range(0, ENTITY_MOVE_KIND_COUNT) {
+        0 => PlayerControlled,
+        1 => Stationary,
+        _ => Mobile,
+    }
 }
 
 const BUTTON_COUNT: usize = 8;
@@ -237,9 +329,9 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
 }
 
 fn render_grid_game<R: Rng + Sized>(
-    rng: &mut R,
-    spec: GameSpec,
-    grid_dimensions: (u8, u8),
+    _rng: &mut R,
+    _spec: GameSpec,
+    _grid_dimensions: (u8, u8),
 ) -> Result<RenderableGame> {
     err!(NotImplemented)
 }
@@ -253,18 +345,21 @@ const STATE_PREDICATE_LENGTH_UPPER_BOUND: usize =
     + 14 //ELSE_IF.len() - 6
     ;
 
+#[allow(unused_macros)]
 macro_rules! IF {
     () => {
         "if {} {{\n\t{}\n}}"
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! ELSE_IF {
     () => {
         "else if {} {{\n\t{}\n}}"
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! ELSE {
     () => {
         "else {{\n\t{}\n}}\n"
