@@ -339,56 +339,227 @@ struct RenderedGame {
 
 const BUTTON_COUNT: usize = 8;
 
+#[derive(Default)]
 struct RenderableGame {
-    button_responses: [&'static str; BUTTON_COUNT],
+    input_responders: Vec<InputResponder>,
+    initial_state: InitialState,
+    grid_dimensions: Option<(u8, u8)>,
+}
+
+#[derive(Default)]
+struct InitialState {
+    positions: Vec<(u8, u8)>,
     appearances: Vec<u8>,
+    varieties: Vec<u8>,
+}
+
+impl fmt::Display for InitialState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let InitialState {
+            positions,
+            appearances,
+            varieties,
+        } = *self;
+
+        debug_assert!(positions.len() == appearances.len() && appearances.len() == varieties.len());
+
+        for i in positions.len() {
+            write!(
+                f,
+                "    positions[{}] = {};
+    appearances[{0}] = {};
+    varieties[{0}] = {};
+",
+                i, positions[i], appearances[i], varieties[i],
+            )?;
+        }
+    }
+}
+
+fn get_cell_dimensions(gw: u8, gh: u8) -> (u8, u8) {
+    (
+        (gw as _ / SCREEN_WIDTH) as _,
+        (gh as _ / SCREEN_HEIGHT) as _,
+    )
 }
 
 impl RenderableGame {
     fn render(self) -> RenderedGame {
         let RenderableGame {
-            button_responses, ..
+            input_responders,
+            initial_state,
+            grid_dimensions,
         } = self;
+
+        let (w, h) = match grid_dimensions {
+            Some((gw, gh)) => get_cell_dimensions(gw, gh),
+            None => (1, 1), //TODO handle this case better.
+        };
 
         let update_and_render = format!(
             "
     use common::*;
 
+    {}
+
     #[inline]
-    pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
-        if input.pressed_this_frame(Button::Left) {{
-            {}
+    pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {{
+        for i in 0..GameState::ENTITY_COUNT {{
+            if !self.entities[id].contains(Component::Animate) {{
+                continue;
+            }}
+
+            if self.entities[id].contains(Component::PlayerControlled) {{
+                if state.varieties[i] == state.player_controlling_variety {{
+                    respond_to_input(state, input, id, state.varieties[i]);
+                }}
+            }} else {{
+                let artifical_input = Input::default(); //TODO AI
+
+                respond_to_input(state, artifical_input, id, state.varieties[i]);
+            }}
         }}
 
-        if input.pressed_this_frame(Button::Right) {{
-            {}
-        }}
+        framebuffer.clear();
 
-        if input.pressed_this_frame(Button::Up) {{
-            {}
-        }}
+        for i in 0..GameState::ENTITY_COUNT {{
+            let (x, y) = state.positions[i];
+            let appearance = &mut state.appearances[i];
 
-        if input.pressed_this_frame(Button::Down) {{
-            {}
-        }}
-
-        if input.pressed_this_frame(Button::Select) {{
-            {}
-        }}
-
-        if input.pressed_this_frame(Button::Start) {{
-            {}
-        }}
-
-        if input.pressed_this_frame(Button::A) {{
-            {}
-        }}
-
-        if input.pressed_this_frame(Button::B) {{
-            {}
+            appearance.render(framebuffer, (x as usize, y as usize), ({}, {}));
         }}
     }}
     ",
+            InputResponders(input_responders),
+            w,
+            h,
+        );
+
+        let game_state_impl = format!(
+            "use inner_common::*;
+
+        impl GameState {{
+            pub const ENTITY_COUNT: usize = 256;
+
+            pub fn new() -> GameState {{
+                let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
+
+                let mut positions = [(0, 0); GameState::ENTITY_COUNT];
+                let mut appearances = [Appearance::default(); GameState::ENTITY_COUNT];
+                let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
+
+                let player_controlling_variety = Variety::default();
+
+                {}
+
+                GameState {{
+                    entities,
+                    positions,
+                    appearances,
+                    varieties,
+                    player_controlling_variety,
+                }}
+            }}
+        }}
+",
+            render_initial_state(initial_state)
+        );
+
+        RenderedGame {
+            update_and_render,
+            game_state_impl,
+        }
+    }
+}
+
+#[derive(Default)]
+struct InputResponders(Vec<InputResponder>);
+
+impl fmt::Display for InputResponders {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for input_responder in self.0.iter() {
+            write!(f, "{}\n", input_responder)?;
+        }
+
+        write!(
+            f,
+"fn respond_to_input(state: &mut GameState, input: Input, id: usize, variety: Variety) {{
+    match variety {{\n"
+        )?;
+
+        let mut varieties = self.0.iter().map(|ir| ir.variety).collect();
+
+        varieties.sort();
+        varieties.dedup();
+
+        for variety in varieties.iter() {
+            write!(
+                f,
+                "           {0} => input_responder_{}(state, input, id),\n",
+                variety
+            )?;
+        }
+
+        write!(
+            f,
+            "           _ => {{}},
+        }}
+    }}\n"
+        )?;
+
+        Ok(())
+    }
+}
+
+struct InputResponder {
+    button_responses: [&'static str; BUTTON_COUNT],
+    variety: Variety,
+}
+
+impl fmt::Display for InputResponder {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let InputResponder {
+            button_responses,
+            variety,
+        } = *self;
+
+        write!(
+            f,
+            "fn input_responder_{}(state: &mut GameState, input: Input, id: usize) {{
+                if input.pressed_this_frame(Button::Left) {{
+                    {}
+                }}
+
+                if input.pressed_this_frame(Button::Right) {{
+                    {}
+                }}
+
+                if input.pressed_this_frame(Button::Up) {{
+                    {}
+                }}
+
+                if input.pressed_this_frame(Button::Down) {{
+                    {}
+                }}
+
+                if input.pressed_this_frame(Button::Select) {{
+                    {}
+                }}
+
+                if input.pressed_this_frame(Button::Start) {{
+                    {}
+                }}
+
+                if input.pressed_this_frame(Button::A) {{
+                    {}
+                }}
+
+                if input.pressed_this_frame(Button::B) {{
+                    {}
+                }}
+            }}
+        ",
+            variety,
             button_responses[0],
             button_responses[1],
             button_responses[2],
@@ -397,12 +568,9 @@ impl RenderableGame {
             button_responses[5],
             button_responses[6],
             button_responses[7],
-        );
+        )?;
 
-        RenderedGame {
-            update_and_render,
-            game_state_impl: Default::default(),
-        }
+        Ok(())
     }
 }
 
@@ -423,9 +591,15 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
 
     button_responses[winning_index] = "draw_winning_screen(state);";
 
-    Ok(RenderableGame {
+    let responder = InputResponder {
         button_responses,
-        appearances: Default::default(),
+        variety: Default::default(),
+    };
+
+    Ok(RenderableGame {
+        input_responders: vec![responder];
+        initial_state: Default::default(),
+        grid_dimensions: Default::default(),
     })
 }
 
@@ -444,18 +618,53 @@ fn render_grid_game<R: Rng + Sized>(
     let entity_type_count = spec.entity_animacies.len();
 
     let mut appearances = Vec::with_capacity(entity_type_count);
+    let mut positions = Vec::with_capacity(entity_type_count);
+    let mut varieties = Vec::with_capacity(entity_type_count);
 
-    for _ in 0..entity_type_count {
+    let mut input_responders = Vec::with_capacity(entity_type_count);
+
+    for i in 0..entity_type_count {
         appearances.push(rng.gen());
+
+        positions.push(
+            (rng.gen_range(0, grid_dimensions.0), rng.gen_range(0, grid_dimensions.1))
+        );
+
+        varieties.push(i as Variety);
+
+        input_responders.push(InputResponder {
+            button_responses: controls_to_button_responses(entity_controls[i]),
+            variety: i as Variety,
+        });
     }
 
-    //TODO gather data to render a function that takes the state, an entity type and a gamepad
-    //and which makes the move indicated on the gamepad
+    let initial_state = InitialState {
+        positions,
+        appearances,
+        varieties,
+    };
 
     Ok(RenderableGame {
-        appearances,
-        button_responses: Default::default(),
+        initial_state,
+        grid_dimensions: Some(grid_dimensions),
     })
+}
+
+fn controls_to_button_responses(controls: EntityControl) -> [&'static str; BUTTON_COUNT] {
+    struct EntityControl {
+        movement: MoveControl,
+        a: Action,
+        b: Action,
+        select: Action,
+    }
+    enum MoveControl {
+        Orthogonal,
+        Diagonal,
+    }
+    enum Action {
+        SwapPlayerControlToNext(u8),
+        CopySelf,
+    }
 }
 
 const STATE_PREDICATE_LENGTH_UPPER_BOUND: usize =

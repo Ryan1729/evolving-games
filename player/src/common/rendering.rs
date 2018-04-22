@@ -435,10 +435,28 @@ pub fn draw_winning_screen(framebuffer: &mut Framebuffer) {
 }
 
 impl Appearance {
-    pub fn render(&self, framebuffer: &mut Framebuffer, pos: Position) {
+    pub fn render(
+        &self,
+        framebuffer: &mut Framebuffer,
+        (x, y): (usize, usize),
+        (w, h): (usize, usize),
+    ) {
         let colour: Colour = (*self).into();
 
         let shape = Shape::from(*self);
+
+        match shape {
+            Rectangle => framebuffer.draw_rect(x, y, w, h, u32::from(colour)),
+            FilledRectangle => framebuffer.draw_filled_rect(x, y, w, h, u32::from(colour)),
+            Circle => {
+                let radius = min(w, h) / 2;
+                framebuffer.draw_circle(x + radius, y + radius, radius, colour)
+            }
+            FilledCircle => {
+                let radius = min(w, h) / 2;
+                framebuffer.draw_filled_circle(x + radius, y + radius, radius, colour)
+            }
+        }
     }
 }
 
