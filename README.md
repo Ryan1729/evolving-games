@@ -2,6 +2,18 @@
 
 A currently WIP project with the aim of generating/evolving turn-based single-player games.
 
+## Generator
+
+randomly generates some `.rs` files and places them in the proper place in the player.
+
+### Building
+
+The usual `cargo run`. Pass something to the binary to use what you passed as the random seed.
+
+## Player
+
+Surrounds then generated files and when compiled produces a running game.
+
 ### Building (using Rust's native WebAssembly backend)
 
 1. Install newest nightly Rust:
