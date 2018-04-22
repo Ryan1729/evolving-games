@@ -31,5 +31,3 @@ pub enum Shape {
     FilledCircle,
 }
 pub use Shape::*;
-
-pub type Variety = u8;

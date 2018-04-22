@@ -92,3 +92,5 @@ impl From<usize> for Colour {
         }
     }
 }
+
+pub type Variety = u8;

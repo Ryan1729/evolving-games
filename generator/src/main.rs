@@ -83,7 +83,7 @@ fn overwrite_filename(filename: &str, data: String) -> std::io::Result<()> {
 #[derive(Debug)]
 struct Error {
     line: u32,
-    file: &'static str,
+    file: String,
     kind: ErrorKind,
 }
 
@@ -460,6 +460,72 @@ impl RenderableGame {
                     player_controlling_variety,
                 }}
             }}
+
+            pub fn get_free_id(&self) -> Option<usize> {{
+                for e in self.entities.iter() {{
+                    if e.is_empty() {{
+                        return Some(e);
+                    }}
+                }}
+
+                None
+            }}
+
+            pub fn find_nearest_empty_pos(
+                &self,
+                start_pos: Position,
+                grid_dimensions: (u8, u8)
+            ) -> Option<Position> {{
+                //PERF would it be faster to preallocate this?
+                //I expect the common case not to use anything close to the maximum.
+                let mut queue = VecDeque<Position>::new();
+
+                let mut full = HashSet<Position>::with_capacity(GameState::ENTITY_COUNT);
+                let mut visited = HashSet<Position>::with_capacity(GameState::ENTITY_COUNT);
+
+                //PERF it might make sense to just keep track of which slots are free all the time
+                for i in 0..GameState::ENTITY_COUNT {{
+                    if !self.entities[i].is_empty() {{
+                        full.insert(self.positions[i]);
+                    }}
+                }}
+
+                queue.push_back(start_pos);
+
+                while let Some(pos) = queue.pop_front() {{
+                    if !full.contains(pos) {{
+                        return Some(pos)
+                    }}
+
+                    if visited.contains(pos) {{
+                        continue;
+                    }}
+
+                    visited.insert(pos);
+
+                    //TODO we might want to figure out a heuristic on which direction to look in
+                    //first, given the start_pos. It would also prevent the empty ones always
+                    //being in a certain direction.
+
+                    if pos.0 > 0 {{
+                        queue.push_back((pos.0 - 1, pos.1));
+                    }}
+
+                    if pos.0 < grid_dimensions.0 - 1 {{
+                        queue.push_back((pos.0 + 1, pos.1));
+                    }}
+
+                    if pos.1 > 0 {{
+                        queue.push_back((pos.0, pos.1 - 1));
+                    }}
+
+                    if pos.1 < grid_dimensions.1 - 1 {{
+                        queue.push_back((pos.0, pos.1 + 1));
+                    }}
+                }}
+
+                None
+            }}
         }}
 ",
             render_initial_state(initial_state)
@@ -487,7 +553,7 @@ impl fmt::Display for InputResponders {
     match variety {{\n"
         )?;
 
-        let mut varieties = self.0.iter().map(|ir| ir.variety).collect();
+        let mut varieties: Vec<_> = self.0.iter().map(|ir| ir.variety).collect();
 
         varieties.sort();
         varieties.dedup();
@@ -512,7 +578,7 @@ impl fmt::Display for InputResponders {
 }
 
 struct InputResponder {
-    button_responses: [&'static str; BUTTON_COUNT],
+    button_responses: ButtonResponses,
     variety: Variety,
 }
 
@@ -560,14 +626,14 @@ impl fmt::Display for InputResponder {
             }}
         ",
             variety,
-            button_responses[0],
-            button_responses[1],
-            button_responses[2],
-            button_responses[3],
-            button_responses[4],
-            button_responses[5],
-            button_responses[6],
-            button_responses[7],
+            button_responses.left,
+            button_responses.right,
+            button_responses.up,
+            button_responses.down,
+            button_responses.select,
+            button_responses.start,
+            button_responses.a,
+            button_responses.b,
         )?;
 
         Ok(())
@@ -585,9 +651,20 @@ fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGa
 }
 
 fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
-    let mut button_responses = [""; BUTTON_COUNT];
+    let mut button_responses = ButtonResponses::default();
 
     let winning_index = rng.gen_range(0, BUTTON_COUNT);
+
+    match winning_index {
+        up: &'static str,
+        down: &'static str,
+        left: &'static str,
+        right: &'static str,
+        a: String,
+        b: String,
+        start: &'static str,
+        select: String,
+    }
 
     button_responses[winning_index] = "draw_winning_screen(state);";
 
@@ -597,7 +674,7 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
     };
 
     Ok(RenderableGame {
-        input_responders: vec![responder];
+        input_responders: vec![responder],
         initial_state: Default::default(),
         grid_dimensions: Default::default(),
     })
@@ -626,9 +703,10 @@ fn render_grid_game<R: Rng + Sized>(
     for i in 0..entity_type_count {
         appearances.push(rng.gen());
 
-        positions.push(
-            (rng.gen_range(0, grid_dimensions.0), rng.gen_range(0, grid_dimensions.1))
-        );
+        positions.push((
+            rng.gen_range(0, grid_dimensions.0),
+            rng.gen_range(0, grid_dimensions.1),
+        ));
 
         varieties.push(i as Variety);
 
@@ -650,23 +728,87 @@ fn render_grid_game<R: Rng + Sized>(
     })
 }
 
-fn controls_to_button_responses(controls: EntityControl) -> [&'static str; BUTTON_COUNT] {
-    struct EntityControl {
-        movement: MoveControl,
-        a: Action,
-        b: Action,
-        select: Action,
+#[derive(Default)]
+struct ButtonResponses {
+    up: &'static str,
+    down: &'static str,
+    left: &'static str,
+    right: &'static str,
+    a: String,
+    b: String,
+    start: &'static str,
+    select: String,
+}
+
+fn controls_to_button_responses(controls: EntityControl) -> ButtonResponses {
+    let up;
+    let down;
+    let left;
+    let right;
+
+    match controls.movement {
+        Orthogonal => {
+            up = "let mut pos = state.positions[id];
+pos.1 = pos.1.saturating_sub(1);\n";
+            down = "let mut pos = state.positions[id];
+pos.1 = pos.1.saturating_add(1);\n";
+            left = "let mut pos = state.positions[id];
+pos.0 = pos.0.saturating_sub(1);\n";
+            right = "let mut pos = state.positions[id];
+pos.0 = pos.0.saturating_add(1);\n";
+        }
+        Diagonal => {
+            up = "let mut pos = state.positions[id];
+pos.0 = pos.0.saturating_add(1);
+pos.1 = pos.1.saturating_sub(1);\n";
+            down = "let mut pos = state.positions[id];
+pos.0 = pos.0.saturating_sub(1);
+pos.1 = pos.1.saturating_add(1);\n";
+            left = "let mut pos = state.positions[id];
+pos.0 = pos.0.saturating_sub(1);
+pos.1 = pos.1.saturating_sub(1);\n";
+            right = "let mut pos = state.positions[id];
+pos.0 = pos.0.saturating_add(1);
+pos.1 = pos.1.saturating_add(1);\n";
+        }
     }
-    enum MoveControl {
-        Orthogonal,
-        Diagonal,
-    }
-    enum Action {
-        SwapPlayerControlToNext(u8),
-        CopySelf,
+
+    let a = action_to_button_responses(controls.a);
+    let b = action_to_button_responses(controls.b);
+    let select = action_to_button_responses(controls.select);
+
+    let start = "";
+
+    ButtonResponses {
+        up,
+        down,
+        left,
+        right,
+        a,
+        b,
+        start,
+        select,
     }
 }
 
+fn action_to_button_responses(action: Action) -> String {
+    match action {
+        SwapPlayerControlToNext(offset) => format!(
+            "state.player_controlling_variety = state.player_controlling_variety.wrapping_add({});",
+            offset
+        ),
+        CopySelf => "if let Some(clone_id) = state.get_free_id(state.positions[id]) {
+            if let Some(clone_pos) = state.find_nearest_empty_pos(state.positions[id]) {
+                state.positions[clone_id] = clone_pos;
+                state.entities[clone_id] = state.entities[id];
+                state.appearances[clone_id] = state.appearances[id];
+                state.varieties[clone_id] = state.varieties[id];
+            }
+        }
+"
+            .to_string(),
+    }
+}
 const STATE_PREDICATE_LENGTH_UPPER_BOUND: usize =
     (SCREEN_WIDTH / 2) //Average amount of nodes pe expression
     * (
