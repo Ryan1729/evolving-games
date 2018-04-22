@@ -80,55 +80,21 @@ fn main() {
     }
 }
 
+const BUTTON_COUNT: usize = 8;
+
 fn generate_update_function<R: Rng + Sized>(rng: &mut R) -> String {
+    let mut button_responses = [""; BUTTON_COUNT];
+
+    let winning_index = rng.gen_range(0, BUTTON_COUNT);
+
+    button_responses[winning_index] = "draw_winning_screen(state);";
+
     format!(
         "
 use common::*;
 
-fn add_one_to_buffer(buffer: &mut [u32], mut i: usize) {{
-    loop {{
-        buffer[i] = match buffer[i] {{
-            BLUE => GREEN,
-            GREEN => RED,
-            RED => YELLOW,
-            YELLOW => PURPLE,
-            PURPLE => GREY,
-            GREY => WHITE,
-            WHITE => BLACK,
-            BLACK => BLUE,
-            other => other,
-        }};
-
-        if buffer[i] != BLUE || i == 0 {{
-            break;
-        }}
-
-        i -= 1;
-    }}
-}}
-
-fn add_n_to_buffer(buffer: &mut [u32], mut n: u32) {{
-    let len = buffer.len();
-    for i in (0..len).rev() {{
-        for _ in 0..(n & 0b111) {{
-            add_one_to_buffer(buffer, i);
-        }}
-
-        n >>= 3;
-
-        if n == 0 {{
-            break;
-        }}
-    }}
-}}
-
-fn nor(b1: bool, b2: bool) -> bool {{
-    !(b1 || b2)
-}}
-
 #[inline]
 pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
-    let buffer = &mut state.buffer;
     if input.pressed_this_frame(Button::Left) {{
         {}
     }}
@@ -160,22 +126,16 @@ pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
     if input.pressed_this_frame(Button::B) {{
         {}
     }}
-
-    for y in 1..SCREEN_HEIGHT {{
-        for x in 0..SCREEN_WIDTH {{
-            buffer[y * SCREEN_WIDTH + x] = buffer[x];
-        }}
-    }}
 }}
 ",
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
-        gen_button_response(rng),
+        button_responses[0],
+        button_responses[1],
+        button_responses[2],
+        button_responses[3],
+        button_responses[4],
+        button_responses[5],
+        button_responses[6],
+        button_responses[7],
     )
 }
 
