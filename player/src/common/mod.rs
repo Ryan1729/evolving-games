@@ -29,7 +29,7 @@ impl State {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct Input {
     pub gamepad: Button::Ty,
     pub previous_gamepad: Button::Ty,
@@ -51,6 +51,7 @@ impl Input {
 // These values are deliberately picked to be the same as the ones in NES' input registers.
 pub mod Button {
     bitflags! {
+        #[derive(Default)]
         pub flags Ty: u8 {
             const A          = 1 << 0,
             const B          = 1 << 1,

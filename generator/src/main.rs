@@ -367,7 +367,7 @@ impl fmt::Display for InitialState {
             write!(
                 f,
                 "    positions[{}] = ({}, {});
-    appearances[{0}] = {};
+    appearances[{0}] = Appearance({});
     varieties[{0}] = {};
 ",
                 i, positions[i].0, positions[i].1, appearances[i], varieties[i],
@@ -393,10 +393,69 @@ impl RenderableGame {
             grid_dimensions,
         } = self;
 
-        let (w, h) = match grid_dimensions {
-            Some((gw, gh)) => get_cell_dimensions(gw, gh),
-            None => (1, 1), //TODO handle this case better.
-        };
+        match grid_dimensions {
+            Some(gd) => RenderableGame::grid_game(input_responders, initial_state, gd),
+            None => RenderableGame::guess_game(input_responders, initial_state),
+        }
+    }
+
+    fn guess_game(
+        input_responders: Vec<InputResponder>,
+        initial_state: InitialState,
+    ) -> RenderedGame {
+        let update_and_render = format!(
+            "
+    use common::*;
+
+    {}
+
+    #[inline]
+    pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {{
+        respond_to_input(state, input, 0, Variety::default());
+    }}
+    ",
+            InputResponders(input_responders),
+        );
+
+        let game_state_impl = "use inner_common::*;
+
+    impl GameState {{
+        pub const ENTITY_COUNT: usize = 256;
+        pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
+
+        pub fn new() -> GameState {{
+            let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
+
+            let mut positions = [(0, 0); GameState::ENTITY_COUNT];
+            let mut appearances = [Appearance::default(); GameState::ENTITY_COUNT];
+            let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
+
+            let player_controlling_variety = Variety::default();
+
+            GameState {{
+                entities,
+                positions,
+                appearances,
+                varieties,
+                player_controlling_variety,
+            }}
+        }}
+    }}
+"
+            .to_string();
+
+        RenderedGame {
+            update_and_render,
+            game_state_impl,
+        }
+    }
+
+    fn grid_game(
+        input_responders: Vec<InputResponder>,
+        initial_state: InitialState,
+        (gw, gh): (u8, u8),
+    ) -> RenderedGame {
+        let (w, h) = get_cell_dimensions(gw, gh);
 
         let update_and_render = format!(
             "
@@ -406,19 +465,20 @@ impl RenderableGame {
 
     #[inline]
     pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {{
-        for i in 0..GameState::ENTITY_COUNT {{
-            if !self.entities[id].contains(Component::Animate) {{
+        for id in 0..GameState::ENTITY_COUNT {{
+            if !state.entities[id].contains(Component::Animate) {{
                 continue;
             }}
 
-            if self.entities[id].contains(Component::PlayerControlled) {{
-                if state.varieties[i] == state.player_controlling_variety {{
-                    respond_to_input(state, input, id, state.varieties[i]);
+            let current_variety = state.varieties[id];
+            if state.entities[id].contains(Component::PlayerControlled) {{
+                if current_variety == state.player_controlling_variety {{
+                    respond_to_input(state, input, id, current_variety);
                 }}
             }} else {{
                 let artifical_input = Input::default(); //TODO AI
 
-                respond_to_input(state, artifical_input, id, state.varieties[i]);
+                respond_to_input(state, artifical_input, id, current_variety);
             }}
         }}
 
@@ -442,6 +502,7 @@ impl RenderableGame {
 
         impl GameState {{
             pub const ENTITY_COUNT: usize = 256;
+            pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
 
             pub fn new() -> GameState {{
                 let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
@@ -464,9 +525,9 @@ impl RenderableGame {
             }}
 
             pub fn get_free_id(&self) -> Option<usize> {{
-                for e in self.entities.iter() {{
+                for (i, e) in self.entities.iter().enumerate() {{
                     if e.is_empty() {{
-                        return Some(e);
+                        return Some(i);
                     }}
                 }}
 
@@ -476,14 +537,14 @@ impl RenderableGame {
             pub fn find_nearest_empty_pos(
                 &self,
                 start_pos: Position,
-                grid_dimensions: (u8, u8)
             ) -> Option<Position> {{
+                use std::collections::{{VecDeque, HashSet}};
                 //PERF would it be faster to preallocate this?
                 //I expect the common case not to use anything close to the maximum.
-                let mut queue = VecDeque<Position>::new();
+                let mut queue = VecDeque::new();
 
-                let mut full = HashSet<Position>::with_capacity(GameState::ENTITY_COUNT);
-                let mut visited = HashSet<Position>::with_capacity(GameState::ENTITY_COUNT);
+                let mut full = HashSet::with_capacity(GameState::ENTITY_COUNT);
+                let mut visited = HashSet::with_capacity(GameState::ENTITY_COUNT);
 
                 //PERF it might make sense to just keep track of which slots are free all the time
                 for i in 0..GameState::ENTITY_COUNT {{
@@ -495,11 +556,11 @@ impl RenderableGame {
                 queue.push_back(start_pos);
 
                 while let Some(pos) = queue.pop_front() {{
-                    if !full.contains(pos) {{
+                    if !full.contains(&pos) {{
                         return Some(pos)
                     }}
 
-                    if visited.contains(pos) {{
+                    if visited.contains(&pos) {{
                         continue;
                     }}
 
@@ -513,7 +574,7 @@ impl RenderableGame {
                         queue.push_back((pos.0 - 1, pos.1));
                     }}
 
-                    if pos.0 < grid_dimensions.0 - 1 {{
+                    if pos.0 < GameState::GRID_DIMENSIONS.0 - 1 {{
                         queue.push_back((pos.0 + 1, pos.1));
                     }}
 
@@ -521,7 +582,7 @@ impl RenderableGame {
                         queue.push_back((pos.0, pos.1 - 1));
                     }}
 
-                    if pos.1 < grid_dimensions.1 - 1 {{
+                    if pos.1 < GameState::GRID_DIMENSIONS.1 - 1 {{
                         queue.push_back((pos.0, pos.1 + 1));
                     }}
                 }}
@@ -530,7 +591,7 @@ impl RenderableGame {
             }}
         }}
 ",
-            initial_state
+            gw, gh, initial_state
         );
 
         RenderedGame {
@@ -827,7 +888,7 @@ fn action_to_button_responses(action: Action) -> String {
             "state.player_controlling_variety = state.player_controlling_variety.wrapping_add({});",
             offset
         ),
-        CopySelf => "if let Some(clone_id) = state.get_free_id(state.positions[id]) {
+        CopySelf => "if let Some(clone_id) = state.get_free_id() {
             if let Some(clone_pos) = state.find_nearest_empty_pos(state.positions[id]) {
                 state.positions[clone_id] = clone_pos;
                 state.entities[clone_id] = state.entities[id];

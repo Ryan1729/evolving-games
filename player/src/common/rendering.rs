@@ -450,11 +450,11 @@ impl Appearance {
             FilledRectangle => framebuffer.draw_filled_rect(x, y, w, h, u32::from(colour)),
             Circle => {
                 let radius = min(w, h) / 2;
-                framebuffer.draw_circle(x + radius, y + radius, radius, colour)
+                framebuffer.draw_circle(x + radius, y + radius, radius, u32::from(colour))
             }
             FilledCircle => {
                 let radius = min(w, h) / 2;
-                framebuffer.draw_filled_circle(x + radius, y + radius, radius, colour)
+                framebuffer.draw_filled_circle(x + radius, y + radius, radius, u32::from(colour))
             }
         }
     }

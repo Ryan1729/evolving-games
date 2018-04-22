@@ -1,3 +1,5 @@
+pub use common::project_common::*;
+
 pub struct GameState {
     pub entities: [Component::Ty; GameState::ENTITY_COUNT],
 
