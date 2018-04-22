@@ -380,8 +380,8 @@ impl fmt::Display for InitialState {
 
 fn get_cell_dimensions(gw: u8, gh: u8) -> (u8, u8) {
     (
-        (gw as usize / SCREEN_WIDTH) as _,
-        (gh as usize / SCREEN_HEIGHT) as _,
+        (SCREEN_WIDTH / gw as usize) as _,
+        (SCREEN_HEIGHT / gh as usize) as _,
     )
 }
 

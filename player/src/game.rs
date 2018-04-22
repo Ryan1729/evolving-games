@@ -198,7 +198,7 @@ fn respond_to_input(state: &mut GameState, input: Input, id: usize, variety: Var
             let (x, y) = state.positions[i];
             let appearance = &mut state.appearances[i];
 
-            appearance.render(framebuffer, (x as usize, y as usize), (0, 0));
+            appearance.render(framebuffer, (x as usize, y as usize), (1, 4));
         }
     }
     
