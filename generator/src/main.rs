@@ -322,6 +322,20 @@ enum EntityAnimacy {
 }
 use EntityAnimacy::*;
 
+impl fmt::Display for EntityAnimacy {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let result = match *self {
+            PlayerControlled => "Component::Player",
+            Inanimate => "Component::empty()",
+            Animate => "Component::Animate",
+        };
+
+        write!(f, "{}", result,)?;
+
+        Ok(())
+    }
+}
+
 const ENTITY_ANIMACY_COUNT: u8 = 3;
 
 fn generate_entity_animacy<R: Rng + Sized>(rng: &mut R) -> EntityAnimacy {
@@ -348,6 +362,7 @@ struct RenderableGame {
 
 #[derive(Default)]
 struct InitialState {
+    animacies: Vec<EntityAnimacy>,
     positions: Vec<(u8, u8)>,
     appearances: Vec<u8>,
     varieties: Vec<u8>,
@@ -356,21 +371,26 @@ struct InitialState {
 impl fmt::Display for InitialState {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let InitialState {
+            ref animacies,
             ref positions,
             ref appearances,
             ref varieties,
         } = *self;
 
-        debug_assert!(positions.len() == appearances.len() && appearances.len() == varieties.len());
+        debug_assert!(
+            animacies.len() == positions.len() && positions.len() == appearances.len()
+                && appearances.len() == varieties.len()
+        );
 
         for i in 0..positions.len() {
             write!(
                 f,
-                "    positions[{}] = ({}, {});
+                "    entities[{}] = {};
+    positions[{0}] = ({}, {});
     appearances[{0}] = Appearance({});
     varieties[{0}] = {};
 ",
-                i, positions[i].0, positions[i].1, appearances[i], varieties[i],
+                i, animacies[i], positions[i].0, positions[i].1, appearances[i], varieties[i],
             )?;
         }
 
@@ -799,6 +819,7 @@ fn render_grid_game<R: Rng + Sized>(
     }
 
     let initial_state = InitialState {
+        animacies: spec.entity_animacies,
         positions,
         appearances,
         varieties,
@@ -831,33 +852,33 @@ fn controls_to_button_responses(controls: EntityControl) -> ButtonResponses {
 
     match controls.movement {
         Orthogonal => {
-            up = "let mut pos = state.positions[id];
+            up = "let pos = &mut state.positions[id];
 pos.1 = pos.1.saturating_sub(1);\n"
                 .to_string();
-            down = "let mut pos = state.positions[id];
+            down = "let pos = &mut state.positions[id];
 pos.1 = pos.1.saturating_add(1);\n"
                 .to_string();
-            left = "let mut pos = state.positions[id];
+            left = "let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_sub(1);\n"
                 .to_string();
-            right = "let mut pos = state.positions[id];
+            right = "let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_add(1);\n"
                 .to_string();
         }
         Diagonal => {
-            up = "let mut pos = state.positions[id];
+            up = "let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_add(1);
 pos.1 = pos.1.saturating_sub(1);\n"
                 .to_string();
-            down = "let mut pos = state.positions[id];
+            down = "let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_sub(1);
 pos.1 = pos.1.saturating_add(1);\n"
                 .to_string();
-            left = "let mut pos = state.positions[id];
+            left = "let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_sub(1);
 pos.1 = pos.1.saturating_sub(1);\n"
                 .to_string();
-            right = "let mut pos = state.positions[id];
+            right = "let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_add(1);
 pos.1 = pos.1.saturating_add(1);\n"
                 .to_string();

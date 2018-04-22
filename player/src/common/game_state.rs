@@ -13,12 +13,15 @@ use inner_common::*;
 
                 let player_controlling_variety = Variety::default();
 
-                    positions[0] = (36, 14);
+                    entities[0] = Component::Player;
+    positions[0] = (36, 14);
     appearances[0] = Appearance(2);
     varieties[0] = 0;
+    entities[1] = Component::Player;
     positions[1] = (47, 1);
     appearances[1] = Appearance(8);
     varieties[1] = 1;
+    entities[2] = Component::Player;
     positions[2] = (58, 38);
     appearances[2] = Appearance(47);
     varieties[2] = 2;

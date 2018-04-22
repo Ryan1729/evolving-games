@@ -3,28 +3,28 @@
 
     fn input_responder_0(state: &mut GameState, input: Input, id: usize) {
                 if input.pressed_this_frame(Button::Left) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_sub(1);
 pos.1 = pos.1.saturating_sub(1);
 
                 }
 
                 if input.pressed_this_frame(Button::Right) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_add(1);
 pos.1 = pos.1.saturating_add(1);
 
                 }
 
                 if input.pressed_this_frame(Button::Up) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_add(1);
 pos.1 = pos.1.saturating_sub(1);
 
                 }
 
                 if input.pressed_this_frame(Button::Down) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_sub(1);
 pos.1 = pos.1.saturating_add(1);
 
@@ -49,25 +49,25 @@ pos.1 = pos.1.saturating_add(1);
         
 fn input_responder_1(state: &mut GameState, input: Input, id: usize) {
                 if input.pressed_this_frame(Button::Left) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_sub(1);
 
                 }
 
                 if input.pressed_this_frame(Button::Right) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_add(1);
 
                 }
 
                 if input.pressed_this_frame(Button::Up) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.1 = pos.1.saturating_sub(1);
 
                 }
 
                 if input.pressed_this_frame(Button::Down) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.1 = pos.1.saturating_add(1);
 
                 }
@@ -107,25 +107,25 @@ pos.1 = pos.1.saturating_add(1);
         
 fn input_responder_2(state: &mut GameState, input: Input, id: usize) {
                 if input.pressed_this_frame(Button::Left) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_sub(1);
 
                 }
 
                 if input.pressed_this_frame(Button::Right) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.0 = pos.0.saturating_add(1);
 
                 }
 
                 if input.pressed_this_frame(Button::Up) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.1 = pos.1.saturating_sub(1);
 
                 }
 
                 if input.pressed_this_frame(Button::Down) {
-                    let mut pos = state.positions[id];
+                    let pos = &mut state.positions[id];
 pos.1 = pos.1.saturating_add(1);
 
                 }

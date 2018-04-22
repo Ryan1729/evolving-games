@@ -29,7 +29,7 @@ impl State {
     }
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Input {
     pub gamepad: Button::Ty,
     pub previous_gamepad: Button::Ty,
