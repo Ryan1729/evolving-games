@@ -21,6 +21,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "generator"
 version = "0.1.0"
 dependencies = [
+ "project_common 0.1.0",
  "rand 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -28,6 +29,10 @@ dependencies = [
 name = "libc"
 version = "0.2.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "project_common"
+version = "0.1.0"
 
 [[package]]
 name = "rand"

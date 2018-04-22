@@ -9,23 +9,8 @@ use std::fmt::Write;
 extern crate rand;
 use rand::{Rng, SeedableRng, XorShiftRng};
 
-//TODO dedup these constants with player crate
-//in pixels
-pub const SCREEN_WIDTH: usize = 256;
-pub const SCREEN_HEIGHT: usize = 240;
-pub const SCREEN_LENGTH: usize = SCREEN_WIDTH * SCREEN_HEIGHT;
-
-// reportedly colourblind friendly colours
-// https://twitter.com/ea_accessible/status/968595073184092160
-pub const BLUE: u32 = 0xFFE15233;
-pub const GREEN: u32 = 0xFF6EB030;
-pub const RED: u32 = 0xFF4949DE;
-pub const YELLOW: u32 = 0xFF37B9FF;
-pub const PURPLE: u32 = 0xFF543353;
-pub const GREY: u32 = 0xFF8B7D5A;
-pub const GRAY: u32 = GREY;
-pub const WHITE: u32 = 0xFFEEEEEE;
-pub const BLACK: u32 = 0xFF222222;
+extern crate project_common;
+use project_common::*;
 
 fn main() {
     let seed: [u32; 4] = {
@@ -58,7 +43,7 @@ fn main() {
 
     println!("{:?}\n", rng.next_u32());
 
-    let code = match generate_update_function(&mut rng) {
+    let code = match generate_game(&mut rng) {
         Err(error) => {
             println!("{}", error);
             return;
@@ -66,7 +51,12 @@ fn main() {
         Ok(c) => c,
     };
 
-    let filename = "../player/src/game.rs";
+    overwrite_filename("../player/src/game.rs", code.update_and_render).unwrap();
+
+    overwrite_filename("../player/src/common/game_state.rs", code.game_state_impl).unwrap();
+}
+
+fn overwrite_filename(filename: &str, data: String) -> std::io::Result<()> {
     let path = Path::new(filename);
     println!("Overwriting {:?}.", path.as_os_str());
 
@@ -76,13 +66,17 @@ fn main() {
         .open(path)
         .unwrap();
 
-    let bytes = code.as_bytes();
+    let bytes = data.as_bytes();
 
-    if let Err(error) = IOWrite::write_all(&mut file, bytes) {
+    let result = IOWrite::write_all(&mut file, bytes);
+
+    if let Err(error) = result {
         println!("{}", error);
+        Err(error)
     } else {
         let len = bytes.len();
         println!("Overwrote {} successfully with {} bytes.", filename, len);
+        Ok(())
     }
 }
 
@@ -137,10 +131,11 @@ type Result<T> = std::result::Result<T, Error>;
 struct GameSpec {
     grid_dimensions: Option<(u8, u8)>,
     goal: Goal,
-    ontology: Ontology,
+    entity_animacies: Vec<EntityAnimacy>,
+    entity_controls: Vec<Option<EntityControl>>,
 }
 
-fn generate_update_function<R: Rng + Sized>(rng: &mut R) -> Result<String> {
+fn generate_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderedGame> {
     generate_spec(rng).and_then(|spec: GameSpec| {
         println!("{:#?}", spec);
         //TODO Separate seed for these RNG calls?
@@ -156,12 +151,16 @@ fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
 
     let goal = generate_goal(rng);
 
-    let ontology = generate_ontology(rng, goal);
+    let Ontology {
+        entity_animacies,
+        entity_controls,
+    } = generate_ontology(rng, goal);
 
     Ok(GameSpec {
         grid_dimensions: Some(grid_dimensions),
         goal,
-        ontology,
+        entity_animacies,
+        entity_controls,
     })
 }
 
@@ -333,17 +332,25 @@ fn generate_entity_animacy<R: Rng + Sized>(rng: &mut R) -> EntityAnimacy {
     }
 }
 
+struct RenderedGame {
+    pub update_and_render: String,
+    pub game_state_impl: String,
+}
+
 const BUTTON_COUNT: usize = 8;
 
 struct RenderableGame {
     button_responses: [&'static str; BUTTON_COUNT],
+    appearances: Vec<u8>,
 }
 
 impl RenderableGame {
-    fn render(self) -> String {
-        let RenderableGame { button_responses } = self;
+    fn render(self) -> RenderedGame {
+        let RenderableGame {
+            button_responses, ..
+        } = self;
 
-        format!(
+        let update_and_render = format!(
             "
     use common::*;
 
@@ -390,11 +397,16 @@ impl RenderableGame {
             button_responses[5],
             button_responses[6],
             button_responses[7],
-        )
+        );
+
+        RenderedGame {
+            update_and_render,
+            game_state_impl: Default::default(),
+        }
     }
 }
 
-fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<String> {
+fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGame> {
     let result = if let Some(grid_dimensions) = spec.grid_dimensions {
         render_grid_game(rng, spec, grid_dimensions)
     } else {
@@ -411,7 +423,10 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
 
     button_responses[winning_index] = "draw_winning_screen(state);";
 
-    Ok(RenderableGame { button_responses })
+    Ok(RenderableGame {
+        button_responses,
+        appearances: Default::default(),
+    })
 }
 
 fn render_grid_game<R: Rng + Sized>(
@@ -419,7 +434,28 @@ fn render_grid_game<R: Rng + Sized>(
     spec: GameSpec,
     grid_dimensions: (u8, u8),
 ) -> Result<RenderableGame> {
-    err!(NotImplemented)
+    let grid_cell_size = (
+        next_power_of_2(grid_dimensions.0 as _),
+        next_power_of_2(grid_dimensions.1 as _),
+    );
+
+    debug_assert!(spec.entity_animacies.len() == spec.entity_controls.len());
+
+    let entity_type_count = spec.entity_animacies.len();
+
+    let mut appearances = Vec::with_capacity(entity_type_count);
+
+    for _ in 0..entity_type_count {
+        appearances.push(rng.gen());
+    }
+
+    //TODO gather data to render a function that takes the state, an entity type and a gamepad
+    //and which makes the move indicated on the gamepad
+
+    Ok(RenderableGame {
+        appearances,
+        button_responses: Default::default(),
+    })
 }
 
 const STATE_PREDICATE_LENGTH_UPPER_BOUND: usize =
@@ -508,81 +544,6 @@ const MAXIMUM_U32_CHAR_LENGTH: usize = 10;
 const COLOUR_COUNT: usize = 8;
 
 type PixelTransform = [u32; COLOUR_COUNT];
-
-#[derive(Clone, Copy)]
-enum Colour {
-    Blue,
-    Green,
-    Red,
-    Yellow,
-    Purple,
-    Grey,
-    White,
-    Black,
-}
-use Colour::*;
-
-impl From<Colour> for u32 {
-    fn from(c: Colour) -> Self {
-        match c {
-            Blue => BLUE,
-            Green => GREEN,
-            Red => RED,
-            Yellow => YELLOW,
-            Purple => PURPLE,
-            Grey => GREY,
-            White => WHITE,
-            Black => BLACK,
-        }
-    }
-}
-
-impl From<u32> for Colour {
-    fn from(n: u32) -> Self {
-        match n {
-            BLUE => Blue,
-            GREEN => Green,
-            RED => Red,
-            YELLOW => Yellow,
-            PURPLE => Purple,
-            GREY => Grey,
-            WHITE => White,
-            BLACK => Black,
-            _ => Grey,
-        }
-    }
-}
-
-impl From<Colour> for usize {
-    fn from(c: Colour) -> Self {
-        match c {
-            Blue => 0,
-            Green => 1,
-            Red => 2,
-            Yellow => 3,
-            Purple => 4,
-            Grey => 5,
-            White => 6,
-            Black => 7,
-        }
-    }
-}
-
-impl From<usize> for Colour {
-    fn from(n: usize) -> Self {
-        match n {
-            0 => Blue,
-            1 => Green,
-            2 => Red,
-            3 => Yellow,
-            4 => Purple,
-            5 => Grey,
-            6 => White,
-            7 => Black,
-            _ => Grey,
-        }
-    }
-}
 
 fn generate_state_mutation<R: Rng + Sized>(rng: &mut R) -> Mutation {
     let start = rng.gen_range(0, SCREEN_WIDTH);

@@ -2,10 +2,17 @@ pub mod rendering;
 pub use rendering::Framebuffer;
 pub use rendering::draw_winning_screen;
 
-pub mod constants;
-pub use constants::*;
+pub mod inner_common;
+pub use inner_common::*;
+
+pub mod game_state;
+pub use game_state::*;
+
+extern crate project_common;
+pub use self::project_common::*;
 
 pub struct State {
+    pub game_state: GameState,
     pub framebuffer: Framebuffer,
     pub input: Input,
 }
@@ -15,6 +22,7 @@ impl State {
         let framebuffer = Framebuffer::new();
 
         State {
+            game_state: GameState::new(),
             framebuffer,
             input: Input::new(),
         }

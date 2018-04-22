@@ -1,4 +1,7 @@
-use constants::*;
+use inner_common::*;
+use common::project_common::{colours, Colour, SCREEN_HEIGHT, SCREEN_WIDTH};
+use colours::{BLACK, BLUE, GRAY, GREEN, GREY, PURPLE, RED, WHITE, YELLOW};
+use Colour::{Black, Blue, Green, Grey, Purple, Red, White, Yellow};
 
 pub struct Framebuffer {
     pub buffer: Vec<u32>,
@@ -428,5 +431,41 @@ pub fn draw_winning_screen(framebuffer: &mut Framebuffer) {
         }
 
         colour = next_colour(colour);
+    }
+}
+
+impl Appearance {
+    pub fn render(&self, framebuffer: &mut Framebuffer, pos: Position) {
+        let colour: Colour = (*self).into();
+
+        let shape = Shape::from(*self);
+    }
+}
+
+impl Into<Colour> for Appearance {
+    fn into(self) -> Colour {
+        let Appearance(n) = self;
+        match n & 0b111 {
+            0 => Blue,
+            1 => Green,
+            2 => Red,
+            3 => Yellow,
+            4 => Purple,
+            5 => Grey,
+            6 => White,
+            7 => Black,
+            _ => Grey,
+        }
+    }
+}
+
+impl From<Appearance> for Shape {
+    fn from(Appearance(n): Appearance) -> Self {
+        match n & 0b1100 {
+            0b01000 => FilledRectangle,
+            0b10000 => Circle,
+            0b11000 => FilledCircle,
+            _ => Rectangle,
+        }
     }
 }

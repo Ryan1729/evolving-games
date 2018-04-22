@@ -125,6 +125,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "project_common"
+version = "0.1.0"
+
+[[package]]
 name = "quick-error"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -200,6 +204,7 @@ name = "rust-wasm-template"
 version = "0.1.0"
 dependencies = [
  "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "project_common 0.1.0",
  "quickcheck 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
