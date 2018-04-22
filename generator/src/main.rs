@@ -58,11 +58,17 @@ fn main() {
 
     println!("{:?}\n", rng.next_u32());
 
+    let code = match generate_update_function(&mut rng) {
+        Err(error) => {
+            println!("{}", error);
+            return;
+        }
+        Ok(c) => c,
+    };
+
     let filename = "../player/src/game.rs";
     let path = Path::new(filename);
     println!("Overwriting {:?}.", path.as_os_str());
-
-    let code = generate_update_function(&mut rng);
 
     let mut file = OpenOptions::new()
         .write(true)
@@ -80,63 +86,162 @@ fn main() {
     }
 }
 
+#[derive(Debug)]
+struct Error {
+    line: u32,
+    file: &'static str,
+    kind: ErrorKind,
+}
+
+macro_rules! err {
+    ($kind: expr) => {
+        Err(Error {
+            line: line!(),
+            file: file!(),
+            kind: $kind,
+        })
+    };
+}
+
+#[derive(Debug)]
+enum ErrorKind {
+    NotImplemented,
+}
+use ErrorKind::*;
+
+impl fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{} error occurred at line {} in {}",
+            self.kind, self.line, self.file
+        )
+    }
+}
+
+impl std::error::Error for Error {
+    fn description(&self) -> &str {
+        "https://github.com/rust-lang/rfcs/pull/2230"
+    }
+}
+
+type Result<T> = std::result::Result<T, Error>;
+
+struct GameSpec {
+    grid_dimensions: Option<(u8, u8)>,
+}
+
+fn generate_update_function<R: Rng + Sized>(rng: &mut R) -> Result<String> {
+    generate_spec(rng).and_then(|spec: GameSpec| {
+        //TODO Separate seed for these RNG calls?
+        render_spec(rng, spec)
+    })
+}
+
+fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
+    let grid_dimensions = (
+        rng.gen_range(0, SCREEN_WIDTH) as u8,
+        rng.gen_range(0, SCREEN_HEIGHT) as u8,
+    );
+
+    Ok(GameSpec {
+        grid_dimensions: Some(grid_dimensions),
+    })
+}
+
 const BUTTON_COUNT: usize = 8;
 
-fn generate_update_function<R: Rng + Sized>(rng: &mut R) -> String {
+struct RenderableGame {
+    button_responses: [&'static str; BUTTON_COUNT],
+}
+
+impl RenderableGame {
+    fn render(self) -> String {
+        let RenderableGame { button_responses } = self;
+
+        format!(
+            "
+    use common::*;
+
+    #[inline]
+    pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
+        if input.pressed_this_frame(Button::Left) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::Right) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::Up) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::Down) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::Select) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::Start) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::A) {{
+            {}
+        }}
+
+        if input.pressed_this_frame(Button::B) {{
+            {}
+        }}
+    }}
+    ",
+            button_responses[0],
+            button_responses[1],
+            button_responses[2],
+            button_responses[3],
+            button_responses[4],
+            button_responses[5],
+            button_responses[6],
+            button_responses[7],
+        )
+    }
+}
+
+fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<String> {
+    let result = if let Some(grid_dimensions) = spec.grid_dimensions {
+        render_grid_game(rng, spec, grid_dimensions)
+    } else {
+        render_guess_game(rng)
+    };
+
+    result.map(RenderableGame::render)
+}
+
+fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
     let mut button_responses = [""; BUTTON_COUNT];
 
     let winning_index = rng.gen_range(0, BUTTON_COUNT);
 
     button_responses[winning_index] = "draw_winning_screen(state);";
 
-    format!(
-        "
-use common::*;
+    Ok(RenderableGame { button_responses })
+}
 
-#[inline]
-pub fn update_and_render(state: &mut Framebuffer, input: Input) {{
-    if input.pressed_this_frame(Button::Left) {{
-        {}
-    }}
-
-    if input.pressed_this_frame(Button::Right) {{
-        {}
-    }}
-
-    if input.pressed_this_frame(Button::Up) {{
-        {}
-    }}
-
-    if input.pressed_this_frame(Button::Down) {{
-        {}
-    }}
-
-    if input.pressed_this_frame(Button::Select) {{
-        {}
-    }}
-
-    if input.pressed_this_frame(Button::Start) {{
-        {}
-    }}
-
-    if input.pressed_this_frame(Button::A) {{
-        {}
-    }}
-
-    if input.pressed_this_frame(Button::B) {{
-        {}
-    }}
-}}
-",
-        button_responses[0],
-        button_responses[1],
-        button_responses[2],
-        button_responses[3],
-        button_responses[4],
-        button_responses[5],
-        button_responses[6],
-        button_responses[7],
-    )
+fn render_grid_game<R: Rng + Sized>(
+    rng: &mut R,
+    spec: GameSpec,
+    grid_dimensions: (u8, u8),
+) -> Result<RenderableGame> {
+    err!(NotImplemented)
 }
 
 const STATE_PREDICATE_LENGTH_UPPER_BOUND: usize =
@@ -164,39 +269,6 @@ macro_rules! ELSE {
     () => {
         "else {{\n\t{}\n}}\n"
     };
-}
-
-fn gen_button_response<R: Rng + Sized>(rng: &mut R) -> String {
-    let pred_count = rng.gen_range(1, 4);
-
-    let mut predicates = Vec::with_capacity(pred_count);
-
-    for _ in 0..pred_count {
-        predicates.push(generate_state_predicate(rng));
-    }
-
-    let mut result = String::with_capacity(
-        pred_count
-        * STATE_PREDICATE_LENGTH_UPPER_BOUND
-        + 11  //ELSE.len() - 4
-        + (pred_count + 1)
-        * STATE_MUTATION_LENGTH_UPPER_BOUND,
-    );
-
-    write!(result, IF!(), predicates[0], generate_state_mutation(rng)).unwrap();
-
-    for i in 1..pred_count {
-        write!(
-            result,
-            ELSE_IF!(),
-            predicates[i],
-            generate_state_mutation(rng)
-        ).unwrap();
-    }
-
-    write!(result, ELSE!(), generate_state_mutation(rng)).unwrap();
-
-    result
 }
 
 //TODO could be tighter
