@@ -13,3 +13,14 @@ After trying to come up with a set of goals for a game to have, I found myself c
 ___
 
 After partially implementing the program choosing from a small set of possibilities, then generating a program which implements it, I have found that when the choices presented is in the form of a number, (grid dimensions for example) the space can still be unnecessarily large if the options are approached naively. So I will now start using only part of the possible space allowed by other constraints. If a game is good, hopefully it is at least somewhat good with a less than optimal grid size. 
+
+___
+
+While this idea of "automatically" creating implementations of (potentially) novel games is interesting, it seems to have a high effort to reward ratio. Also, the first game came out, (as much as I finished it,) more or less exactly as I imagined it, and I wasn't expecting much. I think it might be a better idea to find a game idea that demands implementation to figure out if it is interesting, or to one which is already known to be interesting and develop a set of decision that lead to that game, then go back and fill in the other branches. If we actually make an implementation using this generation method and we fill in the other branches starting at the bottom, then we will have an implementation of the slightly different game almost immediately. And if we maintain a struct representing the decisions taken, if we go down another probably interesting path we can, (depending on the overlap,) save work getting an implementation.
+
+So it appears the next step is to find something that demands to be implemented. As mentioned before there are two clear paths here: 
+
+* make some decisions randomly (or perhaps intentionally) until something looks interesting and hard to imagine.
+* find an existing interesting game design and implement that.
+
+I have begun attempting the first of these options in the accompanying [decision_tree.md](./decision_tree.md) file.
