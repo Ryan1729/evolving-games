@@ -28,3 +28,14 @@ Abstract Goal: Influence the one non-player thing, such that it moves into a giv
 > I suppose the, (potentially contentious,) heuristic behind this rule would be, when the path forward is not clear, "Further constrain the most constrained of the not entirely constrained things, further, in the hopes that it will constrain the rest of the things". If we figure that "restrictions breed creativity", as has been suggested elsewhere, then this heuristic is basically suggesting "do the easy stuff first" which doesn't sound like a bad idea.
 >
 > So if we decide we like that heuristic, then we should constrain the one thing next somehow. But what aspect of it should we constrain? Lets try applying the heuristic again! What is the most-but-not-completely constrained, which for brevity's sake we will call the "least unconstrained", aspect of the one thing?
+
+> I guess since nothing is leaping t mind I should try listing aspects of the one thing and go from there.
+> * oneness: there is only one of it. Fully constrained.
+> * unless we specify otherwise, it *can* be in the same square as a player thing. Unless we change this, fully constrained.
+> * it is not player controlled. Fully constrained.
+> * it is influenced by the player controlled pieces somehow. Mostly unconstrained.
+> * it exists on an 8 by 8 grid (or a subset thereof?). This is fairly unconstrained but adjusting it would adjust things for everyone. Which I suppose is fine? We could also adjust the grid size/shape only for the one thing. The clearest, simplest thing to do here, which also constrains the player pieces, seems to be to have the player pieces determine the grid squares the one thing can use.
+>
+> Assuming we go with that last one, then can we do so in a way that is more interesting/novel than "chess but you already got rid of all the pieces except their king. Oh and you have pieces that move differently too"? What would need to change to not have it fit that mould?
+
+
