@@ -38,4 +38,5 @@ Abstract Goal: Influence the one non-player thing, such that it moves into a giv
 >
 > Assuming we go with that last one, then can we do so in a way that is more interesting/novel than "chess but you already got rid of all the pieces except their king. Oh and you have pieces that move differently too"? What would need to change to not have it fit that mould?
 
-
+> Coming back to this after a while, chess against a single Queen, or maybe an other powerful fairy chess piece like the Amazon, actually sounds interesting enough to try.
+> I didn't really achieve my stated goal of making a game design decision tree, but I might have achieved my meta-goal of finding an interesting game design seed. I can come back to this decision tree idea depending on how trying to make this n / 1 chess thing works out. In addition I can still use evolutionary algorithms and/or code generation to design this game. I think I will just treat this game idea as a particular game design path to implement in the generator, so we can potentially combine it with other things in future.
