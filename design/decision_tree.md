@@ -40,3 +40,5 @@ Abstract Goal: Influence the one non-player thing, such that it moves into a giv
 
 > Coming back to this after a while, chess against a single Queen, or maybe an other powerful fairy chess piece like the Amazon, actually sounds interesting enough to try.
 > I didn't really achieve my stated goal of making a game design decision tree, but I might have achieved my meta-goal of finding an interesting game design seed. I can come back to this decision tree idea depending on how trying to make this n / 1 chess thing works out. In addition I can still use evolutionary algorithms and/or code generation to design this game. I think I will just treat this game idea as a particular game design path to implement in the generator, so we can potentially combine it with other things in future.
+
+> I tried simulating this by arranging chess pieces in a chess program that let's you play against Stockfish (a highly rated chess engine), such that I had a bunch of pieces and the engine had a king and a queen. After that playing around with the idea, I'm less enthused about it. I am currently enthused by the idea of evolving Shenzhen Solitaire variants.

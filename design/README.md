@@ -24,3 +24,20 @@ So it appears the next step is to find something that demands to be implemented.
 * find an existing interesting game design and implement that.
 
 I have begun attempting the first of these options in the accompanying [decision_tree.md](./decision_tree.md) file.
+
+___
+
+<!-- Because I started writing down design notes I felt like I should keep documenting things but now I'm finding it somewhat stifling to continue to do so. So I'm putting this paragraph in here so I can feel like I've addressed this in the text so if there is an abrupt stop, at least it was telegraphed. -->
+
+As mentioned in [decision_tree.md](./decision_tree.md), I now want to try evolving Shenzhen Solitaire variants.
+
+This is probably post-hoc rationalization, but it does fit rather well. Shenzhen Solitaire is surprisingly compelling, and it fits with the criteria of single-player and turn-based. It also has low levels of actor removal and (arguably) is on a grid.
+
+In broad strokes, the plan is to use the existing generator change it generate games like Shenzhen Solitaire but with card amounts, types, and relationships varied. Then we will try to come up with some criteria to evaluate these variants on and try to create the best variant. If a variant suggests a largely different game, we might go with that instead of course!
+
+So here's the current plan:
+* Make a very simple Shenzhen Solitaire variant ruleset generator say just with a random amount of cards in each suit.
+* Have the generator generate the portion of the program that would depend on the amount of card in each suit.
+* Write the supporting, non-generated portion: card display, mouse picking etc.
+* Once the game works, add more variations to the ruleset generator and start iterating on them.
+
