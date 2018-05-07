@@ -470,6 +470,10 @@ impl RenderableGame {
     #[inline]
     pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {{
         respond_to_input(state, input, 0, Variety::default());
+
+        if state.has_won() {{
+            draw_winning_screen(framebuffer);
+        }}
     }}
     ",
             InputResponders(input_responders),
@@ -477,11 +481,10 @@ impl RenderableGame {
 
         let game_state_impl = "use inner_common::*;
 
-    impl GameState {{
+    impl GameState {
         pub const ENTITY_COUNT: usize = 256;
-        pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
 
-        pub fn new() -> GameState {{
+        pub fn new() -> GameState {
             let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
 
             let mut positions = [(0, 0); GameState::ENTITY_COUNT];
@@ -490,15 +493,23 @@ impl RenderableGame {
 
             let player_controlling_variety = Variety::default();
 
-            GameState {{
+            GameState {
                 entities,
                 positions,
                 appearances,
                 varieties,
                 player_controlling_variety,
-            }}
-        }}
-    }}
+            }
+        }
+
+        pub fn mark_won(&mut self) {
+            self.positions[0] = (1,1);
+        }
+
+        pub fn has_won(&self) -> bool {
+            self.positions[0].0 == 1
+        }
+    }
 "
             .to_string();
 
@@ -776,7 +787,7 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
 
     let winning_index = rng.gen_range(0, BUTTON_COUNT);
 
-    let winner = "draw_winning_screen(state);".to_string();
+    let winner = "state.mark_won();".to_string();
 
     match winning_index {
         0 => {
