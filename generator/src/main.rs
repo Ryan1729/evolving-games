@@ -41,8 +41,6 @@ fn main() {
 
     let mut rng = XorShiftRng::from_seed(seed);
 
-    println!("{:?}\n", rng.next_u32());
-
     let code = match generate_game(&mut rng) {
         Err(error) => {
             println!("{}", error);
@@ -157,17 +155,18 @@ fn generate_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderedGame> {
     })
 }
 
+#[derive(Debug)]
 enum GameType {
     Guess,
-    GridBased,
     Solitaire,
+    GridBased,
 }
 
 fn generate_game_type<R: Rng + Sized>(rng: &mut R) -> GameType {
     match rng.gen_range(0, 3) {
         0 => GameType::Guess,
-        1 => GameType::GridBased,
-        _ => GameType::Solitaire,
+        1 => GameType::Solitaire,
+        _ => GameType::GridBased,
     }
 }
 
