@@ -128,8 +128,22 @@ impl std::error::Error for Error {
 type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
-struct GameSpec {
-    grid_dimensions: Option<(u8, u8)>,
+enum GameSpec {
+    Guess,
+    Grid(GridGameSpec),
+    Solitaire(()),
+}
+use GameSpec::*;
+
+impl Default for GameSpec {
+    fn default() -> GameSpec {
+        Guess
+    }
+}
+
+#[derive(Debug)]
+struct GridGameSpec {
+    grid_dimensions: (u8, u8),
     goal: Goal,
     entity_animacies: Vec<EntityAnimacy>,
     entity_controls: Vec<Option<EntityControl>>,
@@ -143,21 +157,45 @@ fn generate_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderedGame> {
     })
 }
 
+enum GameType {
+    Guess,
+    GridBased,
+    Solitaire,
+}
+
+fn generate_game_type<R: Rng + Sized>(rng: &mut R) -> GameType {
+    match rng.gen_range(0, 3) {
+        0 => GameType::Guess,
+        1 => GameType::GridBased,
+        _ => GameType::Solitaire,
+    }
+}
+
 fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
+    let game_type = generate_game_type(rng);
+
+    match game_type {
+        GameType::Guess => Ok(Default::default()),
+        GameType::GridBased => generate_grid_spec(rng).map(Grid),
+        GameType::Solitaire => Ok(()).map(Solitaire),
+    }
+}
+
+fn generate_grid_spec<R: Rng + Sized>(rng: &mut R) -> Result<GridGameSpec> {
     let grid_dimensions = (
         rng.gen_range(0, SCREEN_WIDTH) as u8,
         rng.gen_range(0, SCREEN_HEIGHT) as u8,
     );
 
-    let goal = generate_goal(rng);
+    let goal = generate_grid_goal(rng);
 
     let Ontology {
         entity_animacies,
         entity_controls,
     } = generate_ontology(rng, goal);
 
-    Ok(GameSpec {
-        grid_dimensions: Some(grid_dimensions),
+    Ok(GridGameSpec {
+        grid_dimensions,
         goal,
         entity_animacies,
         entity_controls,
@@ -192,7 +230,7 @@ impl Goal {
 }
 const GOAL_COUNT: u8 = 4;
 
-fn generate_goal<R: Rng + Sized>(rng: &mut R) -> Goal {
+fn generate_grid_goal<R: Rng + Sized>(rng: &mut R) -> Goal {
     match rng.gen_range(0, GOAL_COUNT) {
         0 => AddSomeNumberOfXsToTheGrid,
         1 => MoveAllXsToALocation,
@@ -724,10 +762,10 @@ impl fmt::Display for InputResponder {
 }
 
 fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGame> {
-    let result = if let Some(grid_dimensions) = spec.grid_dimensions {
-        render_grid_game(rng, spec, grid_dimensions)
-    } else {
-        render_guess_game(rng)
+    let result = match spec {
+        Guess => render_guess_game(rng),
+        Grid(ggs) => render_grid_game(rng, ggs),
+        Solitaire(sgs) => render_guess_game(rng), //TODO render_solitaire_game
     };
 
     result.map(RenderableGame::render)
@@ -780,14 +818,10 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
     })
 }
 
-fn render_grid_game<R: Rng + Sized>(
-    rng: &mut R,
-    spec: GameSpec,
-    grid_dimensions: (u8, u8),
-) -> Result<RenderableGame> {
+fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<RenderableGame> {
     let grid_cell_size = (
-        next_power_of_2(grid_dimensions.0 as _),
-        next_power_of_2(grid_dimensions.1 as _),
+        next_power_of_2(spec.grid_dimensions.0 as _),
+        next_power_of_2(spec.grid_dimensions.1 as _),
     );
 
     debug_assert!(spec.entity_animacies.len() == spec.entity_controls.len());
@@ -804,8 +838,8 @@ fn render_grid_game<R: Rng + Sized>(
         appearances.push(rng.gen());
 
         positions.push((
-            rng.gen_range(0, grid_dimensions.0),
-            rng.gen_range(0, grid_dimensions.1),
+            rng.gen_range(0, spec.grid_dimensions.0),
+            rng.gen_range(0, spec.grid_dimensions.1),
         ));
 
         varieties.push(i as Variety);
@@ -828,7 +862,7 @@ fn render_grid_game<R: Rng + Sized>(
     Ok(RenderableGame {
         input_responders,
         initial_state,
-        grid_dimensions: Some(grid_dimensions),
+        grid_dimensions: Some(spec.grid_dimensions),
     })
 }
 
