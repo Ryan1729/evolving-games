@@ -129,7 +129,7 @@ type Result<T> = std::result::Result<T, Error>;
 enum GameSpec {
     Guess,
     Grid(GridGameSpec),
-    Solitaire(()),
+    Solitaire(SolitaireSpec),
 }
 use GameSpec::*;
 
@@ -137,14 +137,6 @@ impl Default for GameSpec {
     fn default() -> GameSpec {
         Guess
     }
-}
-
-#[derive(Debug)]
-struct GridGameSpec {
-    grid_dimensions: (u8, u8),
-    goal: Goal,
-    entity_animacies: Vec<EntityAnimacy>,
-    entity_controls: Vec<Option<EntityControl>>,
 }
 
 fn generate_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderedGame> {
@@ -176,8 +168,48 @@ fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
     match game_type {
         GameType::Guess => Ok(Default::default()),
         GameType::GridBased => generate_grid_spec(rng).map(Grid),
-        GameType::Solitaire => Ok(()).map(Solitaire),
+        GameType::Solitaire => generate_solitaire_spec(rng).map(Solitaire),
     }
+}
+
+#[derive(Debug)]
+struct SolitaireSpec {
+    initial_grid_dimensions: (u8, u8),
+    deck: DeckType,
+}
+
+#[derive(Debug)]
+struct DeckType {
+    ThreeColour(u8)
+}
+
+fn generate_solitaire_spec<R: Rng + Sized>(rng: &mut R) -> Result<SolitaireSpec> {
+    let deck = ThreeColour(rng.gen_range(6, 12));
+
+    let initial_grid_dimensions = match deck {
+        ThreeColour(highest_card) => {
+            let minimum_card_count = highest_card as _ * 3;
+
+            let w = rng.gen_range(highest_card / 2, highest_card) as u8;
+            //Ceiling division
+            let h = ((minimum_card_count - 1) / w) + 1
+
+            (w, h)
+        }
+    };
+
+    Ok(SolitaireSpec {
+        initial_grid_dimensions,
+        deck,
+    })
+}
+
+#[derive(Debug)]
+struct GridGameSpec {
+    grid_dimensions: (u8, u8),
+    goal: Goal,
+    entity_animacies: Vec<EntityAnimacy>,
+    entity_controls: Vec<Option<EntityControl>>,
 }
 
 fn generate_grid_spec<R: Rng + Sized>(rng: &mut R) -> Result<GridGameSpec> {
