@@ -1,10 +1,10 @@
-use std::fs::OpenOptions;
-use std::path::Path;
-use std::io::Write as IOWrite;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Write;
+use std::fs::OpenOptions;
+use std::io::Write as IOWrite;
+use std::path::Path;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 extern crate rand;
 use rand::{Rng, SeedableRng, XorShiftRng};
@@ -86,7 +86,7 @@ struct Error {
 }
 
 macro_rules! err {
-    ($kind: expr) => {
+    ($kind:expr) => {
         Err(Error {
             line: line!(),
             file: file!(),
@@ -179,20 +179,21 @@ struct SolitaireSpec {
 }
 
 #[derive(Debug)]
-struct DeckType {
-    ThreeColour(u8)
+enum DeckType {
+    ThreeColour(u8),
 }
+use DeckType::*;
 
 fn generate_solitaire_spec<R: Rng + Sized>(rng: &mut R) -> Result<SolitaireSpec> {
     let deck = ThreeColour(rng.gen_range(6, 12));
 
     let initial_grid_dimensions = match deck {
         ThreeColour(highest_card) => {
-            let minimum_card_count = highest_card as _ * 3;
+            let minimum_card_count = highest_card * 3;
 
             let w = rng.gen_range(highest_card / 2, highest_card) as u8;
             //Ceiling division
-            let h = ((minimum_card_count - 1) / w) + 1
+            let h = ((minimum_card_count - 1) / w) + 1;
 
             (w, h)
         }

@@ -23,11 +23,11 @@
                 }
 
                 if input.pressed_this_frame(Button::Start) {
-                    
+                    state.mark_won();
                 }
 
                 if input.pressed_this_frame(Button::A) {
-                    state.mark_won();
+                    
                 }
 
                 if input.pressed_this_frame(Button::B) {
