@@ -131,11 +131,10 @@ enum GameSpec {
     Grid(GridGameSpec),
     Solitaire(SolitaireSpec),
 }
-use GameSpec::*;
 
 impl Default for GameSpec {
     fn default() -> GameSpec {
-        Guess
+        GameSpec::Guess
     }
 }
 
@@ -153,12 +152,19 @@ enum GameType {
     Solitaire,
     GridBased,
 }
+use GameType::*;
+
+impl Default for GameType {
+    fn default() -> GameType {
+        Guess
+    }
+}
 
 fn generate_game_type<R: Rng + Sized>(rng: &mut R) -> GameType {
     match rng.gen_range(0, 3) {
-        0 => GameType::Guess,
-        1 => GameType::Solitaire,
-        _ => GameType::GridBased,
+        0 => Guess,
+        1 => Solitaire,
+        _ => GridBased,
     }
 }
 
@@ -166,9 +172,9 @@ fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
     let game_type = generate_game_type(rng);
 
     match game_type {
-        GameType::Guess => Ok(Default::default()),
-        GameType::GridBased => generate_grid_spec(rng).map(Grid),
-        GameType::Solitaire => generate_solitaire_spec(rng).map(Solitaire),
+        Guess => Ok(Default::default()),
+        GridBased => generate_grid_spec(rng).map(GameSpec::Grid),
+        Solitaire => generate_solitaire_spec(rng).map(GameSpec::Solitaire),
     }
 }
 
@@ -425,9 +431,10 @@ const BUTTON_COUNT: usize = 8;
 
 #[derive(Default)]
 struct RenderableGame {
+    game_type: GameType,
     input_responders: Vec<InputResponder>,
     initial_state: InitialState,
-    grid_dimensions: Option<(u8, u8)>,
+    grid_dimensions: (u8, u8),
 }
 
 #[derive(Default)]
@@ -478,14 +485,19 @@ fn get_cell_dimensions(gw: u8, gh: u8) -> (u8, u8) {
 impl RenderableGame {
     fn render(self) -> RenderedGame {
         let RenderableGame {
+            game_type,
             input_responders,
             initial_state,
             grid_dimensions,
         } = self;
 
-        match grid_dimensions {
-            Some(gd) => RenderableGame::grid_game(input_responders, initial_state, gd),
-            None => RenderableGame::guess_game(input_responders, initial_state),
+        match game_type {
+            Guess => RenderableGame::guess_game(input_responders, initial_state),
+            GridBased => {
+                RenderableGame::grid_game(input_responders, initial_state, grid_dimensions)
+            }
+            //TODO RenderableGame::solitaire_game
+            Solitaire => RenderableGame::guess_game(input_responders, initial_state),
         }
     }
 
@@ -806,15 +818,18 @@ impl fmt::Display for InputResponder {
 
 fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGame> {
     let result = match spec {
-        Guess => render_guess_game(rng),
-        Grid(ggs) => render_grid_game(rng, ggs),
-        Solitaire(sgs) => render_guess_game(rng), //TODO render_solitaire_game
+        GameSpec::Guess => render_guess_game(rng),
+        GameSpec::Grid(ggs) => render_grid_game(rng, ggs),
+        GameSpec::Solitaire(sgs) => render_solitaire_game(rng, sgs),
     };
 
     result.map(RenderableGame::render)
 }
 
-fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
+fn render_solitaire_game<R: Rng + Sized>(
+    rng: &mut R,
+    spec: SolitaireSpec,
+) -> Result<RenderableGame> {
     let mut button_responses = ButtonResponses::default();
 
     let winning_index = rng.gen_range(0, BUTTON_COUNT);
@@ -855,6 +870,7 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
     };
 
     Ok(RenderableGame {
+        game_type: Solitaire,
         input_responders: vec![responder],
         initial_state: Default::default(),
         grid_dimensions: Default::default(),
@@ -903,9 +919,58 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
     };
 
     Ok(RenderableGame {
+        game_type: GridBased,
         input_responders,
         initial_state,
-        grid_dimensions: Some(spec.grid_dimensions),
+        grid_dimensions: spec.grid_dimensions,
+    })
+}
+
+fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
+    let mut button_responses = ButtonResponses::default();
+
+    let winning_index = rng.gen_range(0, BUTTON_COUNT);
+
+    let winner = "state.mark_won();".to_string();
+
+    match winning_index {
+        0 => {
+            button_responses.up = winner;
+        }
+        1 => {
+            button_responses.down = winner;
+        }
+        2 => {
+            button_responses.left = winner;
+        }
+        3 => {
+            button_responses.right = winner;
+        }
+        4 => {
+            button_responses.a = winner;
+        }
+        5 => {
+            button_responses.b = winner;
+        }
+        6 => {
+            button_responses.start = winner;
+        }
+        7 => {
+            button_responses.select = winner;
+        }
+        _ => {}
+    }
+
+    let responder = InputResponder {
+        button_responses,
+        variety: Default::default(),
+    };
+
+    Ok(RenderableGame {
+        game_type: Guess,
+        input_responders: vec![responder],
+        initial_state: Default::default(),
+        grid_dimensions: Default::default(),
     })
 }
 
