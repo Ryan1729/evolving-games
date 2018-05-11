@@ -180,7 +180,7 @@ fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
 
 #[derive(Debug)]
 struct SolitaireSpec {
-    initial_grid_dimensions: (u8, u8),
+    grid_dimensions: (u8, u8),
     deck: DeckType,
 }
 
@@ -193,9 +193,9 @@ use DeckType::*;
 fn generate_solitaire_spec<R: Rng + Sized>(rng: &mut R) -> Result<SolitaireSpec> {
     let deck = ThreeColour(rng.gen_range(6, 12));
 
-    let initial_grid_dimensions = match deck {
+    let grid_dimensions = match deck {
         ThreeColour(highest_card) => {
-            let minimum_card_count = highest_card * 3;
+            let minimum_card_count = deck.get_minimum_card_count();
 
             let w = rng.gen_range(highest_card / 2, highest_card) as u8;
             //Ceiling division
@@ -206,9 +206,17 @@ fn generate_solitaire_spec<R: Rng + Sized>(rng: &mut R) -> Result<SolitaireSpec>
     };
 
     Ok(SolitaireSpec {
-        initial_grid_dimensions,
+        grid_dimensions,
         deck,
     })
+}
+
+impl DeckType {
+    fn get_minimum_card_count(&self) -> u8 {
+        match *self {
+            ThreeColour(highest_card) => highest_card.saturating_mul(3),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -398,6 +406,12 @@ enum EntityAnimacy {
 }
 use EntityAnimacy::*;
 
+impl Default for EntityAnimacy {
+    fn default() -> EntityAnimacy {
+        PlayerControlled
+    }
+}
+
 impl fmt::Display for EntityAnimacy {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let result = match *self {
@@ -496,8 +510,92 @@ impl RenderableGame {
             GridBased => {
                 RenderableGame::grid_game(input_responders, initial_state, grid_dimensions)
             }
-            //TODO RenderableGame::solitaire_game
-            Solitaire => RenderableGame::guess_game(input_responders, initial_state),
+            Solitaire => {
+                RenderableGame::solitaire_game(input_responders, initial_state, grid_dimensions)
+            }
+        }
+    }
+
+    fn solitaire_game(
+        input_responders: Vec<InputResponder>,
+        initial_state: InitialState,
+        (gw, gh): (u8, u8),
+    ) -> RenderedGame {
+        let (w, h) = get_cell_dimensions(gw, gh);
+
+        let update_and_render = format!(
+            "
+    use common::*;
+
+    {}
+
+    #[inline]
+    pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {{
+        for id in 0..GameState::ENTITY_COUNT {{
+            if state.entities[id].contains(Component::PlayerControlled) {{
+                respond_to_input(state, input, id, Variety::default());
+            }}
+        }}
+
+        framebuffer.clear();
+
+        for i in 0..GameState::ENTITY_COUNT {{
+            let (x, y) = state.positions[i];
+            let appearance = &mut state.appearances[i];
+
+            appearance.render(framebuffer, (x as usize, y as usize), ({}, {}));
+        }}
+    }}
+    ",
+            InputResponders(input_responders),
+            w,
+            h,
+        );
+
+        let game_state_impl = format!(
+            "use inner_common::*;
+
+        impl GameState {{
+            pub const ENTITY_COUNT: usize = 256;
+            pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
+
+            pub fn new() -> GameState {{
+                let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
+
+                let mut positions = [(0, 0); GameState::ENTITY_COUNT];
+                let mut appearances = [Appearance::default(); GameState::ENTITY_COUNT];
+                let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
+
+                let player_controlling_variety = Variety::default();
+
+                {}
+
+                GameState {{
+                    entities,
+                    positions,
+                    appearances,
+                    varieties,
+                    player_controlling_variety,
+                }}
+            }}
+
+            pub fn get_free_id(&self) -> Option<usize> {{
+                for (i, e) in self.entities.iter().enumerate() {{
+                    if e.is_empty() {{
+                        return Some(i);
+                    }}
+                }}
+
+                None
+            }}
+        }}
+",
+            gw, gh, initial_state
+        );
+
+        RenderedGame {
+            update_and_render,
+            game_state_impl,
         }
     }
 
@@ -830,50 +928,52 @@ fn render_solitaire_game<R: Rng + Sized>(
     rng: &mut R,
     spec: SolitaireSpec,
 ) -> Result<RenderableGame> {
-    let mut button_responses = ButtonResponses::default();
-
-    let winning_index = rng.gen_range(0, BUTTON_COUNT);
-
-    let winner = "state.mark_won();".to_string();
-
-    match winning_index {
-        0 => {
-            button_responses.up = winner;
-        }
-        1 => {
-            button_responses.down = winner;
-        }
-        2 => {
-            button_responses.left = winner;
-        }
-        3 => {
-            button_responses.right = winner;
-        }
-        4 => {
-            button_responses.a = winner;
-        }
-        5 => {
-            button_responses.b = winner;
-        }
-        6 => {
-            button_responses.start = winner;
-        }
-        7 => {
-            button_responses.select = winner;
-        }
-        _ => {}
-    }
+    let button_responses = ButtonResponses::default();
 
     let responder = InputResponder {
         button_responses,
         variety: Default::default(),
     };
 
+    let minimum_card_count = spec.deck.get_minimum_card_count();
+
+    let capacity = minimum_card_count as usize;
+
+    let mut animacies: Vec<EntityAnimacy> = Vec::with_capacity(capacity);
+    let mut positions: Vec<(u8, u8)> = Vec::with_capacity(capacity);
+    let mut appearances: Vec<u8> = Vec::with_capacity(capacity);
+    let mut varieties: Vec<u8> = Vec::with_capacity(capacity);
+
+    let (w, h) = spec.grid_dimensions;
+
+    for i in 0..minimum_card_count {
+        animacies.push(Default::default());
+
+        let (x, y) = (i % w, i / h);
+
+        let pos = (
+            x * (card::WIDTH + card::SPACING) + card::SPACING,
+            y * (card::HEIGHT / 2),
+        );
+
+        positions.push(pos);
+
+        appearances.push(i);
+        varieties.push(i);
+    }
+
+    let initial_state = InitialState {
+        animacies,
+        positions,
+        appearances,
+        varieties,
+    };
+
     Ok(RenderableGame {
         game_type: Solitaire,
         input_responders: vec![responder],
-        initial_state: Default::default(),
-        grid_dimensions: Default::default(),
+        initial_state,
+        grid_dimensions: spec.grid_dimensions,
     })
 }
 

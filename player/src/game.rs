@@ -23,7 +23,7 @@
                 }
 
                 if input.pressed_this_frame(Button::Start) {
-                    state.mark_won();
+                    
                 }
 
                 if input.pressed_this_frame(Button::A) {
@@ -45,10 +45,19 @@ fn respond_to_input(state: &mut GameState, input: Input, id: usize, variety: Var
 
     #[inline]
     pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {
-        respond_to_input(state, input, 0, Variety::default());
+        for id in 0..GameState::ENTITY_COUNT {
+            if state.entities[id].contains(Component::PlayerControlled) {
+                respond_to_input(state, input, id, Variety::default());
+            }
+        }
 
-        if state.has_won() {
-            draw_winning_screen(framebuffer);
+        framebuffer.clear();
+
+        for i in 0..GameState::ENTITY_COUNT {
+            let (x, y) = state.positions[i];
+            let appearance = &mut state.appearances[i];
+
+            appearance.render(framebuffer, (x as usize, y as usize), (36, 60));
         }
     }
     

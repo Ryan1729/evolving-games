@@ -94,3 +94,10 @@ impl From<usize> for Colour {
 }
 
 pub type Variety = u8;
+
+pub mod card {
+    //in pixels
+    pub const SPACING: u8 = 2;
+    pub const WIDTH: u8 = 20;
+    pub const HEIGHT: u8 = 28;
+}
