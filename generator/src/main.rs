@@ -521,8 +521,6 @@ impl RenderableGame {
         initial_state: InitialState,
         (gw, gh): (u8, u8),
     ) -> RenderedGame {
-        let (w, h) = get_cell_dimensions(gw, gh);
-
         let update_and_render = format!(
             "
     use common::*;
@@ -548,8 +546,8 @@ impl RenderableGame {
     }}
     ",
             InputResponders(input_responders),
-            w,
-            h,
+            card::WIDTH,
+            card::HEIGHT,
         );
 
         let game_state_impl = format!(
@@ -949,7 +947,7 @@ fn render_solitaire_game<R: Rng + Sized>(
     for i in 0..minimum_card_count {
         animacies.push(Default::default());
 
-        let (x, y) = (i % w, i / h);
+        let (x, y) = (i % w, i / w);
 
         let pos = (
             x * (card::WIDTH + card::SPACING) + card::SPACING,
@@ -994,7 +992,7 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
     let mut input_responders = Vec::with_capacity(entity_type_count);
 
     for i in 0..entity_type_count {
-        appearances.push(rng.gen());
+        appearances.push(rng.gen::<u8>().saturating_add(1));
 
         positions.push((
             rng.gen_range(0, spec.grid_dimensions.0),

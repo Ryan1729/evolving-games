@@ -101,3 +101,5 @@ pub mod card {
     pub const WIDTH: u8 = 20;
     pub const HEIGHT: u8 = 28;
 }
+
+pub const EMPTY_APPEARANCE: u8 = 255;

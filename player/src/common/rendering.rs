@@ -1,6 +1,6 @@
-use inner_common::*;
-use common::project_common::{colours, Colour, SCREEN_HEIGHT, SCREEN_WIDTH};
 use colours::{BLACK, BLUE, GRAY, GREEN, GREY, PURPLE, RED, WHITE, YELLOW};
+use common::project_common::{colours, Colour, SCREEN_HEIGHT, SCREEN_WIDTH};
+use inner_common::*;
 use Colour::{Black, Blue, Green, Grey, Purple, Red, White, Yellow};
 
 pub struct Framebuffer {
@@ -16,37 +16,37 @@ impl PartialEq for Framebuffer {
 impl Eq for Framebuffer {}
 
 macro_rules! red {
-    ($colour: expr) => {
+    ($colour:expr) => {
         $colour & 0xFF
     };
 }
 
 macro_rules! green {
-    ($colour: expr) => {
+    ($colour:expr) => {
         ($colour & 0xFF_00) >> 8
     };
 }
 
 macro_rules! blue {
-    ($colour: expr) => {
+    ($colour:expr) => {
         ($colour & 0xFF_00_00) >> 16
     };
 }
 
 macro_rules! alpha {
-    ($colour: expr) => {
+    ($colour:expr) => {
         ($colour & 0xFF_00_00_00) >> 24
     };
 }
 
 macro_rules! colour {
-    ($red: expr, $green: expr, $blue: expr, $alpha: expr) => {
+    ($red:expr, $green:expr, $blue:expr, $alpha:expr) => {
         $red | $green << 8 | $blue << 16 | $alpha << 24
     };
 }
 
 macro_rules! set_alpha {
-    ($colour: expr, $alpha: expr) => {
+    ($colour:expr, $alpha:expr) => {
         ($colour & 0x00_FF_FF_FF) | $alpha << 24
     };
 }
@@ -441,6 +441,10 @@ impl Appearance {
         (x, y): (usize, usize),
         (w, h): (usize, usize),
     ) {
+        if self.0 == EMPTY_APPEARANCE {
+            return;
+        }
+
         let colour: Colour = (*self).into();
 
         let shape = Shape::from(*self);
@@ -479,7 +483,7 @@ impl Into<Colour> for Appearance {
 
 impl From<Appearance> for Shape {
     fn from(Appearance(n): Appearance) -> Self {
-        match n & 0b1100 {
+        match n & 0b11000 {
             0b01000 => FilledRectangle,
             0b10000 => Circle,
             0b11000 => FilledCircle,
