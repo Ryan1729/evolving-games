@@ -1,19 +1,25 @@
+
 use inner_common::*;
 
-        impl GameState {
-            pub const ENTITY_COUNT: usize = 256;
-            pub const GRID_DIMENSIONS: (u8, u8) = (7, 4);
+impl GameState {
+    pub const ENTITY_COUNT: usize = 256;
+    pub const ENTITY_PIECE_COUNT: usize = 32;
+    pub const GRID_DIMENSIONS: (u8, u8) = (7, 4);
 
-            pub fn new() -> GameState {
-                let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
 
-                let mut positions = [(0, 0); GameState::ENTITY_COUNT];
-                let mut appearances = [Appearance::default(); GameState::ENTITY_COUNT];
-                let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
+    pub fn new() -> GameState {
+        let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
 
-                let player_controlling_variety = Variety::default();
+        let mut positions = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+        let mut appearances =
+            [[Appearance::default(); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+        let mut sizes = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
 
-                    entities[0] = Component::Player;
+        let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
+
+        let player_controlling_variety = Variety::default();
+
+            entities[0] = Component::Player;
     positions[0] = (2, 0);
     appearances[0] = Appearance(0);
     varieties[0] = 0;
@@ -123,22 +129,24 @@ use inner_common::*;
     varieties[26] = 26;
 
 
-                GameState {
-                    entities,
-                    positions,
-                    appearances,
-                    varieties,
-                    player_controlling_variety,
-                }
-            }
+        GameState {
+            entities,
+            positions,
+            appearances,
+            varieties,
+            player_controlling_variety,
+        }
+    }
 
-            pub fn get_free_id(&self) -> Option<usize> {
-                for (i, e) in self.entities.iter().enumerate() {
-                    if e.is_empty() {
-                        return Some(i);
-                    }
-                }
-
-                None
+    pub fn get_free_id(&self) -> Option<usize> {
+        for (i, e) in self.entities.iter().enumerate() {
+            if e.is_empty() {
+                return Some(i);
             }
         }
+
+        None
+    }
+
+    
+}

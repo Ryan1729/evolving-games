@@ -447,8 +447,8 @@ const BUTTON_COUNT: usize = 8;
 struct RenderableGame {
     game_type: GameType,
     input_responders: Vec<InputResponder>,
-    initial_state: InitialState,
     grid_dimensions: (u8, u8),
+    game_state_impl: GameStateImpl,
 }
 
 #[derive(Default)]
@@ -457,6 +457,15 @@ struct InitialState {
     positions: Vec<(u8, u8)>,
     appearances: Vec<u8>,
     varieties: Vec<u8>,
+}
+
+#[derive(Default)]
+struct GameStateImpl {
+    entity_count: usize,
+    entity_piece_count: usize,
+    custom_consts: String,
+    initial_state: InitialState,
+    custom_methods: String,
 }
 
 impl fmt::Display for InitialState {
@@ -489,6 +498,61 @@ impl fmt::Display for InitialState {
     }
 }
 
+//TODO make this a Display impl
+fn render_game_state_impl(gsi: GameStateImpl) -> String {
+    format!(
+        "
+use inner_common::*;
+
+impl GameState {{
+    pub const ENTITY_COUNT: usize = {};
+    pub const ENTITY_PIECE_COUNT: usize = {};
+    {}
+
+    pub fn new() -> GameState {{
+        let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
+
+        let mut positions = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+        let mut appearances =
+            [[Appearance::default(); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+        let mut sizes = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+
+        let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
+
+        let player_controlling_variety = Variety::default();
+
+        {}
+
+        GameState {{
+            entities,
+            positions,
+            appearances,
+            varieties,
+            player_controlling_variety,
+        }}
+    }}
+
+    pub fn get_free_id(&self) -> Option<usize> {{
+        for (i, e) in self.entities.iter().enumerate() {{
+            if e.is_empty() {{
+                return Some(i);
+            }}
+        }}
+
+        None
+    }}
+
+    {}
+}}
+",
+        gsi.entity_count,
+        gsi.entity_piece_count,
+        gsi.custom_consts,
+        gsi.initial_state,
+        gsi.custom_methods
+    )
+}
+
 fn get_cell_dimensions(gw: u8, gh: u8) -> (u8, u8) {
     (
         (SCREEN_WIDTH / gw as usize) as _,
@@ -501,24 +565,24 @@ impl RenderableGame {
         let RenderableGame {
             game_type,
             input_responders,
-            initial_state,
+            game_state_impl,
             grid_dimensions,
         } = self;
 
         match game_type {
-            Guess => RenderableGame::guess_game(input_responders, initial_state),
+            Guess => RenderableGame::guess_game(input_responders, game_state_impl),
             GridBased => {
-                RenderableGame::grid_game(input_responders, initial_state, grid_dimensions)
+                RenderableGame::grid_game(input_responders, game_state_impl, grid_dimensions)
             }
             Solitaire => {
-                RenderableGame::solitaire_game(input_responders, initial_state, grid_dimensions)
+                RenderableGame::solitaire_game(input_responders, game_state_impl, grid_dimensions)
             }
         }
     }
 
     fn solitaire_game(
         input_responders: Vec<InputResponder>,
-        initial_state: InitialState,
+        game_state_impl: GameStateImpl,
         (gw, gh): (u8, u8),
     ) -> RenderedGame {
         let update_and_render = format!(
@@ -538,10 +602,16 @@ impl RenderableGame {
         framebuffer.clear();
 
         for i in 0..GameState::ENTITY_COUNT {{
-            let (x, y) = state.positions[i];
-            let appearance = &mut state.appearances[i];
+            if state.entities[i].is_empty() {{
+                continue;
+            }}
 
-            appearance.render(framebuffer, (x as usize, y as usize), ({}, {}));
+            for i in 0..GameState::ENTITY_PIECE_COUNT {{
+                let (x, y) = state.positions[i];
+                let appearance = &mut state.appearances[i];
+
+                appearance.render(framebuffer, (x as usize, y as usize), ({}, {}));
+            }}
         }}
     }}
     ",
@@ -550,118 +620,15 @@ impl RenderableGame {
             card::HEIGHT,
         );
 
-        let game_state_impl = format!(
-            "use inner_common::*;
-
-        impl GameState {{
-            pub const ENTITY_COUNT: usize = 256;
-            pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
-
-            pub fn new() -> GameState {{
-                let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
-
-                let mut positions = [(0, 0); GameState::ENTITY_COUNT];
-                let mut appearances = [Appearance::default(); GameState::ENTITY_COUNT];
-                let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
-
-                let player_controlling_variety = Variety::default();
-
-                {}
-
-                GameState {{
-                    entities,
-                    positions,
-                    appearances,
-                    varieties,
-                    player_controlling_variety,
-                }}
-            }}
-
-            pub fn get_free_id(&self) -> Option<usize> {{
-                for (i, e) in self.entities.iter().enumerate() {{
-                    if e.is_empty() {{
-                        return Some(i);
-                    }}
-                }}
-
-                None
-            }}
-        }}
-",
-            gw, gh, initial_state
-        );
-
         RenderedGame {
             update_and_render,
-            game_state_impl,
-        }
-    }
-
-    fn guess_game(
-        input_responders: Vec<InputResponder>,
-        initial_state: InitialState,
-    ) -> RenderedGame {
-        let update_and_render = format!(
-            "
-    use common::*;
-
-    {}
-
-    #[inline]
-    pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {{
-        respond_to_input(state, input, 0, Variety::default());
-
-        if state.has_won() {{
-            draw_winning_screen(framebuffer);
-        }}
-    }}
-    ",
-            InputResponders(input_responders),
-        );
-
-        let game_state_impl = "use inner_common::*;
-
-    impl GameState {
-        pub const ENTITY_COUNT: usize = 256;
-
-        pub fn new() -> GameState {
-            let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
-
-            let mut positions = [(0, 0); GameState::ENTITY_COUNT];
-            let mut appearances = [Appearance::default(); GameState::ENTITY_COUNT];
-            let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
-
-            let player_controlling_variety = Variety::default();
-
-            GameState {
-                entities,
-                positions,
-                appearances,
-                varieties,
-                player_controlling_variety,
-            }
-        }
-
-        pub fn mark_won(&mut self) {
-            self.positions[0] = (1,1);
-        }
-
-        pub fn has_won(&self) -> bool {
-            self.positions[0].0 == 1
-        }
-    }
-"
-            .to_string();
-
-        RenderedGame {
-            update_and_render,
-            game_state_impl,
+            game_state_impl: render_game_state_impl(game_state_impl),
         }
     }
 
     fn grid_game(
         input_responders: Vec<InputResponder>,
-        initial_state: InitialState,
+        game_state_impl: GameStateImpl,
         (gw, gh): (u8, u8),
     ) -> RenderedGame {
         let (w, h) = get_cell_dimensions(gw, gh);
@@ -706,106 +673,37 @@ impl RenderableGame {
             h,
         );
 
-        let game_state_impl = format!(
-            "use inner_common::*;
+        RenderedGame {
+            update_and_render,
+            game_state_impl: render_game_state_impl(game_state_impl),
+        }
+    }
 
-        impl GameState {{
-            pub const ENTITY_COUNT: usize = 256;
-            pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
+    fn guess_game(
+        input_responders: Vec<InputResponder>,
+        game_state_impl: GameStateImpl,
+    ) -> RenderedGame {
+        let update_and_render = format!(
+            "
+    use common::*;
 
-            pub fn new() -> GameState {{
-                let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
+    {}
 
-                let mut positions = [(0, 0); GameState::ENTITY_COUNT];
-                let mut appearances = [Appearance::default(); GameState::ENTITY_COUNT];
-                let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
+    #[inline]
+    pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {{
+        respond_to_input(state, input, 0, Variety::default());
 
-                let player_controlling_variety = Variety::default();
-
-                {}
-
-                GameState {{
-                    entities,
-                    positions,
-                    appearances,
-                    varieties,
-                    player_controlling_variety,
-                }}
-            }}
-
-            pub fn get_free_id(&self) -> Option<usize> {{
-                for (i, e) in self.entities.iter().enumerate() {{
-                    if e.is_empty() {{
-                        return Some(i);
-                    }}
-                }}
-
-                None
-            }}
-
-            pub fn find_nearest_empty_pos(
-                &self,
-                start_pos: Position,
-            ) -> Option<Position> {{
-                use std::collections::{{VecDeque, HashSet}};
-                //PERF would it be faster to preallocate this?
-                //I expect the common case not to use anything close to the maximum.
-                let mut queue = VecDeque::new();
-
-                let mut full = HashSet::with_capacity(GameState::ENTITY_COUNT);
-                let mut visited = HashSet::with_capacity(GameState::ENTITY_COUNT);
-
-                //PERF it might make sense to just keep track of which slots are free all the time
-                for i in 0..GameState::ENTITY_COUNT {{
-                    if !self.entities[i].is_empty() {{
-                        full.insert(self.positions[i]);
-                    }}
-                }}
-
-                queue.push_back(start_pos);
-
-                while let Some(pos) = queue.pop_front() {{
-                    if !full.contains(&pos) {{
-                        return Some(pos)
-                    }}
-
-                    if visited.contains(&pos) {{
-                        continue;
-                    }}
-
-                    visited.insert(pos);
-
-                    //TODO we might want to figure out a heuristic on which direction to look in
-                    //first, given the start_pos. It would also prevent the empty ones always
-                    //being in a certain direction.
-
-                    if pos.0 > 0 {{
-                        queue.push_back((pos.0 - 1, pos.1));
-                    }}
-
-                    if pos.0 < GameState::GRID_DIMENSIONS.0 - 1 {{
-                        queue.push_back((pos.0 + 1, pos.1));
-                    }}
-
-                    if pos.1 > 0 {{
-                        queue.push_back((pos.0, pos.1 - 1));
-                    }}
-
-                    if pos.1 < GameState::GRID_DIMENSIONS.1 - 1 {{
-                        queue.push_back((pos.0, pos.1 + 1));
-                    }}
-                }}
-
-                None
-            }}
+        if state.has_won() {{
+            draw_winning_screen(framebuffer);
         }}
-",
-            gw, gh, initial_state
+    }}
+    ",
+            InputResponders(input_responders),
         );
 
         RenderedGame {
             update_and_render,
-            game_state_impl,
+            game_state_impl: render_game_state_impl(game_state_impl),
         }
     }
 }
@@ -967,19 +865,26 @@ fn render_solitaire_game<R: Rng + Sized>(
         varieties,
     };
 
+    let game_state_impl = GameStateImpl {
+        entity_count: 256,
+        entity_piece_count: 32,
+        custom_consts: format!("pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});\n", w, h),
+        initial_state,
+        ..Default::default()
+    };
+
     Ok(RenderableGame {
         game_type: Solitaire,
         input_responders: vec![responder],
-        initial_state,
+        game_state_impl,
         grid_dimensions: spec.grid_dimensions,
     })
 }
 
 fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<RenderableGame> {
-    let grid_cell_size = (
-        next_power_of_2(spec.grid_dimensions.0 as _),
-        next_power_of_2(spec.grid_dimensions.1 as _),
-    );
+    let (w, h) = spec.grid_dimensions;
+
+    let grid_cell_size = (next_power_of_2(w as _), next_power_of_2(h as _));
 
     debug_assert!(spec.entity_animacies.len() == spec.entity_controls.len());
 
@@ -994,10 +899,7 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
     for i in 0..entity_type_count {
         appearances.push(rng.gen::<u8>().saturating_add(1));
 
-        positions.push((
-            rng.gen_range(0, spec.grid_dimensions.0),
-            rng.gen_range(0, spec.grid_dimensions.1),
-        ));
+        positions.push((rng.gen_range(0, w), rng.gen_range(0, h)));
 
         varieties.push(i as Variety);
 
@@ -1016,10 +918,74 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
         varieties,
     };
 
+    let game_state_impl = GameStateImpl {
+        entity_count: 256,
+        entity_piece_count: 1,
+        custom_consts: format!("pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});\n", w, h),
+        initial_state,
+        custom_methods: "
+        pub fn find_nearest_empty_pos(
+            &self,
+            start_pos: Position,
+        ) -> Option<Position> {{
+            use std::collections::{{VecDeque, HashSet}};
+            //PERF would it be faster to preallocate this?
+            //I expect the common case not to use anything close to the maximum.
+            let mut queue = VecDeque::new();
+
+            let mut full = HashSet::with_capacity(GameState::ENTITY_COUNT);
+            let mut visited = HashSet::with_capacity(GameState::ENTITY_COUNT);
+
+            //PERF it might make sense to just keep track of which slots are free all the time
+            for i in 0..GameState::ENTITY_COUNT {{
+                if !self.entities[i].is_empty() {{
+                    full.insert(self.positions[i]);
+                }}
+            }}
+
+            queue.push_back(start_pos);
+
+            while let Some(pos) = queue.pop_front() {{
+                if !full.contains(&pos) {{
+                    return Some(pos)
+                }}
+
+                if visited.contains(&pos) {{
+                    continue;
+                }}
+
+                visited.insert(pos);
+
+                //TODO we might want to figure out a heuristic on which direction to look in
+                //first, given the start_pos. It would also prevent the empty ones always
+                //being in a certain direction.
+
+                if pos.0 > 0 {{
+                    queue.push_back((pos.0 - 1, pos.1));
+                }}
+
+                if pos.0 < GameState::GRID_DIMENSIONS.0 - 1 {{
+                    queue.push_back((pos.0 + 1, pos.1));
+                }}
+
+                if pos.1 > 0 {{
+                    queue.push_back((pos.0, pos.1 - 1));
+                }}
+
+                if pos.1 < GameState::GRID_DIMENSIONS.1 - 1 {{
+                    queue.push_back((pos.0, pos.1 + 1));
+                }}
+            }}
+
+            None
+        }}"
+            .to_string(),
+    };
+
     Ok(RenderableGame {
         game_type: GridBased,
         input_responders,
-        initial_state,
+        game_state_impl,
         grid_dimensions: spec.grid_dimensions,
     })
 }
@@ -1064,10 +1030,23 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
         variety: Default::default(),
     };
 
+    let mut game_state_impl: GameStateImpl = Default::default();
+
+    game_state_impl.custom_methods = "
+            pub fn mark_won(&mut self) {
+                self.positions[0] = (1,1);
+            }
+
+            pub fn has_won(&self) -> bool {
+                self.positions[0].0 == 1
+            }
+"
+        .to_string();
+
     Ok(RenderableGame {
         game_type: Guess,
         input_responders: vec![responder],
-        initial_state: Default::default(),
+        game_state_impl,
         grid_dimensions: Default::default(),
     })
 }

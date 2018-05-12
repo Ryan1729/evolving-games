@@ -54,10 +54,16 @@ fn respond_to_input(state: &mut GameState, input: Input, id: usize, variety: Var
         framebuffer.clear();
 
         for i in 0..GameState::ENTITY_COUNT {
-            let (x, y) = state.positions[i];
-            let appearance = &mut state.appearances[i];
+            if state.entities[i].is_empty() {
+                continue;
+            }
 
-            appearance.render(framebuffer, (x as usize, y as usize), (20, 28));
+            for i in 0..GameState::ENTITY_PIECE_COUNT {
+                let (x, y) = state.positions[i];
+                let appearance = &mut state.appearances[i];
+
+                appearance.render(framebuffer, (x as usize, y as usize), (20, 28));
+            }
         }
     }
     
