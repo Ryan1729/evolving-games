@@ -1,6 +1,4 @@
-use std::collections::HashMap;
 use std::fmt;
-use std::fmt::Write;
 use std::fs::OpenOptions;
 use std::io::Write as IOWrite;
 use std::path::Path;
@@ -37,6 +35,7 @@ fn main() {
                 [seconds[0], seconds[1], seconds[0], seconds[1]]
             })
     };
+
     println!("\nUsing {:?} as a seed.\n", seed);
 
     let mut rng = XorShiftRng::from_seed(seed);
@@ -81,7 +80,7 @@ fn overwrite_filename(filename: &str, data: String) -> std::io::Result<()> {
 #[derive(Debug)]
 struct Error {
     line: u32,
-    file: String,
+    file: &'static str,
     kind: ErrorKind,
 }
 
@@ -127,9 +126,9 @@ type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 enum GameSpec {
-    Guess,
-    Grid(GridGameSpec),
     Solitaire(SolitaireSpec),
+    Grid(GridGameSpec),
+    Guess,
 }
 
 impl Default for GameSpec {
@@ -148,9 +147,10 @@ fn generate_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderedGame> {
 
 #[derive(Debug)]
 enum GameType {
-    Guess,
+    ErrorTest,
     Solitaire,
     GridBased,
+    Guess,
 }
 use GameType::*;
 
@@ -161,10 +161,11 @@ impl Default for GameType {
 }
 
 fn generate_game_type<R: Rng + Sized>(rng: &mut R) -> GameType {
-    match rng.gen_range(0, 3) {
-        0 => Guess,
+    match rng.gen_range(0, 4) {
+        0 => ErrorTest,
         1 => Solitaire,
-        _ => GridBased,
+        2 => GridBased,
+        _ => Guess,
     }
 }
 
@@ -172,9 +173,10 @@ fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
     let game_type = generate_game_type(rng);
 
     match game_type {
-        Guess => Ok(Default::default()),
-        GridBased => generate_grid_spec(rng).map(GameSpec::Grid),
+        ErrorTest => err!(NotImplemented),
         Solitaire => generate_solitaire_spec(rng).map(GameSpec::Solitaire),
+        GridBased => generate_grid_spec(rng).map(GameSpec::Grid),
+        Guess => Ok(Default::default()),
     }
 }
 
@@ -369,8 +371,6 @@ enum Action {
     CopySelf,
 }
 use Action::*;
-
-const ACTION_COUNT: u8 = 2;
 
 fn generate_action<R: Rng + Sized>(rng: &mut R) -> Action {
     match rng.gen_range(0, MOVE_CONTROL_COUNT) {
@@ -570,20 +570,17 @@ impl RenderableGame {
         } = self;
 
         match game_type {
-            Guess => RenderableGame::guess_game(input_responders, game_state_impl),
+            Guess | ErrorTest => RenderableGame::guess_game(input_responders, game_state_impl),
             GridBased => {
                 RenderableGame::grid_game(input_responders, game_state_impl, grid_dimensions)
             }
-            Solitaire => {
-                RenderableGame::solitaire_game(input_responders, game_state_impl, grid_dimensions)
-            }
+            Solitaire => RenderableGame::solitaire_game(input_responders, game_state_impl),
         }
     }
 
     fn solitaire_game(
         input_responders: Vec<InputResponder>,
         game_state_impl: GameStateImpl,
-        (gw, gh): (u8, u8),
     ) -> RenderedGame {
         let update_and_render = format!(
             "
@@ -821,7 +818,7 @@ fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGa
 }
 
 fn render_solitaire_game<R: Rng + Sized>(
-    rng: &mut R,
+    _rng: &mut R,
     spec: SolitaireSpec,
 ) -> Result<RenderableGame> {
     let button_responses = ButtonResponses::default();
@@ -884,7 +881,7 @@ fn render_solitaire_game<R: Rng + Sized>(
 fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<RenderableGame> {
     let (w, h) = spec.grid_dimensions;
 
-    let grid_cell_size = (next_power_of_2(w as _), next_power_of_2(h as _));
+    let grid_cell_size = (next_power_of_2(w as _) as u8, next_power_of_2(h as _) as u8);
 
     debug_assert!(spec.entity_animacies.len() == spec.entity_controls.len());
 
@@ -918,10 +915,18 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
         varieties,
     };
 
+    let custom_consts = format!(
+        "
+    pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
+    pub const GRID_CELL_SIZE: (u8, u8) = ({}, {});
+    ",
+        w, h, grid_cell_size.0, grid_cell_size.1
+    );
+
     let game_state_impl = GameStateImpl {
         entity_count: 256,
         entity_piece_count: 1,
-        custom_consts: format!("pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});\n", w, h),
+        custom_consts,
         initial_state,
         custom_methods: "
         pub fn find_nearest_empty_pos(
@@ -1140,14 +1145,6 @@ fn action_to_button_responses(action: Action) -> String {
             .to_string(),
     }
 }
-const STATE_PREDICATE_LENGTH_UPPER_BOUND: usize =
-    (SCREEN_WIDTH / 2) //Average amount of nodes pe expression
-    * (
-        5 //"nor()".len()
-        + SECTION_PREDICATE_LENGTH_UPPER_BOUND
-    )
-    + 14 //ELSE_IF.len() - 6
-    ;
 
 #[allow(unused_macros)]
 macro_rules! IF {
@@ -1170,146 +1167,6 @@ macro_rules! ELSE {
     };
 }
 
-//TODO could be tighter
-const STATE_MUTATION_LENGTH_UPPER_BOUND: usize = SCREEN_WIDTH * 512;
-
-struct Mutation {
-    pub start: usize,
-    pub one_past_end: usize,
-    pub transform: PixelTransform,
-}
-
-impl fmt::Display for Mutation {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let Mutation {
-            start,
-            one_past_end,
-            transform,
-        } = *self;
-
-        write!(
-            f,
-            "for i in ({}..{}).rev() {{
-                let n = match buffer[i] {{
-                BLUE => {},
-                GREEN => {},
-                RED => {},
-                YELLOW => {},
-                PURPLE => {},
-                GREY => {},
-                WHITE => {},
-                BLACK => {},
-                _ => 0
-            }};
-
-            add_n_to_buffer(&mut buffer[{0}..{1}], n);
-        //}}
-        ",
-            start,
-            one_past_end,
-            u32::from(transform[usize::from(Blue)]),
-            u32::from(transform[usize::from(Green)]),
-            u32::from(transform[usize::from(Red)]),
-            u32::from(transform[usize::from(Yellow)]),
-            u32::from(transform[usize::from(Purple)]),
-            u32::from(transform[usize::from(Grey)]),
-            u32::from(transform[usize::from(White)]),
-            u32::from(transform[usize::from(Black)]),
-        )?;
-
-        Ok(())
-    }
-}
-
-const MAXIMUM_U32_CHAR_LENGTH: usize = 10;
-
-const COLOUR_COUNT: usize = 8;
-
-type PixelTransform = [u32; COLOUR_COUNT];
-
-fn generate_state_mutation<R: Rng + Sized>(rng: &mut R) -> Mutation {
-    let start = rng.gen_range(0, SCREEN_WIDTH);
-    let one_past_end = rng.gen_range(start, SCREEN_WIDTH);
-
-    Mutation {
-        start,
-        one_past_end,
-        transform: generate_pixel_transform(rng),
-    }
-}
-
-fn generate_pixel_transform<R: Rng + Sized>(rng: &mut R) -> PixelTransform {
-    let mut result = [0; COLOUR_COUNT];
-
-    for i in 0..COLOUR_COUNT {
-        result[i] = rng.gen_range(0, SCREEN_WIDTH as u32);
-    }
-
-    result
-}
-
-struct StatePredicate(Vec<Option<SectionPredicate>>);
-
-fn generate_state_predicate<R: Rng + Sized>(rng: &mut R) -> StatePredicate {
-    let section_predicates = generate_section_predicates(rng);
-
-    // Insert up to twice the current nodes worth of blanks,
-    // so all possible combinations are possible
-    let max_nodes = next_power_of_2(section_predicates.len()) * 2;
-
-    let mut result = vec![None; max_nodes];
-
-    debug_assert!(section_predicates.len() <= max_nodes);
-
-    for s in section_predicates.into_iter() {
-        let mut index = rng.gen_range(0, max_nodes);
-
-        loop {
-            if result[index].is_none() {
-                result[index] = Some(s);
-                break;
-            }
-
-            index += 1;
-            index &= max_nodes - 1;
-        }
-    }
-
-    StatePredicate(result)
-}
-
-impl fmt::Display for StatePredicate {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut strings: Vec<String> = Vec::with_capacity(self.0.len() / 2);
-        for nodes in self.0.chunks(2) {
-            //TODO evaluate whether the default to false here skews things.
-            strings.push(match (nodes[0], nodes[1]) {
-                (Some(p1), Some(p2)) => format!("nor({}, {})", p1, p2),
-                (Some(p), None) | (None, Some(p)) => format!("{}", p),
-                (None, None) => "false".to_string(),
-            });
-        }
-
-        while strings.len() > 1 {
-            let new_len = strings.len() / 2;
-            for i in 0..new_len {
-                strings[i] = format!("nor({}, {})", strings[2 * i], strings[2 * i + 1]);
-            }
-
-            unsafe { strings.set_len(new_len) };
-        }
-
-        let result = strings.pop();
-
-        match result {
-            Some(p) => write!(f, "{}", p).unwrap(),
-            None => write!(f, "false").unwrap(),
-        };
-
-        Ok(())
-    }
-}
-
 // https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 fn next_power_of_2(mut x: usize) -> usize {
     //The basic idea here is fill in all the bits below the highest set bit
@@ -1326,80 +1183,4 @@ fn next_power_of_2(mut x: usize) -> usize {
     x |= x >> 16;
     x |= x >> 32;
     x.wrapping_add(1)
-}
-
-#[derive(Copy, Clone)]
-struct SectionPredicate(usize, [bool; COLOUR_COUNT]);
-
-const SECTION_PREDICATE_LENGTH_UPPER_BOUND: usize =
-    15 // "match buffer[{}] {{ ".len() - 4
-    + MAXIMUM_U32_CHAR_LENGTH
-    + 5 //"false".len()
-    + 6 // "{} => {}, ".len() - 4
-    + 13//"_ => false, }}".len() - 1
-    ;
-impl fmt::Display for SectionPredicate {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let &SectionPredicate(index, results) = self;
-        write!(f, "match buffer[{}] {{ ", index)?;
-
-        for i in 0..COLOUR_COUNT {
-            write!(
-                f,
-                "{} => {}, ",
-                u32::from(Colour::from(i)),
-                //Theoretically Display for bools could change
-                if results[i] { "true" } else { "false" }
-            )?;
-        }
-
-        write!(f, "_ => false, }}")?;
-
-        Ok(())
-    }
-}
-
-fn generate_section_predicates<R: Rng + Sized>(rng: &mut R) -> Vec<SectionPredicate> {
-    let state_subset_size = rng.gen_range(0, SCREEN_WIDTH / 8);
-    //we don't want duplicates.
-    let mut map = HashMap::with_capacity(state_subset_size);
-
-    //Apparently due to a Robert Floyd.
-    //see https://stackoverflow.com/a/2394292/4496839
-    for j in 1..state_subset_size {
-        let current_index = rng.gen_range(0, j);
-        if map.contains_key(&current_index) {
-            map.insert(j, generate_section_predicate(rng, j));
-        } else {
-            map.insert(
-                current_index,
-                generate_section_predicate(rng, current_index),
-            );
-        }
-    }
-
-    let mut result: Vec<SectionPredicate> = map.drain().map(|(_, p)| p).collect();
-    //We want a consistent order so the result is determined only by the RNG.
-    result.sort_by(|&SectionPredicate(i1, _), &SectionPredicate(i2, _)| i1.cmp(&i2));
-
-    //But we don't want the order to be the same every time.
-    rng.shuffle(&mut result);
-
-    result
-}
-
-fn generate_section_predicate<R: Rng + Sized>(rng: &mut R, state_index: usize) -> SectionPredicate {
-    SectionPredicate(
-        state_index,
-        [
-            rng.gen(),
-            rng.gen(),
-            rng.gen(),
-            rng.gen(),
-            rng.gen(),
-            rng.gen(),
-            rng.gen(),
-            rng.gen(),
-        ],
-    )
 }
