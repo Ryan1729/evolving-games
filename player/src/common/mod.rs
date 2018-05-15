@@ -1,6 +1,6 @@
 pub mod rendering;
-pub use rendering::Framebuffer;
 pub use rendering::draw_winning_screen;
+pub use rendering::Framebuffer;
 
 pub mod inner_common;
 pub use inner_common::*;
@@ -30,9 +30,16 @@ impl State {
 }
 
 #[derive(Clone, Copy, Default, Debug)]
+pub struct MouseButton {
+    pub released: Option<(u8, u8)>,
+    pub pressed: Option<(u8, u8)>,
+}
+
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Input {
     pub gamepad: Button::Ty,
     pub previous_gamepad: Button::Ty,
+    pub left: MouseButton,
 }
 
 impl Input {

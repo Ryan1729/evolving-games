@@ -9,11 +9,14 @@ extern crate bitflags;
 extern crate stdweb;
 
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::error::Error;
+use std::rc::Rc;
 
+use stdweb::web::event::{
+    IEvent, IKeyboardEvent, KeyDownEvent, KeyUpEvent, KeyboardLocation,
+    MouseButton as MouseButtonKind,
+};
 use stdweb::web::{self, Element, IElement, IEventTarget, INode, INonElementParentNode};
-use stdweb::web::event::{IEvent, IKeyboardEvent, KeyDownEvent, KeyUpEvent, KeyboardLocation};
 
 use stdweb::{UnsafeTypedArray, Value};
 
@@ -61,7 +64,7 @@ fn setup_webgl(canvas: &Element) -> Value {
 
     fn ortho(left: f64, right: f64, bottom: f64, top: f64) -> Vec<f64> {
         let mut m = vec![
-            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
         ];
 
         m[0 * 4 + 0] = 2.0 / (right - left);
@@ -353,6 +356,20 @@ impl State {
     pub fn release(&mut self, button: Button::Ty) {
         self.input.gamepad.remove(button);
     }
+
+    pub fn mouse_down(&mut self, side: MouseButtonKind, coords: (u8, u8)) {
+        match side {
+            MouseButtonKind::Left => self.input.left.pressed = Some(coords),
+            _ => {}
+        }
+    }
+
+    pub fn mouse_up(&mut self, side: MouseButtonKind, coords: (u8, u8)) {
+        match side {
+            MouseButtonKind::Left => self.input.left.released = Some(coords),
+            _ => {}
+        }
+    }
 }
 
 fn emulate_for_a_single_frame(pinky: Rc<RefCell<PinkyWeb>>) {
@@ -413,6 +430,13 @@ fn hide(id: &str) {
 fn support_input(pinky: Rc<RefCell<PinkyWeb>>) {
     web::window().add_event_listener(enclose!( [pinky] move |event: KeyDownEvent| {
         let handled = pinky.borrow_mut().on_key( &event.key(), event.location(), true );
+        if handled {
+            event.prevent_default();
+        }
+    }));
+
+    web::window().add_event_listener(enclose!( [pinky] move |event: KeyUpEvent| {
+        let handled = pinky.borrow_mut().on_key( &event.key(), event.location(), false );
         if handled {
             event.prevent_default();
         }
