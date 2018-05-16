@@ -463,31 +463,3 @@ impl Appearance {
         }
     }
 }
-
-impl Into<Colour> for Appearance {
-    fn into(self) -> Colour {
-        let Appearance(n) = self;
-        match n & 0b111 {
-            0 => Blue,
-            1 => Green,
-            2 => Red,
-            3 => Yellow,
-            4 => Purple,
-            5 => Grey,
-            6 => White,
-            7 => Black,
-            _ => Grey,
-        }
-    }
-}
-
-impl From<Appearance> for Shape {
-    fn from(Appearance(n): Appearance) -> Self {
-        match n & 0b11000 {
-            0b01000 => FilledRectangle,
-            0b10000 => Circle,
-            0b11000 => FilledCircle,
-            _ => Rectangle,
-        }
-    }
-}

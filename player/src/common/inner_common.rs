@@ -24,21 +24,3 @@ pub mod Component {
 }
 
 pub type Position = (u8, u8);
-
-#[derive(Clone, Copy, Debug)]
-pub struct Appearance(pub u8);
-
-impl Default for Appearance {
-    fn default() -> Self {
-        Appearance(EMPTY_APPEARANCE)
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum Shape {
-    Rectangle,
-    FilledRectangle,
-    Circle,
-    FilledCircle,
-}
-pub use Shape::*;

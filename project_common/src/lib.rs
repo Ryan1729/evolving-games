@@ -31,6 +31,8 @@ pub enum Colour {
 }
 pub use Colour::*;
 
+pub const COLOUR_COUNT: usize = 8;
+
 impl From<Colour> for u32 {
     fn from(c: Colour) -> Self {
         match c {
@@ -89,6 +91,75 @@ impl From<usize> for Colour {
             6 => White,
             7 => Black,
             _ => Grey,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Appearance(pub u8);
+
+impl Default for Appearance {
+    fn default() -> Self {
+        Appearance(EMPTY_APPEARANCE)
+    }
+}
+
+impl Into<Colour> for Appearance {
+    fn into(self) -> Colour {
+        let Appearance(n) = self;
+        match n & 0b111 {
+            0 => Blue,
+            1 => Green,
+            2 => Red,
+            3 => Yellow,
+            4 => Purple,
+            5 => Grey,
+            6 => White,
+            7 => Black,
+            _ => Grey,
+        }
+    }
+}
+
+impl From<Appearance> for Shape {
+    fn from(Appearance(n): Appearance) -> Self {
+        match n & 0b11000 {
+            0b01000 => FilledRectangle,
+            0b10000 => Circle,
+            0b11000 => FilledCircle,
+            _ => Rectangle,
+        }
+    }
+}
+
+use std::ops::BitOr;
+
+impl BitOr for Appearance {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self {
+        Appearance(self.0 | rhs.0)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Shape {
+    Rectangle,
+    FilledRectangle,
+    Circle,
+    FilledCircle,
+}
+pub use Shape::*;
+
+pub const SHAPE_COUNT: usize = 8;
+
+impl From<usize> for Shape {
+    fn from(n: usize) -> Self {
+        match n {
+            0 => FilledRectangle,
+            1 => Circle,
+            2 => FilledCircle,
+            _ => Rectangle,
         }
     }
 }

@@ -454,8 +454,9 @@ struct RenderableGame {
 #[derive(Default)]
 struct InitialState {
     animacies: Vec<EntityAnimacy>,
-    positions: Vec<(u8, u8)>,
-    appearances: Vec<u8>,
+    positions: Vec<Vec<(u8, u8)>>,
+    sizes: Vec<Vec<(u8, u8)>>,
+    appearances: Vec<Vec<u8>>,
     varieties: Vec<u8>,
 }
 
@@ -473,6 +474,7 @@ impl fmt::Display for InitialState {
         let InitialState {
             ref animacies,
             ref positions,
+            ref sizes,
             ref appearances,
             ref varieties,
         } = *self;
@@ -482,15 +484,23 @@ impl fmt::Display for InitialState {
                 && appearances.len() == varieties.len()
         );
 
+        let as_tuple = |(x, y), f| f(format!("({}, {})", x, y));
+
         for i in 0..positions.len() {
             write!(
                 f,
                 "    entities[{}] = {};
-    positions[{0}] = ({}, {});
+    positions[{0}] = [{}];
+    sizes[{0}] = [{}];
     appearances[{0}] = Appearance({});
     varieties[{0}] = {};
 ",
-                i, animacies[i], positions[i].0, positions[i].1, appearances[i], varieties[i],
+                i,
+                animacies[i],
+                positions[i].iter().format_with(", ", as_tuple),
+                sizes[i].iter().format_with(", ", as_tuple),
+                appearances[i],
+                varieties[i],
             )?;
         }
 
@@ -817,8 +827,49 @@ fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGa
     result.map(RenderableGame::render)
 }
 
+struct CardAppearance {
+    positions: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT],
+    sizes: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT],
+    appearances: [u8; SOLITAIRE_ENTITY_PIECE_COUNT],
+}
+
+fn generate_solitaire_card_appearance<R: Rng + Sized>(
+    rng: &mut R,
+    (x, y): (u8, u8),
+) -> CardAppearance {
+    //TODO design more cards
+
+    let positions = Default::default();
+    let sizes = Default::default();
+    let appearances = Default::default();
+
+    const SPACING: u8 = 2;
+
+    let mut i = 0;
+
+    positions[i] = (x, y);
+    sizes[i] = (card::WIDTH, card::HEIGHT);
+    appearances[i] = Appearance::from(Colour::from(rng.gen_range(0, COLOUR_COUNT)))
+        | Appearance::from(FilledRectangle);
+
+    i += 1;
+
+    positions[i] = (x + SPACING, y + SPACING);
+    sizes[i] = (card::WIDTH - (SPACING * 2), card::WIDTH - (SPACING * 2));
+    appearances[i] = Appearance::from(Colour::from(rng.gen_range(0, COLOUR_COUNT)))
+        | Appearance::from(Shape::from(rng.gen_range(0, SHAPE_COUNT)));
+
+    CardAppearance {
+        positions,
+        sizes,
+        appearances,
+    }
+}
+
+const SOLITAIRE_ENTITY_PIECE_COUNT: usize = 32;
+
 fn render_solitaire_game<R: Rng + Sized>(
-    _rng: &mut R,
+    rng: &mut R,
     spec: SolitaireSpec,
 ) -> Result<RenderableGame> {
     let button_responses = ButtonResponses::default();
@@ -833,8 +884,9 @@ fn render_solitaire_game<R: Rng + Sized>(
     let capacity = minimum_card_count as usize;
 
     let mut animacies: Vec<EntityAnimacy> = Vec::with_capacity(capacity);
-    let mut positions: Vec<(u8, u8)> = Vec::with_capacity(capacity);
-    let mut appearances: Vec<u8> = Vec::with_capacity(capacity);
+    let mut positions: Vec<[(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT]> = Vec::with_capacity(capacity);
+    let mut appearances: Vec<[u8; SOLITAIRE_ENTITY_PIECE_COUNT]> = Vec::with_capacity(capacity);
+    let mut sizes: Vec<[(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT]> = Vec::with_capacity(capacity);
     let mut varieties: Vec<u8> = Vec::with_capacity(capacity);
 
     let (w, h) = spec.grid_dimensions;
@@ -844,14 +896,17 @@ fn render_solitaire_game<R: Rng + Sized>(
 
         let (x, y) = (i % w, i / w);
 
-        let pos = (
+        let base_pos = (
             x * (card::WIDTH + card::SPACING) + card::SPACING,
             y * (card::HEIGHT / 2),
         );
 
-        positions.push(pos);
+        let card_appearance = generate_solitaire_card_appearance(rng, base_pos);
 
-        appearances.push(i);
+        positions.push(card_appearance.positions);
+        sizes.push(card_appearance.sizes);
+        appearances.push(card_appearance.appearances);
+
         varieties.push(i);
     }
 
@@ -864,7 +919,7 @@ fn render_solitaire_game<R: Rng + Sized>(
 
     let game_state_impl = GameStateImpl {
         entity_count: 256,
-        entity_piece_count: 32,
+        entity_piece_count: SOLITAIRE_ENTITY_PIECE_COUNT,
         custom_consts: format!("pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});\n", w, h),
         initial_state,
         ..Default::default()
