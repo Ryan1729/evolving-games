@@ -456,7 +456,7 @@ struct InitialState {
     animacies: Vec<EntityAnimacy>,
     positions: Vec<Vec<(u8, u8)>>,
     sizes: Vec<Vec<(u8, u8)>>,
-    appearances: Vec<Vec<u8>>,
+    appearances: Vec<Vec<Appearance>>,
     varieties: Vec<u8>,
 }
 
@@ -467,6 +467,35 @@ struct GameStateImpl {
     custom_consts: String,
     initial_state: InitialState,
     custom_methods: String,
+}
+
+fn format<T: fmt::Display>(t: T) -> String {
+    format!("{}", t)
+}
+
+fn format_as_tuple((x, y): (u8, u8)) -> String {
+    format!("({}, {})", x, y)
+}
+
+fn format_as_array<T: Copy, F>(pairs: &Vec<T>, mut format: F) -> String
+where
+    F: FnMut(T) -> String,
+{
+    let mut result = String::new();
+
+    result.push('[');
+
+    for pair in pairs.iter() {
+        let string = format(*pair);
+        result.push_str(&string);
+
+        result.push(',');
+        result.push(' ');
+    }
+
+    result.push(']');
+
+    result
 }
 
 impl fmt::Display for InitialState {
@@ -480,26 +509,25 @@ impl fmt::Display for InitialState {
         } = *self;
 
         debug_assert!(
-            animacies.len() == positions.len() && positions.len() == appearances.len()
+            animacies.len() == positions.len() && positions.len() == sizes.len()
+                && sizes.len() == appearances.len()
                 && appearances.len() == varieties.len()
         );
-
-        let as_tuple = |(x, y), f| f(format!("({}, {})", x, y));
 
         for i in 0..positions.len() {
             write!(
                 f,
                 "    entities[{}] = {};
-    positions[{0}] = [{}];
-    sizes[{0}] = [{}];
-    appearances[{0}] = Appearance({});
+    positions[{0}] = {};
+    sizes[{0}] = {};
+    appearances[{0}] = {};
     varieties[{0}] = {};
 ",
                 i,
                 animacies[i],
-                positions[i].iter().format_with(", ", as_tuple),
-                sizes[i].iter().format_with(", ", as_tuple),
-                appearances[i],
+                format_as_array(&positions[i], format_as_tuple),
+                format_as_array(&sizes[i], format_as_tuple),
+                format_as_array(&appearances[i], format),
                 varieties[i],
             )?;
         }
@@ -830,7 +858,7 @@ fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGa
 struct CardAppearance {
     positions: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT],
     sizes: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT],
-    appearances: [u8; SOLITAIRE_ENTITY_PIECE_COUNT],
+    appearances: [Appearance; SOLITAIRE_ENTITY_PIECE_COUNT],
 }
 
 fn generate_solitaire_card_appearance<R: Rng + Sized>(
@@ -839,9 +867,9 @@ fn generate_solitaire_card_appearance<R: Rng + Sized>(
 ) -> CardAppearance {
     //TODO design more cards
 
-    let positions = Default::default();
-    let sizes = Default::default();
-    let appearances = Default::default();
+    let mut positions: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT] = Default::default();
+    let mut sizes: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT] = Default::default();
+    let mut appearances: [Appearance; SOLITAIRE_ENTITY_PIECE_COUNT] = Default::default();
 
     const SPACING: u8 = 2;
 
@@ -849,15 +877,15 @@ fn generate_solitaire_card_appearance<R: Rng + Sized>(
 
     positions[i] = (x, y);
     sizes[i] = (card::WIDTH, card::HEIGHT);
-    appearances[i] = Appearance::from(Colour::from(rng.gen_range(0, COLOUR_COUNT)))
-        | Appearance::from(FilledRectangle);
+    appearances[i] =
+        Appearance::from(Colour::from(rng.gen_range(0, COLOUR_COUNT))) | FilledRectangle.into();
 
     i += 1;
 
     positions[i] = (x + SPACING, y + SPACING);
     sizes[i] = (card::WIDTH - (SPACING * 2), card::WIDTH - (SPACING * 2));
     appearances[i] = Appearance::from(Colour::from(rng.gen_range(0, COLOUR_COUNT)))
-        | Appearance::from(Shape::from(rng.gen_range(0, SHAPE_COUNT)));
+        | Shape::from(rng.gen_range(0, SHAPE_COUNT)).into();
 
     CardAppearance {
         positions,
@@ -884,9 +912,9 @@ fn render_solitaire_game<R: Rng + Sized>(
     let capacity = minimum_card_count as usize;
 
     let mut animacies: Vec<EntityAnimacy> = Vec::with_capacity(capacity);
-    let mut positions: Vec<[(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT]> = Vec::with_capacity(capacity);
-    let mut appearances: Vec<[u8; SOLITAIRE_ENTITY_PIECE_COUNT]> = Vec::with_capacity(capacity);
-    let mut sizes: Vec<[(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT]> = Vec::with_capacity(capacity);
+    let mut positions: Vec<Vec<(u8, u8)>> = Vec::with_capacity(capacity);
+    let mut appearances: Vec<Vec<Appearance>> = Vec::with_capacity(capacity);
+    let mut sizes: Vec<Vec<(u8, u8)>> = Vec::with_capacity(capacity);
     let mut varieties: Vec<u8> = Vec::with_capacity(capacity);
 
     let (w, h) = spec.grid_dimensions;
@@ -903,9 +931,9 @@ fn render_solitaire_game<R: Rng + Sized>(
 
         let card_appearance = generate_solitaire_card_appearance(rng, base_pos);
 
-        positions.push(card_appearance.positions);
-        sizes.push(card_appearance.sizes);
-        appearances.push(card_appearance.appearances);
+        positions.push(card_appearance.positions.to_vec());
+        sizes.push(card_appearance.sizes.to_vec());
+        appearances.push(card_appearance.appearances.to_vec());
 
         varieties.push(i);
     }
@@ -913,6 +941,7 @@ fn render_solitaire_game<R: Rng + Sized>(
     let initial_state = InitialState {
         animacies,
         positions,
+        sizes,
         appearances,
         varieties,
     };
@@ -949,9 +978,9 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
     let mut input_responders = Vec::with_capacity(entity_type_count);
 
     for i in 0..entity_type_count {
-        appearances.push(rng.gen::<u8>().saturating_add(1));
+        appearances.push(vec![Appearance(rng.gen::<u8>().saturating_add(1))]);
 
-        positions.push((rng.gen_range(0, w), rng.gen_range(0, h)));
+        positions.push(vec![(rng.gen_range(0, w), rng.gen_range(0, h))]);
 
         varieties.push(i as Variety);
 
@@ -968,6 +997,7 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
         positions,
         appearances,
         varieties,
+        ..Default::default()
     };
 
     let custom_consts = format!(

@@ -104,9 +104,16 @@ impl Default for Appearance {
     }
 }
 
-impl Into<Colour> for Appearance {
-    fn into(self) -> Colour {
-        let Appearance(n) = self;
+use std::fmt;
+
+impl fmt::Display for Appearance {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Appearance({})", self.0)
+    }
+}
+
+impl From<Appearance> for Colour {
+    fn from(Appearance(n): Appearance) -> Self {
         match n & 0b111 {
             0 => Blue,
             1 => Green,
@@ -121,6 +128,21 @@ impl Into<Colour> for Appearance {
     }
 }
 
+impl From<Colour> for Appearance {
+    fn from(c: Colour) -> Self {
+        Appearance(match c {
+            Blue => 0,
+            Green => 1,
+            Red => 2,
+            Yellow => 3,
+            Purple => 4,
+            Grey => 5,
+            White => 6,
+            Black => 7,
+        })
+    }
+}
+
 impl From<Appearance> for Shape {
     fn from(Appearance(n): Appearance) -> Self {
         match n & 0b11000 {
@@ -129,6 +151,17 @@ impl From<Appearance> for Shape {
             0b11000 => FilledCircle,
             _ => Rectangle,
         }
+    }
+}
+
+impl From<Shape> for Appearance {
+    fn from(s: Shape) -> Self {
+        Appearance(match s {
+            FilledRectangle => 0b01000,
+            Circle => 0b10000,
+            FilledCircle => 0b11000,
+            Rectangle => 0,
+        })
     }
 }
 
