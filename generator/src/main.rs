@@ -860,6 +860,104 @@ fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGa
     result.map(RenderableGame::render)
 }
 
+struct SevenSegmentAppearance {
+    positions: [(u8, u8); 7],
+    sizes: [(u8, u8); 7],
+    appearances: [Appearance; 7],
+}
+
+//seven segment spec format is 0b_gfedcba
+//   -a-
+//   f b
+//   -g-
+//   e c
+//   -d-
+
+fn digit_to_segment_spec(digit: u8) -> u8 {
+    match digit & 0b1111 {
+        0 => 0b0111111,
+        1 => 0b0000110,
+        2 => 0b1011011,
+        3 => 0b1001111,
+        4 => 0b1100110,
+        5 => 0b1101101,
+        6 => 0b1111101,
+        7 => 0b0000111,
+        8 => 0b1111111,
+        9 => 0b1101111,
+        10 => 0b1110111,
+        11 => 0b1111100,
+        12 => 0b0111001,
+        13 => 0b1011110,
+        14 => 0b1111001,
+        15 => 0b1110001,
+        _ => 0,
+    }
+}
+
+fn render_seven_segment(
+    digit: u8,
+    (x, y): (u8, u8),
+    (w, h): (u8, u8),
+    colour: Colour,
+) -> SevenSegmentAppearance {
+    let mut positions = [Default::default(); 7];
+    let mut sizes = [Default::default(); 7];
+    let appearances = [Appearance::from(colour) | Appearance::from(FilledRectangle); 7];
+
+    let spec: u8 = digit_to_segment_spec(digit);
+
+    let short_width = 1;
+    let long_width = w - (short_width * 2);
+
+    let short_height = 1;
+    let long_height = (h / 2) - (short_height * 2);
+
+    if spec & (1 << 0) == 1 << 0 {
+        positions[0] = (x + short_width, y);
+        sizes[0] = (long_width, short_height);
+    }
+
+    if spec & (1 << 1) == 1 << 1 {
+        positions[1] = (x + long_width + short_width, y + short_height);
+        sizes[1] = (short_width, long_height);
+    }
+
+    if spec & (1 << 2) == 1 << 2 {
+        positions[2] = (
+            x + long_width + short_width,
+            y + (short_height * 2) + long_height,
+        );
+        sizes[2] = (short_width, long_height);
+    }
+
+    if spec & (1 << 3) == 1 << 3 {
+        positions[3] = (x + short_width, y + (short_height * 2) + (long_height * 2));
+        sizes[3] = (long_width, short_height);
+    }
+
+    if spec & (1 << 4) == 1 << 4 {
+        positions[4] = (x, y + (short_height * 2) + long_height);
+        sizes[4] = (short_width, long_height);
+    }
+
+    if spec & (1 << 5) == 1 << 5 {
+        positions[5] = (x, y + short_height);
+        sizes[5] = (short_width, long_height);
+    }
+
+    if spec & (1 << 6) == 1 << 6 {
+        positions[6] = (x + short_width, y + short_height + long_height);
+        sizes[6] = (long_width, short_height);
+    }
+
+    SevenSegmentAppearance {
+        positions,
+        sizes,
+        appearances,
+    }
+}
+
 struct CardAppearance {
     positions: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT],
     sizes: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT],
@@ -887,10 +985,25 @@ fn generate_solitaire_card_appearance<R: Rng + Sized>(
 
     i += 1;
 
-    positions[i] = (x + SPACING, y + SPACING);
-    sizes[i] = (card::WIDTH - (SPACING * 2), card::WIDTH - (SPACING * 2));
-    appearances[i] = Appearance::from(Colour::from(rng.gen_range(0, COLOUR_COUNT)))
-        | Shape::from(rng.gen_range(0, SHAPE_COUNT)).into();
+    let digit = rng.gen_range(0, 16);
+
+    let ssa: SevenSegmentAppearance = render_seven_segment(
+        digit,
+        (x + SPACING, y + SPACING),
+        (
+            (card::WIDTH - (SPACING * 2)) / 2,
+            (card::HEIGHT - (SPACING * 2)) / 2,
+        ),
+        Colour::from(rng.gen_range(0, COLOUR_COUNT)),
+    );
+
+    for ssa_index in 0..7 {
+        positions[i] = ssa.positions[ssa_index];
+        sizes[i] = ssa.sizes[ssa_index];
+        appearances[i] = ssa.appearances[ssa_index];
+
+        i += 1;
+    }
 
     CardAppearance {
         positions,
