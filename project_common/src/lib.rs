@@ -202,8 +202,8 @@ pub type Variety = u8;
 pub mod card {
     //in pixels
     pub const SPACING: u8 = 2;
-    pub const WIDTH: u8 = 20;
-    pub const HEIGHT: u8 = 28;
+    pub const WIDTH: u8 = 25;
+    pub const HEIGHT: u8 = 35;
 }
 
 pub const EMPTY_APPEARANCE: u8 = 255;
