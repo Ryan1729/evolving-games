@@ -1,6 +1,7 @@
 pub mod rendering;
-pub use rendering::Framebuffer;
 pub use rendering::draw_winning_screen;
+pub use rendering::render;
+pub use rendering::Framebuffer;
 
 pub mod inner_common;
 pub use inner_common::*;

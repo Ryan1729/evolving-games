@@ -564,6 +564,7 @@ impl GameState {{
         GameState {{
             entities,
             positions,
+            sizes,
             appearances,
             varieties,
             player_controlling_variety,
@@ -636,23 +637,27 @@ impl RenderableGame {
 
         framebuffer.clear();
 
-        for i in 0..GameState::ENTITY_COUNT {{
-            if state.entities[i].is_empty() {{
+        for entity in 0..GameState::ENTITY_COUNT {{
+            if state.entities[entity].is_empty() {{
                 continue;
             }}
 
             for i in 0..GameState::ENTITY_PIECE_COUNT {{
-                let (x, y) = state.positions[i];
-                let appearance = &mut state.appearances[i];
+                let (x, y) = state.positions[entity][i];
+                let appearance = &state.appearances[entity][i];
+                let (w, h) = state.sizes[entity][i];
 
-                appearance.render(framebuffer, (x as usize, y as usize), ({}, {}));
+                render(
+                    appearance,
+                    framebuffer,
+                    (x as usize, y as usize),
+                    (w as usize, h as usize)
+                );
             }}
         }}
     }}
     ",
             InputResponders(input_responders),
-            card::WIDTH,
-            card::HEIGHT,
         );
 
         RenderedGame {
@@ -699,7 +704,7 @@ impl RenderableGame {
             let (x, y) = state.positions[i];
             let appearance = &mut state.appearances[i];
 
-            appearance.render(framebuffer, (x as usize, y as usize), ({}, {}));
+            render(appearance, framebuffer, (x as usize, y as usize), ({}, {}));
         }}
     }}
     ",

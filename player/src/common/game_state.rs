@@ -159,6 +159,7 @@ impl GameState {
         GameState {
             entities,
             positions,
+            sizes,
             appearances,
             varieties,
             player_controlling_variety,
