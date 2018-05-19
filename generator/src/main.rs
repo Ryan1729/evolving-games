@@ -1061,6 +1061,25 @@ fn render_solitaire_game<R: Rng + Sized>(
 
     let (w, h) = spec.grid_dimensions;
 
+    for i in 0..minimum_card_count {
+        animacies.push(Animate);
+
+        let (x, y) = (i % w, i / w);
+
+        let base_pos = (
+            x * (card::WIDTH + card::SPACING) + card::SPACING,
+            y * (card::HEIGHT / 2),
+        );
+
+        let card_appearance = generate_solitaire_card_appearance(rng, base_pos);
+
+        positions.push(card_appearance.positions.to_vec());
+        sizes.push(card_appearance.sizes.to_vec());
+        appearances.push(card_appearance.appearances.to_vec());
+
+        varieties.push(i);
+    }
+
     {
         animacies.push(Default::default());
         let mut cursor_positions: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT] = Default::default();
@@ -1079,25 +1098,6 @@ fn render_solitaire_game<R: Rng + Sized>(
         appearances.push(cursor_appearances.to_vec());
 
         varieties.push(0);
-    }
-
-    for i in 1..minimum_card_count {
-        animacies.push(Animate);
-
-        let (x, y) = (i % w, i / w);
-
-        let base_pos = (
-            x * (card::WIDTH + card::SPACING) + card::SPACING,
-            y * (card::HEIGHT / 2),
-        );
-
-        let card_appearance = generate_solitaire_card_appearance(rng, base_pos);
-
-        positions.push(card_appearance.positions.to_vec());
-        sizes.push(card_appearance.sizes.to_vec());
-        appearances.push(card_appearance.appearances.to_vec());
-
-        varieties.push(i);
     }
 
     let initial_state = InitialState {
