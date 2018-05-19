@@ -416,7 +416,7 @@ impl fmt::Display for EntityAnimacy {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let result = match *self {
             PlayerControlled => "Component::Player",
-            Inanimate => "Component::empty()",
+            Inanimate => "Component::Ty::empty()",
             Animate => "Component::Animate",
         };
 
@@ -1037,8 +1037,28 @@ fn render_solitaire_game<R: Rng + Sized>(
 
     let (w, h) = spec.grid_dimensions;
 
-    for i in 0..minimum_card_count {
+    {
         animacies.push(Default::default());
+        let mut cursor_positions: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT] = Default::default();
+        let mut cursor_sizes: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT] = Default::default();
+        let mut cursor_appearances: [Appearance; SOLITAIRE_ENTITY_PIECE_COUNT] = Default::default();
+
+        cursor_positions[0] = (
+            (SCREEN_WIDTH / 2) as u8 - (card::WIDTH / 2),
+            SCREEN_HEIGHT as u8 - card::HEIGHT,
+        );
+        cursor_sizes[0] = (card::WIDTH, card::HEIGHT);
+        cursor_appearances[0] = Appearance::from(Yellow) | Appearance::from(Rectangle);
+
+        positions.push(cursor_positions.to_vec());
+        sizes.push(cursor_sizes.to_vec());
+        appearances.push(cursor_appearances.to_vec());
+
+        varieties.push(0);
+    }
+
+    for i in 1..minimum_card_count {
+        animacies.push(Animate);
 
         let (x, y) = (i % w, i / w);
 
