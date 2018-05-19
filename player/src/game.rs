@@ -3,19 +3,19 @@
 
     fn input_responder_0(state: &mut GameState, input: Input, id: usize) {
                 if input.pressed_this_frame(Button::Left) {
-                    
+                    state . move_left ( id ) ;
                 }
 
                 if input.pressed_this_frame(Button::Right) {
-                    
+                    state . move_right ( id ) ;
                 }
 
                 if input.pressed_this_frame(Button::Up) {
-                    
+                    state . move_up ( id ) ;
                 }
 
                 if input.pressed_this_frame(Button::Down) {
-                    
+                    state . move_down ( id ) ;
                 }
 
                 if input.pressed_this_frame(Button::Select) {

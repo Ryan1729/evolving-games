@@ -467,6 +467,7 @@ struct GameStateImpl {
     custom_consts: String,
     initial_state: InitialState,
     custom_methods: String,
+    custom_types: String,
 }
 
 fn format<T: fmt::Display>(t: T) -> String {
@@ -509,7 +510,8 @@ impl fmt::Display for InitialState {
         } = *self;
 
         debug_assert!(
-            animacies.len() == positions.len() && positions.len() == sizes.len()
+            animacies.len() == positions.len()
+                && positions.len() == sizes.len()
                 && sizes.len() == appearances.len()
                 && appearances.len() == varieties.len()
         );
@@ -583,12 +585,15 @@ impl GameState {{
 
     {}
 }}
+
+{}
 ",
         gsi.entity_count,
         gsi.entity_piece_count,
         gsi.custom_consts,
         gsi.initial_state,
-        gsi.custom_methods
+        gsi.custom_methods,
+        gsi.custom_types
     )
 }
 
@@ -1014,11 +1019,30 @@ fn generate_solitaire_card_appearance<R: Rng + Sized>(
 
 const SOLITAIRE_ENTITY_PIECE_COUNT: usize = 32;
 
+macro_rules! code_string {
+    ($($token_trees:tt)*) => {
+        stringify!($($token_trees)*).to_owned()
+    }
+}
+
 fn render_solitaire_game<R: Rng + Sized>(
     rng: &mut R,
     spec: SolitaireSpec,
 ) -> Result<RenderableGame> {
-    let button_responses = ButtonResponses::default();
+    let mut button_responses = ButtonResponses::default();
+
+    button_responses.left = code_string!(
+        state.move_left(id);
+    );
+    button_responses.right = code_string!{
+        state.move_right(id);
+    };
+    button_responses.up = code_string!{
+        state.move_up(id);
+    };
+    button_responses.down = code_string!{
+        state.move_down(id);
+    };
 
     let responder = InputResponder {
         button_responses,
@@ -1084,11 +1108,70 @@ fn render_solitaire_game<R: Rng + Sized>(
         varieties,
     };
 
+    let custom_methods = code_string!{
+        pub fn move_left(&mut self, id: usize) {
+            let positions = &mut self.positions[id];
+            for i in 0..positions.len() {
+                let (x, y) = screen_to_grid(positions[i]);
+                positions[i] = grid_to_screen((x - 1, y));
+            }
+        }
+
+        pub fn move_right(&mut self, id: usize) {
+            let positions = &mut self.positions[id];
+            for i in 0..positions.len() {
+                let (x, y) = screen_to_grid(positions[i]);
+                positions[i] = grid_to_screen((x + 1, y));
+            }
+        }
+
+        pub fn move_up(&mut self, id: usize) {
+            let positions = &mut self.positions[id];
+            for i in 0..positions.len() {
+                let (x, y) = screen_to_grid(positions[i]);
+                positions[i] = grid_to_screen((x, y - 1));
+            }
+        }
+
+        pub fn move_down(&mut self, id: usize) {
+            let positions = &mut self.positions[id];
+            for i in 0..positions.len() {
+                let (x, y) = screen_to_grid(positions[i]);
+                positions[i] = grid_to_screen((x, y + 1));
+            }
+        }
+    };
+
+    let custom_types = code_string!{
+        type GridPos = (GridX, GridY);
+
+        //TODO Replace these with newtypes that restrict the value to be within
+        //`GameState::GRID_DIMENSIONS`.
+        type GridX = u8;
+        type GridY = u8;
+
+        fn screen_to_grid((x, y): (u8,u8)) -> GridPos {
+            (x, y)
+        }
+
+        fn grid_to_screen((x, y): GridPos) -> (u8,u8) {
+            (x, y)
+        }
+    };
+
     let game_state_impl = GameStateImpl {
         entity_count: 256,
         entity_piece_count: SOLITAIRE_ENTITY_PIECE_COUNT,
-        custom_consts: format!("pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});\n", w, h),
+        custom_consts: format!(
+            stringify!{
+                pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
+            },
+            w,
+            h
+        ),
         initial_state,
+        custom_methods,
+        custom_types,
         ..Default::default()
     };
 
@@ -1208,6 +1291,7 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
             None
         }}"
             .to_string(),
+        ..Default::default()
     };
 
     Ok(RenderableGame {

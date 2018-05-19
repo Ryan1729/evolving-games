@@ -4,8 +4,7 @@ use inner_common::*;
 impl GameState {
     pub const ENTITY_COUNT: usize = 256;
     pub const ENTITY_PIECE_COUNT: usize = 32;
-    pub const GRID_DIMENSIONS: (u8, u8) = (7, 4);
-
+    pub const GRID_DIMENSIONS : ( u8 , u8 ) = ( 7 , 4 ) ;
 
     pub fn new() -> GameState {
         let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
@@ -176,5 +175,28 @@ impl GameState {
         None
     }
 
-    
+    pub fn move_left ( & mut self , id : usize ) {
+let positions = & mut self . positions [ id ] ; for i in 0 .. positions . len
+(  ) {
+let ( x , y ) = screen_to_grid ( positions [ i ] ) ; positions [ i ] =
+grid_to_screen ( ( x - 1 , y ) ) ; } } pub fn move_right (
+& mut self , id : usize ) {
+let positions = & mut self . positions [ id ] ; for i in 0 .. positions . len
+(  ) {
+let ( x , y ) = screen_to_grid ( positions [ i ] ) ; positions [ i ] =
+grid_to_screen ( ( x + 1 , y ) ) ; } } pub fn move_up (
+& mut self , id : usize ) {
+let positions = & mut self . positions [ id ] ; for i in 0 .. positions . len
+(  ) {
+let ( x , y ) = screen_to_grid ( positions [ i ] ) ; positions [ i ] =
+grid_to_screen ( ( x , y - 1 ) ) ; } } pub fn move_down (
+& mut self , id : usize ) {
+let positions = & mut self . positions [ id ] ; for i in 0 .. positions . len
+(  ) {
+let ( x , y ) = screen_to_grid ( positions [ i ] ) ; positions [ i ] =
+grid_to_screen ( ( x , y + 1 ) ) ; } }
 }
+
+type GridPos = ( GridX , GridY ) ; type GridX = u8 ; type GridY = u8 ; fn
+screen_to_grid ( ( x , y ) : ( u8 , u8 ) ) -> GridPos { ( x , y ) } fn
+grid_to_screen ( ( x , y ) : GridPos ) -> ( u8 , u8 ) { ( x , y ) }
