@@ -466,8 +466,7 @@ struct GameStateImpl {
     entity_piece_count: usize,
     custom_consts: String,
     initial_state: InitialState,
-    custom_methods: String,
-    custom_types: String,
+    custom_code: String,
 }
 
 fn format<T: fmt::Display>(t: T) -> String {
@@ -583,8 +582,6 @@ impl fmt::Display for GameStateImpl {
 
                 None
             }}
-
-            {}
         }}
 
         {}
@@ -593,8 +590,7 @@ impl fmt::Display for GameStateImpl {
                 self.entity_piece_count,
                 self.custom_consts,
                 self.initial_state,
-                self.custom_methods,
-                self.custom_types
+                self.custom_code,
             )?;
 
         Ok(())
@@ -1108,42 +1104,84 @@ fn render_solitaire_game<R: Rng + Sized>(
         varieties,
     };
 
-    let custom_methods = code_string!{
-        pub fn move_left(&mut self, id: usize) {
-            let positions = &mut self.positions[id];
-            for i in 0..positions.len() {
-                let (x, y) = screen_to_grid(positions[i]);
-                positions[i] = grid_to_screen((x - 1, y));
+    let custom_code = code_string!{
+        impl GameState {
+            pub fn move_left(&mut self, id: usize) {
+                GameState::move_in_direction(self, id, Direction::Left);
+            }
+
+            pub fn move_right(&mut self, id: usize) {
+                GameState::move_in_direction(self, id, Direction::Right);
+            }
+
+            pub fn move_up(&mut self, id: usize) {
+                GameState::move_in_direction(self, id, Direction::Up);
+            }
+
+            pub fn move_down(&mut self, id: usize) {
+                GameState::move_in_direction(self, id, Direction::Down);
+            }
+
+            fn move_in_direction(&mut self, id: usize, dir: Direction) {
+                let grid_pos = GameState::get_cursor_pos(id);
+
+                let new_pos = match dir {
+                    Direction::Left => {
+                        match grid_pos {
+                            GridPos::Main(x, y) => {
+                                 GridPos::Main(x - 1, y)
+                            }
+                        }
+                    },
+                    Direction::Right => {
+                        match grid_pos {
+                            GridPos::Main(x, y) => {
+                                 GridPos::Main(x + 1, y)
+                            }
+                        }
+                    },
+                    Direction::Up => {
+                        match grid_pos {
+                            GridPos::Main(x, y) => {
+                                 GridPos::Main(x, y - 1)
+                            }
+                        }
+                    },
+                    Direction::Down => {
+                        match grid_pos {
+                            GridPos::Main(x, y) => {
+                                 GridPos::Main(x, y + 1)
+                            }
+                        }
+                    },
+                };
+
+                GameState::set_cursor_pos(positions, new_pos);
+            }
+
+            fn get_cursor_pos(id: usize) -> GridPos {
+                let positions = &self.positions[id];
+
+                screen_to_grid(positions[0])
+            }
+
+            fn set_cursor_pos(id: usize, grid_pos: GridPos) {
+                let positions = &mut self.positions[id];
+
+                positions[0] = grid_to_screen(grid_pos);
             }
         }
 
-        pub fn move_right(&mut self, id: usize) {
-            let positions = &mut self.positions[id];
-            for i in 0..positions.len() {
-                let (x, y) = screen_to_grid(positions[i]);
-                positions[i] = grid_to_screen((x + 1, y));
-            }
+        enum Direction {
+            Left,
+            Right,
+            Down,
+            Up,
         }
 
-        pub fn move_up(&mut self, id: usize) {
-            let positions = &mut self.positions[id];
-            for i in 0..positions.len() {
-                let (x, y) = screen_to_grid(positions[i]);
-                positions[i] = grid_to_screen((x, y - 1));
-            }
+        enum GridPos {
+            Main(GridX, GridY)
         }
-
-        pub fn move_down(&mut self, id: usize) {
-            let positions = &mut self.positions[id];
-            for i in 0..positions.len() {
-                let (x, y) = screen_to_grid(positions[i]);
-                positions[i] = grid_to_screen((x, y + 1));
-            }
-        }
-    };
-
-    let custom_types = code_string!{
-        type GridPos = (GridX, GridY);
 
         struct GridX(u8);
         impl GridX {
@@ -1241,10 +1279,10 @@ fn render_solitaire_game<R: Rng + Sized>(
         fn screen_to_grid(screen_pos: (u8,u8)) -> GridPos {
             let (x, y) = card::screen_to_grid(screen_pos);
 
-            (GridX::new(x), GridY::new(y))
+            GridPos::Main(GridX::new(x), GridY::new(y))
         }
 
-        fn grid_to_screen((x, y): GridPos) -> (u8,u8) {
+        fn grid_to_screen(GridPos::Main(x, y): GridPos) -> (u8,u8) {
             card::grid_to_screen((x.0, y.0))
         }
     };
@@ -1260,8 +1298,7 @@ fn render_solitaire_game<R: Rng + Sized>(
             h
         ),
         initial_state,
-        custom_methods,
-        custom_types,
+        custom_code,
         ..Default::default()
     };
 
@@ -1322,67 +1359,72 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
         grid_cell_size.1
     );
 
+    let custom_code = code_string!{
+        impl GameState {
+            pub fn find_nearest_empty_pos(
+                &self,
+                start_pos: Position,
+            ) -> Option<Position> {{
+                use std::collections::{{VecDeque, HashSet}};
+                //PERF would it be faster to preallocate this?
+                //I expect the common case not to use anything close to the maximum.
+                let mut queue = VecDeque::new();
+
+                let mut full = HashSet::with_capacity(GameState::ENTITY_COUNT);
+                let mut visited = HashSet::with_capacity(GameState::ENTITY_COUNT);
+
+                //PERF it might make sense to just keep track of which slots are free all the time
+                for i in 0..GameState::ENTITY_COUNT {{
+                    if !self.entities[i].is_empty() {{
+                        full.insert(self.positions[i]);
+                    }}
+                }}
+
+                queue.push_back(start_pos);
+
+                while let Some(pos) = queue.pop_front() {{
+                    if !full.contains(&pos) {{
+                        return Some(pos)
+                    }}
+
+                    if visited.contains(&pos) {{
+                        continue;
+                    }}
+
+                    visited.insert(pos);
+
+                    //TODO we might want to figure out a heuristic on which direction to look in
+                    //first, given the start_pos. It would also prevent the empty ones always
+                    //being in a certain direction.
+
+                    if pos.0 > 0 {{
+                        queue.push_back((pos.0 - 1, pos.1));
+                    }}
+
+                    if pos.0 < GameState::GRID_DIMENSIONS.0 - 1 {{
+                        queue.push_back((pos.0 + 1, pos.1));
+                    }}
+
+                    if pos.1 > 0 {{
+                        queue.push_back((pos.0, pos.1 - 1));
+                    }}
+
+                    if pos.1 < GameState::GRID_DIMENSIONS.1 - 1 {{
+                        queue.push_back((pos.0, pos.1 + 1));
+                    }}
+                }}
+
+                None
+            }}
+        }
+    };
+
     let game_state_impl = GameStateImpl {
         entity_count: 256,
         entity_piece_count: 1,
         custom_consts,
         initial_state,
-        custom_methods: code_string!{
-        pub fn find_nearest_empty_pos(
-            &self,
-            start_pos: Position,
-        ) -> Option<Position> {{
-            use std::collections::{{VecDeque, HashSet}};
-            //PERF would it be faster to preallocate this?
-            //I expect the common case not to use anything close to the maximum.
-            let mut queue = VecDeque::new();
-
-            let mut full = HashSet::with_capacity(GameState::ENTITY_COUNT);
-            let mut visited = HashSet::with_capacity(GameState::ENTITY_COUNT);
-
-            //PERF it might make sense to just keep track of which slots are free all the time
-            for i in 0..GameState::ENTITY_COUNT {{
-                if !self.entities[i].is_empty() {{
-                    full.insert(self.positions[i]);
-                }}
-            }}
-
-            queue.push_back(start_pos);
-
-            while let Some(pos) = queue.pop_front() {{
-                if !full.contains(&pos) {{
-                    return Some(pos)
-                }}
-
-                if visited.contains(&pos) {{
-                    continue;
-                }}
-
-                visited.insert(pos);
-
-                //TODO we might want to figure out a heuristic on which direction to look in
-                //first, given the start_pos. It would also prevent the empty ones always
-                //being in a certain direction.
-
-                if pos.0 > 0 {{
-                    queue.push_back((pos.0 - 1, pos.1));
-                }}
-
-                if pos.0 < GameState::GRID_DIMENSIONS.0 - 1 {{
-                    queue.push_back((pos.0 + 1, pos.1));
-                }}
-
-                if pos.1 > 0 {{
-                    queue.push_back((pos.0, pos.1 - 1));
-                }}
-
-                if pos.1 < GameState::GRID_DIMENSIONS.1 - 1 {{
-                    queue.push_back((pos.0, pos.1 + 1));
-                }}
-            }}
-
-            None
-        }}},
+        custom_code,
         ..Default::default()
     };
 
@@ -1438,7 +1480,7 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
 
     let mut game_state_impl: GameStateImpl = Default::default();
 
-    game_state_impl.custom_methods = code_string!{
+    game_state_impl.custom_code = code_string!{
         pub fn mark_won(&mut self) {
             self.positions[0] = (1,1);
         }
