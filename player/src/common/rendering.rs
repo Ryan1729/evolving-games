@@ -1,7 +1,6 @@
-use colours::{BLACK, BLUE, GRAY, GREEN, GREY, PURPLE, RED, WHITE, YELLOW};
-use common::project_common::{colours, Colour, SCREEN_HEIGHT, SCREEN_WIDTH};
+use colours::{BLACK, BLUE, GREEN, GREY, PURPLE, RED, WHITE, YELLOW};
+use common::project_common::{Colour, SCREEN_HEIGHT, SCREEN_WIDTH};
 use inner_common::*;
-use Colour::{Black, Blue, Green, Grey, Purple, Red, White, Yellow};
 
 pub struct Framebuffer {
     pub buffer: Vec<u32>,

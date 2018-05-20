@@ -1123,7 +1123,7 @@ fn render_solitaire_game<R: Rng + Sized>(
             }
 
             fn move_in_direction(&mut self, id: usize, dir: Direction) {
-                let grid_pos = GameState::get_cursor_pos(id);
+                let grid_pos = self.get_cursor_pos(id);
 
                 let new_pos = match dir {
                     Direction::Left => {
@@ -1131,6 +1131,9 @@ fn render_solitaire_game<R: Rng + Sized>(
                             GridPos::Main(x, y) => {
                                  GridPos::Main(x - 1, y)
                             }
+                            GridPos::FoundationLeft => GridPos::FoundationLeft,
+                            GridPos::FoundationMiddle => GridPos::FoundationLeft,
+                            GridPos::FoundationRight => GridPos::FoundationMiddle,
                         }
                     },
                     Direction::Right => {
@@ -1138,6 +1141,9 @@ fn render_solitaire_game<R: Rng + Sized>(
                             GridPos::Main(x, y) => {
                                  GridPos::Main(x + 1, y)
                             }
+                            GridPos::FoundationLeft => GridPos::FoundationMiddle,
+                            GridPos::FoundationMiddle => GridPos::FoundationRight,
+                            GridPos::FoundationRight => GridPos::FoundationRight,
                         }
                     },
                     Direction::Up => {
@@ -1145,60 +1151,131 @@ fn render_solitaire_game<R: Rng + Sized>(
                             GridPos::Main(x, y) => {
                                  GridPos::Main(x, y - 1)
                             }
+                            GridPos::FoundationLeft => GridPos::Main(GridX::new(2), GridY::new(GameState::GRID_DIMENSIONS.1 - 1)),
+                            GridPos::FoundationMiddle => GridPos::Main(GridX::new(3), GridY::new(GameState::GRID_DIMENSIONS.1 - 1)),
+                            GridPos::FoundationRight => GridPos::Main(GridX::new(4), GridY::new(GameState::GRID_DIMENSIONS.1 - 1)),
                         }
                     },
                     Direction::Down => {
                         match grid_pos {
                             GridPos::Main(x, y) => {
-                                 GridPos::Main(x, y + 1)
+                                let newY = y + 1;
+
+                                if newY == y {
+                                    if x >= GridX::new(4) {
+                                        GridPos::FoundationRight
+                                    } else if x <= GridX::new(2) {
+                                        GridPos::FoundationLeft
+                                    } else {
+                                        GridPos::FoundationMiddle
+                                    }
+                                } else {
+                                    GridPos::Main(x, newY)
+                                }
                             }
+                            GridPos::FoundationLeft => GridPos::FoundationLeft,
+                            GridPos::FoundationMiddle => GridPos::FoundationMiddle,
+                            GridPos::FoundationRight => GridPos::FoundationRight,
                         }
                     },
                 };
 
-                GameState::set_cursor_pos(positions, new_pos);
+                self.set_cursor_pos(id, new_pos);
             }
 
-            fn get_cursor_pos(id: usize) -> GridPos {
+            fn get_cursor_pos(&self, id: usize) -> GridPos {
                 let positions = &self.positions[id];
+
+                if let Some(pos) = foundation::from_screen(positions[0]) {
+                    return pos;
+                }
 
                 screen_to_grid(positions[0])
             }
 
-            fn set_cursor_pos(id: usize, grid_pos: GridPos) {
+            fn set_cursor_pos(&mut self, id: usize, grid_pos: GridPos) {
                 let positions = &mut self.positions[id];
 
-                positions[0] = grid_to_screen(grid_pos);
+                match grid_pos {
+                    GridPos::Main(x, y) => {
+                        positions[0] = grid_to_screen((x, y));
+                    }
+                    GridPos::FoundationLeft => {
+                        positions[0] = foundation::LEFT;
+                    }
+                    GridPos::FoundationMiddle => {
+                        positions[0] = foundation::MIDDLE;
+                    }
+                    GridPos::FoundationRight => {
+                        positions[0] = foundation::RIGHT;
+                    }
+                }
             }
         }
 
-        enum Direction {
+        mod foundation {
+            use super::*;
+            pub const LEFT_EDGE: u8 = (2 * (card::WIDTH + card::SPACING) + card::SPACING);
+            pub const TOP_EDGE: u8 = card::HEIGHT * GameState::GRID_DIMENSIONS.1;
+
+            pub const LEFT: (u8,u8) = (
+                LEFT_EDGE,
+                TOP_EDGE
+            );
+            pub const MIDDLE: (u8,u8) = (
+                LEFT_EDGE + ((card::WIDTH + card::SPACING) + card::SPACING),
+                TOP_EDGE
+            );
+            pub const RIGHT: (u8,u8) = (
+                LEFT_EDGE + (2 * (card::WIDTH + card::SPACING) + card::SPACING),
+                TOP_EDGE
+            );
+
+            pub fn from_screen(screen_pos: (u8,u8)) -> Option<GridPos> {
+                if screen_pos == LEFT {
+                    Some(GridPos::FoundationLeft)
+                } else if screen_pos == MIDDLE {
+                    Some(GridPos::FoundationMiddle)
+                } else if screen_pos == RIGHT {
+                    Some(GridPos::FoundationRight)
+                } else {
+                    None
+                }
+            }
+        }
+
+        pub enum Direction {
             Left,
             Right,
             Down,
             Up,
         }
 
-        enum GridPos {
-            Main(GridX, GridY)
+        pub enum GridPos {
+            Main(GridX, GridY),
+            FoundationLeft,
+            FoundationMiddle,
+            FoundationRight,
         }
 
-        struct GridX(u8);
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+        pub struct GridX(u8);
         impl GridX {
             fn new(n: u8) -> Self {
-                if n > GameState::GRID_DIMENSIONS.0 {
-                    GridX(GameState::GRID_DIMENSIONS.0)
+                if n >= GameState::GRID_DIMENSIONS.0 - 1 {
+                    GridX(GameState::GRID_DIMENSIONS.0 - 1)
                 } else {
                     GridX(n)
                 }
             }
         }
 
-        struct GridY(u8);
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+        pub struct GridY(u8);
         impl GridY {
             fn new(n: u8) -> Self {
-                if n > GameState::GRID_DIMENSIONS.1 {
-                    GridY(GameState::GRID_DIMENSIONS.1)
+                if n >= GameState::GRID_DIMENSIONS.1 - 1 {
+                    GridY(GameState::GRID_DIMENSIONS.1 - 1)
                 } else {
                     GridY(n)
                 }
@@ -1282,7 +1359,7 @@ fn render_solitaire_game<R: Rng + Sized>(
             GridPos::Main(GridX::new(x), GridY::new(y))
         }
 
-        fn grid_to_screen(GridPos::Main(x, y): GridPos) -> (u8,u8) {
+        fn grid_to_screen((x, y): (GridX, GridY)) -> (u8,u8) {
             card::grid_to_screen((x.0, y.0))
         }
     };
