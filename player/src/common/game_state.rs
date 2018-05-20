@@ -202,7 +202,51 @@ let ( x , y ) = screen_to_grid ( positions [ i ] ) ; positions [ i ] =
 grid_to_screen ( ( x , y + 1 ) ) ; } }
         }
 
-        type GridPos = ( GridX , GridY ) ; type GridX = u8 ; type GridY = u8 ; fn
-screen_to_grid ( ( x , y ) : ( u8 , u8 ) ) -> GridPos { ( x , y ) } fn
-grid_to_screen ( ( x , y ) : GridPos ) -> ( u8 , u8 ) { ( x , y ) }
+        type GridPos = ( GridX , GridY ) ; struct GridX ( u8 ) ; impl GridX {
+fn new ( n : u8 ) -> Self {
+if n > GameState :: GRID_DIMENSIONS . 0 {
+GridX ( GameState :: GRID_DIMENSIONS . 0 ) } else { GridX ( n ) } } } struct
+GridY ( u8 ) ; impl GridY {
+fn new ( n : u8 ) -> Self {
+if n > GameState :: GRID_DIMENSIONS . 1 {
+GridY ( GameState :: GRID_DIMENSIONS . 1 ) } else { GridY ( n ) } } } use std
+:: ops :: Add ; impl Add < GridX > for GridX {
+type Output = GridX ; fn add ( self , other : GridX ) -> GridX {
+let result = self . 0 . saturating_add ( other . 0 ) ; GridX :: new ( result )
+} } impl Add < u8 > for GridX {
+type Output = GridX ; fn add ( self , other : u8 ) -> GridX {
+let result = self . 0 . saturating_add ( other ) ; GridX :: new ( result ) } }
+impl Add < GridX > for u8 {
+type Output = GridX ; fn add ( self , other : GridX ) -> GridX {
+let result = self . saturating_add ( other . 0 ) ; GridX :: new ( result ) } }
+impl Add < GridY > for GridY {
+type Output = GridY ; fn add ( self , other : GridY ) -> GridY {
+let result = self . 0 . saturating_add ( other . 0 ) ; GridY :: new ( result )
+} } impl Add < u8 > for GridY {
+type Output = GridY ; fn add ( self , other : u8 ) -> GridY {
+let result = self . 0 . saturating_add ( other ) ; GridY :: new ( result ) } }
+impl Add < GridY > for u8 {
+type Output = GridY ; fn add ( self , other : GridY ) -> GridY {
+let result = self . saturating_add ( other . 0 ) ; GridY :: new ( result ) } }
+use std :: ops :: Sub ; impl Sub < GridX > for GridX {
+type Output = GridX ; fn sub ( self , other : GridX ) -> GridX {
+let result = self . 0 . saturating_sub ( other . 0 ) ; GridX :: new ( result )
+} } impl Sub < u8 > for GridX {
+type Output = GridX ; fn sub ( self , other : u8 ) -> GridX {
+let result = self . 0 . saturating_sub ( other ) ; GridX :: new ( result ) } }
+impl Sub < GridX > for u8 {
+type Output = GridX ; fn sub ( self , other : GridX ) -> GridX {
+let result = self . saturating_sub ( other . 0 ) ; GridX :: new ( result ) } }
+impl Sub < GridY > for GridY {
+type Output = GridY ; fn sub ( self , other : GridY ) -> GridY {
+let result = self . 0 . saturating_sub ( other . 0 ) ; GridY :: new ( result )
+} } impl Sub < u8 > for GridY {
+type Output = GridY ; fn sub ( self , other : u8 ) -> GridY {
+let result = self . 0 . saturating_sub ( other ) ; GridY :: new ( result ) } }
+impl Sub < GridY > for u8 {
+type Output = GridY ; fn sub ( self , other : GridY ) -> GridY {
+let result = self . saturating_sub ( other . 0 ) ; GridY :: new ( result ) } }
+fn screen_to_grid ( ( x , y ) : ( u8 , u8 ) ) -> GridPos {
+( GridX :: new ( x ) , GridY :: new ( y ) ) } fn grid_to_screen (
+( x , y ) : GridPos ) -> ( u8 , u8 ) { ( x . 0 , y . 0 ) }
         
