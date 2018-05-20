@@ -1067,12 +1067,9 @@ fn render_solitaire_game<R: Rng + Sized>(
     for i in 0..minimum_card_count {
         animacies.push(Animate);
 
-        let (x, y) = (i % w, i / w);
+        let grid_pos = (i % w, i / w);
 
-        let base_pos = (
-            x * (card::WIDTH + card::SPACING) + card::SPACING,
-            y * (card::HEIGHT / 2),
-        );
+        let base_pos = card::grid_to_screen(grid_pos);
 
         let card_appearance = generate_solitaire_card_appearance(rng, base_pos);
 
@@ -1241,12 +1238,14 @@ fn render_solitaire_game<R: Rng + Sized>(
 
         add_sub_impl!{GridX, GridY}
 
-        fn screen_to_grid((x, y): (u8,u8)) -> GridPos {
+        fn screen_to_grid(screen_pos: (u8,u8)) -> GridPos {
+            let (x, y) = card::screen_to_grid(screen_pos);
+
             (GridX::new(x), GridY::new(y))
         }
 
         fn grid_to_screen((x, y): GridPos) -> (u8,u8) {
-            (x.0, y.0)
+            card::grid_to_screen((x.0, y.0))
         }
     };
 

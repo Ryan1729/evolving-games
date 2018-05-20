@@ -231,11 +231,42 @@ impl From<usize> for Shape {
 
 pub type Variety = u8;
 
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
+
 pub mod card {
     //in pixels
     pub const SPACING: u8 = 2;
     pub const WIDTH: u8 = 25;
     pub const HEIGHT: u8 = 35;
+
+    pub fn grid_to_screen((x, y): (u8, u8)) -> (u8, u8) {
+        (
+            x.saturating_mul((WIDTH + SPACING) + SPACING),
+            y.saturating_mul(HEIGHT / 2),
+        )
+    }
+
+    pub fn screen_to_grid((x, y): (u8, u8)) -> (u8, u8) {
+        (x / ((WIDTH + SPACING) + SPACING), y / (HEIGHT / 2))
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use quickcheck::TestResult;
+
+        quickcheck! {
+            fn smaller_type_inversion(pos: (u8, u8)) -> TestResult {
+                if pos.0 > 8 || pos.1 > 15 {
+                    return TestResult::discard();
+                }
+
+                TestResult::from_bool(pos == screen_to_grid(grid_to_screen(pos)))
+            }
+        }
+    }
 }
 
 pub const EMPTY_APPEARANCE: u8 = 255;
