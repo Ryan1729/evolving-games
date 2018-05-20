@@ -1171,128 +1171,75 @@ fn render_solitaire_game<R: Rng + Sized>(
         }
 
         use std::ops::Add;
-
-        impl Add<GridX> for GridX {
-            type Output = GridX;
-
-            fn add(self, other: GridX) -> GridX {
-                let result = self.0.saturating_add(other.0);
-
-                GridX::new(result)
-            }
-        }
-
-        impl Add<u8> for GridX {
-            type Output = GridX;
-
-            fn add(self, other: u8) -> GridX {
-                let result = self.0.saturating_add(other);
-
-                GridX::new(result)
-            }
-        }
-
-        impl Add<GridX> for u8 {
-            type Output = GridX;
-
-            fn add(self, other: GridX) -> GridX {
-                let result = self.saturating_add(other.0);
-
-                GridX::new(result)
-            }
-        }
-
-        impl Add<GridY> for GridY {
-            type Output = GridY;
-
-            fn add(self, other: GridY) -> GridY {
-                let result = self.0.saturating_add(other.0);
-
-                GridY::new(result)
-            }
-        }
-
-        impl Add<u8> for GridY {
-            type Output = GridY;
-
-            fn add(self, other: u8) -> GridY {
-                let result = self.0.saturating_add(other);
-
-                GridY::new(result)
-            }
-        }
-
-        impl Add<GridY> for u8 {
-            type Output = GridY;
-
-            fn add(self, other: GridY) -> GridY {
-                let result = self.saturating_add(other.0);
-
-                GridY::new(result)
-            }
-        }
-
         use std::ops::Sub;
 
-        impl Sub<GridX> for GridX {
-            type Output = GridX;
+        macro_rules! add_sub_impl {
+            ($($type:ty),*) => {
+                $(
+                    impl Add<$type> for $type {
+                        type Output = $type;
 
-            fn sub(self, other: GridX) -> GridX {
-                let result = self.0.saturating_sub(other.0);
+                        fn add(self, other: $type) -> $type {
+                            let result = self.0.saturating_add(other.0);
 
-                GridX::new(result)
+                            <$type>::new(result)
+                        }
+                    }
+
+                    impl Add<u8> for $type {
+                        type Output = $type;
+
+                        fn add(self, other: u8) -> $type {
+                            let result = self.0.saturating_add(other);
+
+                            <$type>::new(result)
+                        }
+                    }
+
+                    impl Add<$type> for u8 {
+                        type Output = $type;
+
+                        fn add(self, other: $type) -> $type {
+                            let result = self.saturating_add(other.0);
+
+                            <$type>::new(result)
+                        }
+                    }
+
+                    impl Sub<$type> for $type {
+                        type Output = $type;
+
+                        fn sub(self, other: $type) -> $type {
+                            let result = self.0.saturating_sub(other.0);
+
+                            <$type>::new(result)
+                        }
+                    }
+
+                    impl Sub<u8> for $type {
+                        type Output = $type;
+
+                        fn sub(self, other: u8) -> $type {
+                            let result = self.0.saturating_sub(other);
+
+                            <$type>::new(result)
+                        }
+                    }
+
+                    impl Sub<$type> for u8 {
+                        type Output = $type;
+
+                        fn sub(self, other: $type) -> $type {
+                            let result = self.saturating_sub(other.0);
+
+                            <$type>::new(result)
+                        }
+                    }
+                )*
             }
         }
 
-        impl Sub<u8> for GridX {
-            type Output = GridX;
-
-            fn sub(self, other: u8) -> GridX {
-                let result = self.0.saturating_sub(other);
-
-                GridX::new(result)
-            }
-        }
-
-        impl Sub<GridX> for u8 {
-            type Output = GridX;
-
-            fn sub(self, other: GridX) -> GridX {
-                let result = self.saturating_sub(other.0);
-
-                GridX::new(result)
-            }
-        }
-
-        impl Sub<GridY> for GridY {
-            type Output = GridY;
-
-            fn sub(self, other: GridY) -> GridY {
-                let result = self.0.saturating_sub(other.0);
-
-                GridY::new(result)
-            }
-        }
-
-        impl Sub<u8> for GridY {
-            type Output = GridY;
-
-            fn sub(self, other: u8) -> GridY {
-                let result = self.0.saturating_sub(other);
-
-                GridY::new(result)
-            }
-        }
-
-        impl Sub<GridY> for u8 {
-            type Output = GridY;
-
-            fn sub(self, other: GridY) -> GridY {
-                let result = self.saturating_sub(other.0);
-
-                GridY::new(result)
-            }
-        }
+        add_sub_impl!{GridX, GridY}
 
         fn screen_to_grid((x, y): (u8,u8)) -> GridPos {
             (GridX::new(x), GridY::new(y))
