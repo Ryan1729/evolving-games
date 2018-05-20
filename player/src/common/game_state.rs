@@ -1,24 +1,24 @@
 
-use inner_common::*;
+        use inner_common::*;
 
-impl GameState {
-    pub const ENTITY_COUNT: usize = 256;
-    pub const ENTITY_PIECE_COUNT: usize = 32;
-    pub const GRID_DIMENSIONS : ( u8 , u8 ) = ( 7 , 4 ) ;
+        impl GameState {
+            pub const ENTITY_COUNT: usize = 256;
+            pub const ENTITY_PIECE_COUNT: usize = 32;
+            pub const GRID_DIMENSIONS : ( u8 , u8 ) = ( 7 , 4 ) ;
 
-    pub fn new() -> GameState {
-        let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
+            pub fn new() -> GameState {
+                let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
 
-        let mut positions = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
-        let mut appearances =
-            [[Appearance::default(); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
-        let mut sizes = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+                let mut positions = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+                let mut appearances =
+                    [[Appearance::default(); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+                let mut sizes = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
 
-        let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
+                let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
 
-        let player_controlling_variety = Variety::default();
+                let player_controlling_variety = Variety::default();
 
-            entities[0] = Component::Animate;
+                    entities[0] = Component::Animate;
     positions[0] = [(2, 0), (5, 2), (13, 3), (13, 9), (5, 14), (0, 0), (0, 0), (5, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
     sizes[0] = [(25, 35), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
     appearances[0] = [Appearance(14), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
@@ -160,27 +160,27 @@ impl GameState {
     varieties[27] = 0;
 
 
-        GameState {
-            entities,
-            positions,
-            sizes,
-            appearances,
-            varieties,
-            player_controlling_variety,
-        }
-    }
-
-    pub fn get_free_id(&self) -> Option<usize> {
-        for (i, e) in self.entities.iter().enumerate() {
-            if e.is_empty() {
-                return Some(i);
+                GameState {
+                    entities,
+                    positions,
+                    sizes,
+                    appearances,
+                    varieties,
+                    player_controlling_variety,
+                }
             }
-        }
 
-        None
-    }
+            pub fn get_free_id(&self) -> Option<usize> {
+                for (i, e) in self.entities.iter().enumerate() {
+                    if e.is_empty() {
+                        return Some(i);
+                    }
+                }
 
-    pub fn move_left ( & mut self , id : usize ) {
+                None
+            }
+
+            pub fn move_left ( & mut self , id : usize ) {
 let positions = & mut self . positions [ id ] ; for i in 0 .. positions . len
 (  ) {
 let ( x , y ) = screen_to_grid ( positions [ i ] ) ; positions [ i ] =
@@ -200,8 +200,9 @@ let positions = & mut self . positions [ id ] ; for i in 0 .. positions . len
 (  ) {
 let ( x , y ) = screen_to_grid ( positions [ i ] ) ; positions [ i ] =
 grid_to_screen ( ( x , y + 1 ) ) ; } }
-}
+        }
 
-type GridPos = ( GridX , GridY ) ; type GridX = u8 ; type GridY = u8 ; fn
+        type GridPos = ( GridX , GridY ) ; type GridX = u8 ; type GridY = u8 ; fn
 screen_to_grid ( ( x , y ) : ( u8 , u8 ) ) -> GridPos { ( x , y ) } fn
 grid_to_screen ( ( x , y ) : GridPos ) -> ( u8 , u8 ) { ( x , y ) }
+        

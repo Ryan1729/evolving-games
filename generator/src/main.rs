@@ -538,63 +538,67 @@ impl fmt::Display for InitialState {
     }
 }
 
-//TODO make this a Display impl
-fn render_game_state_impl(gsi: GameStateImpl) -> String {
-    format!(
-        "
-use inner_common::*;
+impl fmt::Display for GameStateImpl {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+                "
+        use inner_common::*;
 
-impl GameState {{
-    pub const ENTITY_COUNT: usize = {};
-    pub const ENTITY_PIECE_COUNT: usize = {};
-    {}
+        impl GameState {{
+            pub const ENTITY_COUNT: usize = {};
+            pub const ENTITY_PIECE_COUNT: usize = {};
+            {}
 
-    pub fn new() -> GameState {{
-        let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
+            pub fn new() -> GameState {{
+                let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
 
-        let mut positions = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
-        let mut appearances =
-            [[Appearance::default(); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
-        let mut sizes = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+                let mut positions = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+                let mut appearances =
+                    [[Appearance::default(); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
+                let mut sizes = [[(0, 0); GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT];
 
-        let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
+                let mut varieties = [Variety::default(); GameState::ENTITY_COUNT];
 
-        let player_controlling_variety = Variety::default();
+                let player_controlling_variety = Variety::default();
+
+                {}
+
+                GameState {{
+                    entities,
+                    positions,
+                    sizes,
+                    appearances,
+                    varieties,
+                    player_controlling_variety,
+                }}
+            }}
+
+            pub fn get_free_id(&self) -> Option<usize> {{
+                for (i, e) in self.entities.iter().enumerate() {{
+                    if e.is_empty() {{
+                        return Some(i);
+                    }}
+                }}
+
+                None
+            }}
+
+            {}
+        }}
 
         {}
+        ",
+                self.entity_count,
+                self.entity_piece_count,
+                self.custom_consts,
+                self.initial_state,
+                self.custom_methods,
+                self.custom_types
+            )?;
 
-        GameState {{
-            entities,
-            positions,
-            sizes,
-            appearances,
-            varieties,
-            player_controlling_variety,
-        }}
-    }}
-
-    pub fn get_free_id(&self) -> Option<usize> {{
-        for (i, e) in self.entities.iter().enumerate() {{
-            if e.is_empty() {{
-                return Some(i);
-            }}
-        }}
-
-        None
-    }}
-
-    {}
-}}
-
-{}
-",
-        gsi.entity_count,
-        gsi.entity_piece_count,
-        gsi.custom_consts,
-        gsi.initial_state,
-        gsi.custom_methods,
-        gsi.custom_types
-    )
+        Ok(())
+    }
 }
 
 fn get_cell_dimensions(gw: u8, gh: u8) -> (u8, u8) {
@@ -667,7 +671,7 @@ impl RenderableGame {
 
         RenderedGame {
             update_and_render,
-            game_state_impl: render_game_state_impl(game_state_impl),
+            game_state_impl: format!("{}", game_state_impl),
         }
     }
 
@@ -720,7 +724,7 @@ impl RenderableGame {
 
         RenderedGame {
             update_and_render,
-            game_state_impl: render_game_state_impl(game_state_impl),
+            game_state_impl: format!("{}", game_state_impl),
         }
     }
 
@@ -748,7 +752,7 @@ impl RenderableGame {
 
         RenderedGame {
             update_and_render,
-            game_state_impl: render_game_state_impl(game_state_impl),
+            game_state_impl: format!("{}", game_state_impl),
         }
     }
 }
@@ -1221,11 +1225,14 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
     };
 
     let custom_consts = format!(
-        "
-    pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
-    pub const GRID_CELL_SIZE: (u8, u8) = ({}, {});
-    ",
-        w, h, grid_cell_size.0, grid_cell_size.1
+        stringify!{
+            pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
+            pub const GRID_CELL_SIZE: (u8, u8) = ({}, {});
+        },
+        w,
+        h,
+        grid_cell_size.0,
+        grid_cell_size.1
     );
 
     let game_state_impl = GameStateImpl {
@@ -1233,7 +1240,7 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
         entity_piece_count: 1,
         custom_consts,
         initial_state,
-        custom_methods: "
+        custom_methods: code_string!{
         pub fn find_nearest_empty_pos(
             &self,
             start_pos: Position,
@@ -1288,8 +1295,7 @@ fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<R
             }}
 
             None
-        }}"
-            .to_string(),
+        }}},
         ..Default::default()
     };
 
@@ -1306,7 +1312,9 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
 
     let winning_index = rng.gen_range(0, BUTTON_COUNT);
 
-    let winner = "state.mark_won();".to_string();
+    let winner = code_string!{
+        state.mark_won();
+    };
 
     match winning_index {
         0 => {
@@ -1343,16 +1351,15 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
 
     let mut game_state_impl: GameStateImpl = Default::default();
 
-    game_state_impl.custom_methods = "
-            pub fn mark_won(&mut self) {
-                self.positions[0] = (1,1);
-            }
+    game_state_impl.custom_methods = code_string!{
+        pub fn mark_won(&mut self) {
+            self.positions[0] = (1,1);
+        }
 
-            pub fn has_won(&self) -> bool {
-                self.positions[0].0 == 1
-            }
-"
-        .to_string();
+        pub fn has_won(&self) -> bool {
+            self.positions[0].0 == 1
+        }
+    };
 
     Ok(RenderableGame {
         game_type: Guess,
@@ -1382,36 +1389,44 @@ fn controls_to_button_responses(controls: EntityControl) -> ButtonResponses {
 
     match controls.movement {
         Orthogonal => {
-            up = "let pos = &mut state.positions[id];
-pos.1 = pos.1.saturating_sub(1);\n"
-                .to_string();
-            down = "let pos = &mut state.positions[id];
-pos.1 = pos.1.saturating_add(1);\n"
-                .to_string();
-            left = "let pos = &mut state.positions[id];
-pos.0 = pos.0.saturating_sub(1);\n"
-                .to_string();
-            right = "let pos = &mut state.positions[id];
-pos.0 = pos.0.saturating_add(1);\n"
-                .to_string();
+            up = code_string!{
+                let pos = &mut state.positions[id];
+                pos.1 = pos.1.saturating_sub(1);
+            };
+            down = code_string!{
+                let pos = &mut state.positions[id];
+                pos.1 = pos.1.saturating_add(1);
+            };
+            left = code_string!{
+                let pos = &mut state.positions[id];
+                pos.0 = pos.0.saturating_sub(1);
+            };
+            right = code_string!{
+                let pos = &mut state.positions[id];
+                pos.0 = pos.0.saturating_add(1);
+            };
         }
         Diagonal => {
-            up = "let pos = &mut state.positions[id];
-pos.0 = pos.0.saturating_add(1);
-pos.1 = pos.1.saturating_sub(1);\n"
-                .to_string();
-            down = "let pos = &mut state.positions[id];
-pos.0 = pos.0.saturating_sub(1);
-pos.1 = pos.1.saturating_add(1);\n"
-                .to_string();
-            left = "let pos = &mut state.positions[id];
-pos.0 = pos.0.saturating_sub(1);
-pos.1 = pos.1.saturating_sub(1);\n"
-                .to_string();
-            right = "let pos = &mut state.positions[id];
-pos.0 = pos.0.saturating_add(1);
-pos.1 = pos.1.saturating_add(1);\n"
-                .to_string();
+            up = code_string!{
+                let pos = &mut state.positions[id];
+                pos.0 = pos.0.saturating_add(1);
+                pos.1 = pos.1.saturating_sub(1);
+            };
+            down = code_string!{
+                let pos = &mut state.positions[id];
+                pos.0 = pos.0.saturating_sub(1);
+                pos.1 = pos.1.saturating_add(1);
+            };
+            left = code_string!{
+                let pos = &mut state.positions[id];
+                pos.0 = pos.0.saturating_sub(1);
+                pos.1 = pos.1.saturating_sub(1);
+            };
+            right = code_string!{
+                let pos = &mut state.positions[id];
+                pos.0 = pos.0.saturating_add(1);
+                pos.1 = pos.1.saturating_add(1);
+            };
         }
     }
 
@@ -1419,7 +1434,7 @@ pos.1 = pos.1.saturating_add(1);\n"
     let b = action_to_button_responses(controls.b);
     let select = action_to_button_responses(controls.select);
 
-    let start = "".to_string();
+    let start = code_string!{};
 
     ButtonResponses {
         up,
@@ -1436,41 +1451,20 @@ pos.1 = pos.1.saturating_add(1);\n"
 fn action_to_button_responses(action: Action) -> String {
     match action {
         SwapPlayerControlToNext(offset) => format!(
-            "state.player_controlling_variety = state.player_controlling_variety.wrapping_add({});",
+            stringify!{state.player_controlling_variety = state.player_controlling_variety.wrapping_add({});},
             offset
         ),
-        CopySelf => "if let Some(clone_id) = state.get_free_id() {
-            if let Some(clone_pos) = state.find_nearest_empty_pos(state.positions[id]) {
-                state.positions[clone_id] = clone_pos;
-                state.entities[clone_id] = state.entities[id];
-                state.appearances[clone_id] = state.appearances[id];
-                state.varieties[clone_id] = state.varieties[id];
+        CopySelf => code_string!{
+            if let Some(clone_id) = state.get_free_id() {
+                if let Some(clone_pos) = state.find_nearest_empty_pos(state.positions[id]) {
+                    state.positions[clone_id] = clone_pos;
+                    state.entities[clone_id] = state.entities[id];
+                    state.appearances[clone_id] = state.appearances[id];
+                    state.varieties[clone_id] = state.varieties[id];
+                }
             }
         }
-"
-            .to_string(),
     }
-}
-
-#[allow(unused_macros)]
-macro_rules! IF {
-    () => {
-        "if {} {{\n\t{}\n}}"
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! ELSE_IF {
-    () => {
-        "else if {} {{\n\t{}\n}}"
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! ELSE {
-    () => {
-        "else {{\n\t{}\n}}\n"
-    };
 }
 
 // https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
