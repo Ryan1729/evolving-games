@@ -908,7 +908,7 @@ fn render_seven_segment(
 ) -> SevenSegmentAppearance {
     let mut positions = [Default::default(); 7];
     let mut sizes = [Default::default(); 7];
-    let appearances = [Appearance::from(colour) | Appearance::from(FilledRectangle); 7];
+    let appearances = [colour | FilledRectangle; 7];
 
     let spec: u8 = digit_to_segment_spec(digit);
 
@@ -985,8 +985,7 @@ fn generate_solitaire_card_appearance<R: Rng + Sized>(
 
     positions[i] = (x, y);
     sizes[i] = (card::WIDTH, card::HEIGHT);
-    appearances[i] =
-        Appearance::from(Colour::from(rng.gen_range(0, COLOUR_COUNT))) | FilledRectangle.into();
+    appearances[i] = Colour::from(rng.gen_range(0, COLOUR_COUNT)) | FilledRectangle;
 
     i += 1;
 
@@ -1091,7 +1090,7 @@ fn render_solitaire_game<R: Rng + Sized>(
             SCREEN_HEIGHT as u8 - card::HEIGHT,
         );
         cursor_sizes[0] = (card::WIDTH, card::HEIGHT);
-        cursor_appearances[0] = Appearance::from(Yellow) | Appearance::from(Rectangle);
+        cursor_appearances[0] = Yellow | Rectangle;
 
         positions.push(cursor_positions.to_vec());
         sizes.push(cursor_sizes.to_vec());

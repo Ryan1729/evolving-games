@@ -167,11 +167,43 @@ impl From<Shape> for Appearance {
 
 use std::ops::BitOr;
 
-impl BitOr for Appearance {
+impl BitOr<Appearance> for Appearance {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self {
         Appearance(self.0 | rhs.0)
+    }
+}
+
+impl BitOr<Shape> for Appearance {
+    type Output = Self;
+
+    fn bitor(self, rhs: Shape) -> Self {
+        Appearance(self.0) | Appearance::from(rhs)
+    }
+}
+
+impl BitOr<Colour> for Appearance {
+    type Output = Self;
+
+    fn bitor(self, rhs: Colour) -> Self {
+        Appearance(self.0) | Appearance::from(rhs)
+    }
+}
+
+impl BitOr<Colour> for Shape {
+    type Output = Appearance;
+
+    fn bitor(self, rhs: Colour) -> Self::Output {
+        Appearance::from(self) | Appearance::from(rhs)
+    }
+}
+
+impl BitOr<Shape> for Colour {
+    type Output = Appearance;
+
+    fn bitor(self, rhs: Shape) -> Self::Output {
+        Appearance::from(self) | Appearance::from(rhs)
     }
 }
 
