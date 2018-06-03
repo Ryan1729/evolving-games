@@ -16,6 +16,9 @@ use common::*;
 mod grid;
 use grid::render_game as render_grid_game;
 
+mod guess;
+use guess::render_game as render_guess_game;
+
 #[macro_use]
 mod error;
 use error::{Error, ErrorKind, Result};
@@ -272,8 +275,6 @@ struct RenderedGame {
     pub update_and_render: String,
     pub game_state_impl: String,
 }
-
-const BUTTON_COUNT: usize = 8;
 
 fn format<T: fmt::Display>(t: T) -> String {
     format!("{}", t)
@@ -1082,67 +1083,5 @@ fn render_solitaire_game<R: Rng + Sized>(
         input_responders: vec![responder],
         game_state_impl,
         grid_dimensions: spec.grid_dimensions,
-    })
-}
-
-fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
-    let mut button_responses = ButtonResponses::default();
-
-    let winning_index = rng.gen_range(0, BUTTON_COUNT);
-
-    let winner = code_string!{
-        state.mark_won();
-    };
-
-    match winning_index {
-        0 => {
-            button_responses.up = winner;
-        }
-        1 => {
-            button_responses.down = winner;
-        }
-        2 => {
-            button_responses.left = winner;
-        }
-        3 => {
-            button_responses.right = winner;
-        }
-        4 => {
-            button_responses.a = winner;
-        }
-        5 => {
-            button_responses.b = winner;
-        }
-        6 => {
-            button_responses.start = winner;
-        }
-        7 => {
-            button_responses.select = winner;
-        }
-        _ => {}
-    }
-
-    let responder = InputResponder {
-        button_responses,
-        variety: Default::default(),
-    };
-
-    let mut game_state_impl: GameStateImpl = Default::default();
-
-    game_state_impl.custom_code = code_string!{
-        pub fn mark_won(&mut self) {
-            self.positions[0] = (1,1);
-        }
-
-        pub fn has_won(&self) -> bool {
-            self.positions[0].0 == 1
-        }
-    };
-
-    Ok(RenderableGame {
-        game_type: Guess,
-        input_responders: vec![responder],
-        game_state_impl,
-        grid_dimensions: Default::default(),
     })
 }

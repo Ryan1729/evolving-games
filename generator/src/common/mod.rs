@@ -137,6 +137,8 @@ pub struct ButtonResponses {
     pub select: String,
 }
 
+pub const BUTTON_COUNT: usize = 8;
+
 #[derive(Debug)]
 pub enum GameType {
     ErrorTest,
