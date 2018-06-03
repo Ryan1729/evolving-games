@@ -43,6 +43,6 @@ So here's the current plan:
 
 ___
 
-After watching [this video called Scholars Play Spore](https://www.twitch.tv/videos/260386735) <!-- I don't know how long that link will be good for... -->I don't know ho about *Spore* which talked about how great immediate feedback in a tool for creating things is, I'm tempted to (only slightly!) change direction on this project again, to a Shenzhen solitaire-like editor. The idea would be to make some interface for changing the rules which presented information about the resulting game like "% of sampled games winnable", "average moves to complete", etc.
+After watching [this video called Scholars Play Spore](https://www.twitch.tv/videos/260386735) <!-- I don't know how long that link will be good for... --> about *Spore* which talked about how great immediate feedback in a tool for creating things is, I'm tempted to (only slightly!) change direction on this project again, to a Shenzhen solitaire-like editor. The idea would be to make some interface for changing the rules which presented information about the resulting game like "% of sampled games winnable", "average moves to complete", etc.
 
 Having another UI would increase the scope of this project considerably however. So maybe a compromise is to calculate that info and feed it to a generator to help it make decisions on the rules itself? I could make different generators that prefer different things to make different types of games more or less probable.
