@@ -8,10 +8,13 @@ extern crate rand;
 use rand::{Rng, SeedableRng, XorShiftRng};
 
 extern crate project_common;
-use project_common::*;
 
+#[macro_use]
 mod common;
 use common::*;
+
+mod grid;
+use grid::render_game as render_grid_game;
 
 fn main() {
     let seed: [u32; 4] = {
@@ -80,74 +83,12 @@ fn overwrite_filename(filename: &str, data: String) -> std::io::Result<()> {
     }
 }
 
-#[derive(Debug)]
-struct Error {
-    line: u32,
-    file: &'static str,
-    kind: ErrorKind,
-}
-
-macro_rules! err {
-    ($kind:expr) => {
-        Err(Error {
-            line: line!(),
-            file: file!(),
-            kind: $kind,
-        })
-    };
-}
-
-#[derive(Debug)]
-enum ErrorKind {
-    NotImplemented,
-}
-use ErrorKind::*;
-
-impl fmt::Display for ErrorKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{} error occurred at line {} in {}",
-            self.kind, self.line, self.file
-        )
-    }
-}
-
-impl std::error::Error for Error {
-    fn description(&self) -> &str {
-        "https://github.com/rust-lang/rfcs/pull/2230"
-    }
-}
-
-type Result<T> = std::result::Result<T, Error>;
-
 fn generate_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderedGame> {
     generate_spec(rng).and_then(|spec: GameSpec| {
         println!("{:#?}", spec);
         //TODO Separate seed for these RNG calls?
         render_spec(rng, spec)
     })
-}
-
-#[derive(Debug)]
-enum GameType {
-    ErrorTest,
-    Solitaire,
-    GridBased,
-    Guess,
-}
-use GameType::*;
-
-impl Default for GameType {
-    fn default() -> GameType {
-        Guess
-    }
 }
 
 fn generate_game_type<R: Rng + Sized>(rng: &mut R) -> GameType {
@@ -329,32 +270,6 @@ struct RenderedGame {
 }
 
 const BUTTON_COUNT: usize = 8;
-
-#[derive(Default)]
-struct RenderableGame {
-    game_type: GameType,
-    input_responders: Vec<InputResponder>,
-    grid_dimensions: (u8, u8),
-    game_state_impl: GameStateImpl,
-}
-
-#[derive(Default)]
-struct InitialState {
-    animacies: Vec<EntityAnimacy>,
-    positions: Vec<Vec<(u8, u8)>>,
-    sizes: Vec<Vec<(u8, u8)>>,
-    appearances: Vec<Vec<Appearance>>,
-    varieties: Vec<u8>,
-}
-
-#[derive(Default)]
-struct GameStateImpl {
-    entity_count: usize,
-    entity_piece_count: usize,
-    custom_consts: String,
-    initial_state: InitialState,
-    custom_code: String,
-}
 
 fn format<T: fmt::Display>(t: T) -> String {
     format!("{}", t)
@@ -640,108 +555,6 @@ impl RenderableGame {
     }
 }
 
-#[derive(Default)]
-struct InputResponders(Vec<InputResponder>);
-
-impl fmt::Display for InputResponders {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for input_responder in self.0.iter() {
-            write!(f, "{}\n", input_responder)?;
-        }
-
-        write!(
-            f,
-"fn respond_to_input(state: &mut GameState, input: Input, id: usize, variety: Variety) {{
-    match variety {{\n"
-        )?;
-
-        let mut varieties: Vec<_> = self.0.iter().map(|ir| ir.variety).collect();
-
-        varieties.sort();
-        varieties.dedup();
-
-        for variety in varieties.iter() {
-            write!(
-                f,
-                "           {0} => input_responder_{}(state, input, id),\n",
-                variety
-            )?;
-        }
-
-        write!(
-            f,
-            "           _ => {{}},
-        }}
-    }}\n"
-        )?;
-
-        Ok(())
-    }
-}
-
-struct InputResponder {
-    button_responses: ButtonResponses,
-    variety: Variety,
-}
-
-impl fmt::Display for InputResponder {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let InputResponder {
-            ref button_responses,
-            ref variety,
-        } = *self;
-
-        write!(
-            f,
-            "fn input_responder_{}(state: &mut GameState, input: Input, id: usize) {{
-                if input.pressed_this_frame(Button::Left) {{
-                    {}
-                }}
-
-                if input.pressed_this_frame(Button::Right) {{
-                    {}
-                }}
-
-                if input.pressed_this_frame(Button::Up) {{
-                    {}
-                }}
-
-                if input.pressed_this_frame(Button::Down) {{
-                    {}
-                }}
-
-                if input.pressed_this_frame(Button::Select) {{
-                    {}
-                }}
-
-                if input.pressed_this_frame(Button::Start) {{
-                    {}
-                }}
-
-                if input.pressed_this_frame(Button::A) {{
-                    {}
-                }}
-
-                if input.pressed_this_frame(Button::B) {{
-                    {}
-                }}
-            }}
-        ",
-            variety,
-            button_responses.left,
-            button_responses.right,
-            button_responses.up,
-            button_responses.down,
-            button_responses.select,
-            button_responses.start,
-            button_responses.a,
-            button_responses.b,
-        )?;
-
-        Ok(())
-    }
-}
-
 fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGame> {
     let result = match spec {
         GameSpec::Guess => render_guess_game(rng),
@@ -904,12 +717,6 @@ fn generate_solitaire_card_appearance<R: Rng + Sized>(
 }
 
 const SOLITAIRE_ENTITY_PIECE_COUNT: usize = 32;
-
-macro_rules! code_string {
-    ($($token_trees:tt)*) => {
-        stringify!($($token_trees)*).to_owned()
-    }
-}
 
 fn render_solitaire_game<R: Rng + Sized>(
     rng: &mut R,
@@ -1274,132 +1081,6 @@ fn render_solitaire_game<R: Rng + Sized>(
     })
 }
 
-fn render_grid_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<RenderableGame> {
-    let (w, h) = spec.grid_dimensions;
-
-    let grid_cell_size = (next_power_of_2(w as _) as u8, next_power_of_2(h as _) as u8);
-
-    debug_assert!(spec.entity_animacies.len() == spec.entity_controls.len());
-
-    let entity_type_count = spec.entity_animacies.len();
-
-    let mut appearances = Vec::with_capacity(entity_type_count);
-    let mut positions = Vec::with_capacity(entity_type_count);
-    let mut varieties = Vec::with_capacity(entity_type_count);
-
-    let mut input_responders = Vec::with_capacity(entity_type_count);
-
-    for i in 0..entity_type_count {
-        appearances.push(vec![Appearance(rng.gen::<u8>().saturating_add(1))]);
-
-        positions.push(vec![(rng.gen_range(0, w), rng.gen_range(0, h))]);
-
-        varieties.push(i as Variety);
-
-        input_responders.push(InputResponder {
-            button_responses: spec.entity_controls[i]
-                .map(controls_to_button_responses)
-                .unwrap_or_else(|| Default::default()),
-            variety: i as Variety,
-        });
-    }
-
-    let initial_state = InitialState {
-        animacies: spec.entity_animacies,
-        positions,
-        appearances,
-        varieties,
-        ..Default::default()
-    };
-
-    let custom_consts = format!(
-        stringify!{
-            pub const GRID_DIMENSIONS: (u8, u8) = ({}, {});
-            pub const GRID_CELL_SIZE: (u8, u8) = ({}, {});
-        },
-        w,
-        h,
-        grid_cell_size.0,
-        grid_cell_size.1
-    );
-
-    let custom_code = code_string!{
-        impl GameState {
-            pub fn find_nearest_empty_pos(
-                &self,
-                start_pos: Position,
-            ) -> Option<Position> {{
-                use std::collections::{{VecDeque, HashSet}};
-                //PERF would it be faster to preallocate this?
-                //I expect the common case not to use anything close to the maximum.
-                let mut queue = VecDeque::new();
-
-                let mut full = HashSet::with_capacity(GameState::ENTITY_COUNT);
-                let mut visited = HashSet::with_capacity(GameState::ENTITY_COUNT);
-
-                //PERF it might make sense to just keep track of which slots are free all the time
-                for i in 0..GameState::ENTITY_COUNT {{
-                    if !self.entities[i].is_empty() {{
-                        full.insert(self.positions[i]);
-                    }}
-                }}
-
-                queue.push_back(start_pos);
-
-                while let Some(pos) = queue.pop_front() {{
-                    if !full.contains(&pos) {{
-                        return Some(pos)
-                    }}
-
-                    if visited.contains(&pos) {{
-                        continue;
-                    }}
-
-                    visited.insert(pos);
-
-                    //TODO we might want to figure out a heuristic on which direction to look in
-                    //first, given the start_pos. It would also prevent the empty ones always
-                    //being in a certain direction.
-
-                    if pos.0 > 0 {{
-                        queue.push_back((pos.0 - 1, pos.1));
-                    }}
-
-                    if pos.0 < GameState::GRID_DIMENSIONS.0 - 1 {{
-                        queue.push_back((pos.0 + 1, pos.1));
-                    }}
-
-                    if pos.1 > 0 {{
-                        queue.push_back((pos.0, pos.1 - 1));
-                    }}
-
-                    if pos.1 < GameState::GRID_DIMENSIONS.1 - 1 {{
-                        queue.push_back((pos.0, pos.1 + 1));
-                    }}
-                }}
-
-                None
-            }}
-        }
-    };
-
-    let game_state_impl = GameStateImpl {
-        entity_count: 256,
-        entity_piece_count: 1,
-        custom_consts,
-        initial_state,
-        custom_code,
-        ..Default::default()
-    };
-
-    Ok(RenderableGame {
-        game_type: GridBased,
-        input_responders,
-        game_state_impl,
-        grid_dimensions: spec.grid_dimensions,
-    })
-}
-
 fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
     let mut button_responses = ButtonResponses::default();
 
@@ -1460,120 +1141,4 @@ fn render_guess_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
         game_state_impl,
         grid_dimensions: Default::default(),
     })
-}
-
-#[derive(Default)]
-struct ButtonResponses {
-    up: String,
-    down: String,
-    left: String,
-    right: String,
-    a: String,
-    b: String,
-    start: String,
-    select: String,
-}
-
-fn controls_to_button_responses(controls: EntityControl) -> ButtonResponses {
-    let up;
-    let down;
-    let left;
-    let right;
-
-    match controls.movement {
-        Orthogonal => {
-            up = code_string!{
-                let pos = &mut state.positions[id];
-                pos.1 = pos.1.saturating_sub(1);
-            };
-            down = code_string!{
-                let pos = &mut state.positions[id];
-                pos.1 = pos.1.saturating_add(1);
-            };
-            left = code_string!{
-                let pos = &mut state.positions[id];
-                pos.0 = pos.0.saturating_sub(1);
-            };
-            right = code_string!{
-                let pos = &mut state.positions[id];
-                pos.0 = pos.0.saturating_add(1);
-            };
-        }
-        Diagonal => {
-            up = code_string!{
-                let pos = &mut state.positions[id];
-                pos.0 = pos.0.saturating_add(1);
-                pos.1 = pos.1.saturating_sub(1);
-            };
-            down = code_string!{
-                let pos = &mut state.positions[id];
-                pos.0 = pos.0.saturating_sub(1);
-                pos.1 = pos.1.saturating_add(1);
-            };
-            left = code_string!{
-                let pos = &mut state.positions[id];
-                pos.0 = pos.0.saturating_sub(1);
-                pos.1 = pos.1.saturating_sub(1);
-            };
-            right = code_string!{
-                let pos = &mut state.positions[id];
-                pos.0 = pos.0.saturating_add(1);
-                pos.1 = pos.1.saturating_add(1);
-            };
-        }
-    }
-
-    let a = action_to_button_responses(controls.a);
-    let b = action_to_button_responses(controls.b);
-    let select = action_to_button_responses(controls.select);
-
-    let start = code_string!{};
-
-    ButtonResponses {
-        up,
-        down,
-        left,
-        right,
-        a,
-        b,
-        start,
-        select,
-    }
-}
-
-fn action_to_button_responses(action: Action) -> String {
-    match action {
-        SwapPlayerControlToNext(offset) => format!(
-            stringify!{state.player_controlling_variety = state.player_controlling_variety.wrapping_add({});},
-            offset
-        ),
-        CopySelf => code_string!{
-            if let Some(clone_id) = state.get_free_id() {
-                if let Some(clone_pos) = state.find_nearest_empty_pos(state.positions[id]) {
-                    state.positions[clone_id] = clone_pos;
-                    state.entities[clone_id] = state.entities[id];
-                    state.appearances[clone_id] = state.appearances[id];
-                    state.varieties[clone_id] = state.varieties[id];
-                }
-            }
-        }
-    }
-}
-
-// https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-fn next_power_of_2(mut x: usize) -> usize {
-    //The basic idea here is fill in all the bits below the highest set bit
-    //and then add one, making a power of two. We do this by taking the
-    //highest set bit, (the only one we know we have) and progressively
-    //ORing with the lower bits of the number. Once we do the first OR,
-    //then we know there are two set bits at the top, so we can set the
-    //next two below it at once. Then we know the top 4 are set and so on.
-    x = x.wrapping_sub(1); //This subtraction makes, for instance, 8 map to 8 instead of 16.
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    x |= x >> 32;
-    x.wrapping_add(1)
 }
