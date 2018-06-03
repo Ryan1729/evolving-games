@@ -1,6 +1,7 @@
-use common::*;
-
 use rand::Rng;
+
+use common::*;
+use error::Result;
 
 pub fn render_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<RenderableGame> {
     let (w, h) = spec.grid_dimensions;

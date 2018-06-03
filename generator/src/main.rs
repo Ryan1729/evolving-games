@@ -16,6 +16,10 @@ use common::*;
 mod grid;
 use grid::render_game as render_grid_game;
 
+#[macro_use]
+mod error;
+use error::{Error, ErrorKind, Result};
+
 fn main() {
     let seed: [u32; 4] = {
         let mut args = std::env::args();
@@ -104,7 +108,7 @@ fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
     let game_type = generate_game_type(rng);
 
     match game_type {
-        ErrorTest => err!(NotImplemented),
+        ErrorTest => err!(ErrorKind::NotImplemented),
         Solitaire => generate_solitaire_spec(rng).map(GameSpec::Solitaire),
         GridBased => generate_grid_spec(rng).map(GameSpec::Grid),
         Guess => Ok(Default::default()),
