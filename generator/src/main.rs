@@ -10,6 +10,9 @@ use rand::{Rng, SeedableRng, XorShiftRng};
 extern crate project_common;
 use project_common::*;
 
+mod common;
+use common::*;
+
 fn main() {
     let seed: [u32; 4] = {
         let mut args = std::env::args();
@@ -124,19 +127,6 @@ impl std::error::Error for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug)]
-enum GameSpec {
-    Solitaire(SolitaireSpec),
-    Grid(GridGameSpec),
-    Guess,
-}
-
-impl Default for GameSpec {
-    fn default() -> GameSpec {
-        GameSpec::Guess
-    }
-}
-
 fn generate_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderedGame> {
     generate_spec(rng).and_then(|spec: GameSpec| {
         println!("{:#?}", spec);
@@ -180,18 +170,6 @@ fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
     }
 }
 
-#[derive(Debug)]
-struct SolitaireSpec {
-    grid_dimensions: (u8, u8),
-    deck: DeckType,
-}
-
-#[derive(Debug)]
-enum DeckType {
-    ThreeColour(u8),
-}
-use DeckType::*;
-
 fn generate_solitaire_spec<R: Rng + Sized>(rng: &mut R) -> Result<SolitaireSpec> {
     let deck = ThreeColour(rng.gen_range(6, 12));
 
@@ -221,14 +199,6 @@ impl DeckType {
     }
 }
 
-#[derive(Debug)]
-struct GridGameSpec {
-    grid_dimensions: (u8, u8),
-    goal: Goal,
-    entity_animacies: Vec<EntityAnimacy>,
-    entity_controls: Vec<Option<EntityControl>>,
-}
-
 fn generate_grid_spec<R: Rng + Sized>(rng: &mut R) -> Result<GridGameSpec> {
     let grid_dimensions = (
         rng.gen_range(0, SCREEN_WIDTH) as u8,
@@ -249,34 +219,6 @@ fn generate_grid_spec<R: Rng + Sized>(rng: &mut R) -> Result<GridGameSpec> {
         entity_controls,
     })
 }
-
-#[derive(Clone, Copy, Debug)]
-enum Goal {
-    AddSomeNumberOfXsToTheGrid,
-    MoveAllXsToALocation,
-    FreeAllTrappedXs,
-    TransformAllXsIntoYs,
-    MakeAllXsTouchTheGroupofXs,
-    MakeAllXsTouchAtLeastOneY,
-}
-use Goal::*;
-
-impl Goal {
-    fn minimum_entity_types_needed(&self) -> u8 {
-        //We always need at least one player controlled entity
-        match *self {
-            AddSomeNumberOfXsToTheGrid => 1,
-            MoveAllXsToALocation => 1,
-            FreeAllTrappedXs => 1,
-            //X _cannot_ be the same as Y
-            TransformAllXsIntoYs => 2,
-            MakeAllXsTouchTheGroupofXs => 1,
-            //X _can_ be the same as Y
-            MakeAllXsTouchAtLeastOneY => 2,
-        }
-    }
-}
-const GOAL_COUNT: u8 = 4;
 
 fn generate_grid_goal<R: Rng + Sized>(rng: &mut R) -> Goal {
     match rng.gen_range(0, GOAL_COUNT) {
@@ -340,37 +282,12 @@ fn generate_entity_control<R: Rng + Sized>(rng: &mut R) -> EntityControl {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-struct EntityControl {
-    movement: MoveControl,
-    a: Action,
-    b: Action,
-    select: Action,
-}
-
-#[derive(Copy, Clone, Debug)]
-enum MoveControl {
-    Orthogonal,
-    Diagonal,
-}
-use MoveControl::*;
-
-const MOVE_CONTROL_COUNT: u8 = 2;
-
 fn generate_move_control<R: Rng + Sized>(rng: &mut R) -> MoveControl {
     match rng.gen_range(0, MOVE_CONTROL_COUNT) {
         0 => Orthogonal,
         _ => Diagonal,
     }
 }
-
-//Moreso than any other game element, this set of possibilities will need to be expaneded
-#[derive(Copy, Clone, Debug)]
-enum Action {
-    SwapPlayerControlToNext(u8),
-    CopySelf,
-}
-use Action::*;
 
 fn generate_action<R: Rng + Sized>(rng: &mut R) -> Action {
     match rng.gen_range(0, MOVE_CONTROL_COUNT) {
@@ -397,36 +314,6 @@ fn generate_entity_animacies<R: Rng + Sized>(rng: &mut R, goal: Goal) -> Vec<Ent
 
     entity_animacies
 }
-
-#[derive(Debug)]
-enum EntityAnimacy {
-    PlayerControlled,
-    Inanimate,
-    Animate,
-}
-use EntityAnimacy::*;
-
-impl Default for EntityAnimacy {
-    fn default() -> EntityAnimacy {
-        PlayerControlled
-    }
-}
-
-impl fmt::Display for EntityAnimacy {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let result = match *self {
-            PlayerControlled => "Component::Player",
-            Inanimate => "Component::Ty::empty()",
-            Animate => "Component::Animate",
-        };
-
-        write!(f, "{}", result,)?;
-
-        Ok(())
-    }
-}
-
-const ENTITY_ANIMACY_COUNT: u8 = 3;
 
 fn generate_entity_animacy<R: Rng + Sized>(rng: &mut R) -> EntityAnimacy {
     match rng.gen_range(0, ENTITY_ANIMACY_COUNT) {

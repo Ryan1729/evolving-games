@@ -55,3 +55,5 @@ So the current plan (revised as a result of this research) is as follows:
 * implement Shenzhen Solitaire again in this project, borrowing pieces from the other one. (still generating the code for it.)
 * add parameters for the ruleset generation to select from, refactoring as necessary.
 * start generating games and consider how to evaluate them, in order to improve the generator's output.
+
+Coming back to this project after a while has made me see the uglyness in having game in one massive file, and not having a clear decoupling between the different game types. So, I want to pull all the different game-specific stuff in their own separate files.
