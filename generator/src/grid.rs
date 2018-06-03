@@ -3,7 +3,7 @@ use rand::Rng;
 use common::*;
 use error::Result;
 
-pub fn render_game<R: Rng + Sized>(rng: &mut R, spec: GridGameSpec) -> Result<RenderableGame> {
+pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: GridGameSpec) -> Result<RenderableGame> {
     let (w, h) = spec.grid_dimensions;
 
     let grid_cell_size = (next_power_of_2(w as _) as u8, next_power_of_2(h as _) as u8);

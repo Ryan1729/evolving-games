@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Ryan1729 <Ryan1729@gmail.com>"]
 
 [dependencies]
-rand = "0.4.2"
+rand = "0.5"
 project_common = { path = "../project_common" }

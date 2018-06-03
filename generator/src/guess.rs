@@ -3,7 +3,7 @@ use rand::Rng;
 use common::*;
 use error::Result;
 
-pub fn render_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderableGame> {
+pub fn render_game<R: Rng + ?Sized>(rng: &mut R) -> Result<RenderableGame> {
     let mut button_responses = ButtonResponses::default();
 
     let winning_index = rng.gen_range(0, BUTTON_COUNT);

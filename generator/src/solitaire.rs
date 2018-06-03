@@ -3,7 +3,7 @@ use rand::Rng;
 use common::*;
 use error::Result;
 
-pub fn render_game<R: Rng + Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<RenderableGame> {
+pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<RenderableGame> {
     let mut button_responses = ButtonResponses::default();
 
     button_responses.left = code_string!(
@@ -467,7 +467,7 @@ struct CardAppearance {
     appearances: [Appearance; SOLITAIRE_ENTITY_PIECE_COUNT],
 }
 
-fn generate_solitaire_card_appearance<R: Rng + Sized>(
+fn generate_solitaire_card_appearance<R: Rng + ?Sized>(
     rng: &mut R,
     (x, y): (u8, u8),
 ) -> CardAppearance {

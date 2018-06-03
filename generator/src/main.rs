@@ -5,7 +5,9 @@ use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 extern crate rand;
-use rand::{Rng, SeedableRng, XorShiftRng};
+use rand::{
+    distributions::{Distribution, Standard}, Rng, SeedableRng, XorShiftRng,
+};
 
 extern crate project_common;
 
@@ -27,7 +29,7 @@ mod error;
 use error::{Error, ErrorKind, Result};
 
 fn main() {
-    let seed: [u32; 4] = {
+    let seed: [u8; 16] = {
         let mut args = std::env::args();
         //exe name
         args.next();
@@ -39,7 +41,7 @@ fn main() {
                 for i in 0..16 {
                     result[i] = bytes[i % bytes.len()];
                 }
-                unsafe { std::mem::transmute(result) }
+                result
             })
             .unwrap_or_else(|| {
                 let since_the_epoch = SystemTime::now()
@@ -48,7 +50,9 @@ fn main() {
 
                 let seconds: [u32; 2] = unsafe { std::mem::transmute(since_the_epoch.as_secs()) };
 
-                [seconds[0], seconds[1], seconds[0], seconds[1]]
+                let result = [seconds[0], seconds[1], seconds[0], seconds[1]];
+
+                unsafe { std::mem::transmute(result) }
             })
     };
 
@@ -93,7 +97,7 @@ fn overwrite_filename(filename: &str, data: String) -> std::io::Result<()> {
     }
 }
 
-fn generate_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderedGame> {
+fn generate_game<R: Rng + ?Sized>(rng: &mut R) -> Result<RenderedGame> {
     generate_spec(rng).and_then(|spec: GameSpec| {
         println!("{:#?}", spec);
         //TODO Separate seed for these RNG calls?
@@ -101,45 +105,47 @@ fn generate_game<R: Rng + Sized>(rng: &mut R) -> Result<RenderedGame> {
     })
 }
 
-fn generate_game_type<R: Rng + Sized>(rng: &mut R) -> GameType {
-    match rng.gen_range(0, 4) {
-        0 => ErrorTest,
-        1 => Solitaire,
-        2 => GridBased,
-        _ => Guess,
+impl Distribution<GameType> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> GameType {
+        match rng.gen_range(0, 4) {
+            0 => ErrorTest,
+            1 => Solitaire,
+            2 => GridBased,
+            _ => Guess,
+        }
     }
 }
 
-fn generate_spec<R: Rng + Sized>(rng: &mut R) -> Result<GameSpec> {
-    let game_type = generate_game_type(rng);
-
-    match game_type {
+fn generate_spec<R: Rng + ?Sized>(rng: &mut R) -> Result<GameSpec> {
+    match rng.gen() {
         ErrorTest => err!(ErrorKind::NotImplemented),
-        Solitaire => generate_solitaire_spec(rng).map(GameSpec::Solitaire),
-        GridBased => generate_grid_spec(rng).map(GameSpec::Grid),
+        Solitaire => Ok(GameSpec::Solitaire(rng.gen())),
+        GridBased => Ok(GameSpec::Grid(rng.gen())),
         Guess => Ok(Default::default()),
     }
 }
 
-fn generate_solitaire_spec<R: Rng + Sized>(rng: &mut R) -> Result<SolitaireSpec> {
-    let deck = ThreeColour(rng.gen_range(6, 12));
+impl Distribution<SolitaireSpec> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> SolitaireSpec {
+        let deck = ThreeColour(rng.gen_range(6, 12));
 
-    let grid_dimensions = match deck {
-        ThreeColour(highest_card) => {
-            let minimum_card_count = deck.get_minimum_card_count();
+        let grid_dimensions = match deck {
+            ThreeColour(highest_card) => {
+                let minimum_card_count = deck.get_minimum_card_count();
 
-            let w = rng.gen_range(highest_card / 2, highest_card) as u8;
-            //Ceiling division
-            let h = ((minimum_card_count - 1) / w) + 1;
+                let w = rng.gen_range(highest_card / 2, highest_card) as u8;
+                //Ceiling division
+                let h = ((minimum_card_count - 1) / w) + 1;
 
-            (w, h)
+                (w, h)
+            }
+        };
+
+        SolitaireSpec {
+            grid_dimensions,
+            deck,
         }
-    };
-
-    Ok(SolitaireSpec {
-        grid_dimensions,
-        deck,
-    })
+    }
 }
 
 impl DeckType {
@@ -150,35 +156,39 @@ impl DeckType {
     }
 }
 
-fn generate_grid_spec<R: Rng + Sized>(rng: &mut R) -> Result<GridGameSpec> {
-    let grid_dimensions = (
-        rng.gen_range(0, SCREEN_WIDTH) as u8,
-        rng.gen_range(0, SCREEN_HEIGHT) as u8,
-    );
+impl Distribution<GridGameSpec> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> GridGameSpec {
+        let grid_dimensions = (
+            rng.gen_range(0, SCREEN_WIDTH) as u8,
+            rng.gen_range(0, SCREEN_HEIGHT) as u8,
+        );
 
-    let goal = generate_grid_goal(rng);
+        let goal = rng.gen();
 
-    let Ontology {
-        entity_animacies,
-        entity_controls,
-    } = generate_ontology(rng, goal);
+        let Ontology {
+            entity_animacies,
+            entity_controls,
+        } = generate_ontology(rng, goal);
 
-    Ok(GridGameSpec {
-        grid_dimensions,
-        goal,
-        entity_animacies,
-        entity_controls,
-    })
+        GridGameSpec {
+            grid_dimensions,
+            goal,
+            entity_animacies,
+            entity_controls,
+        }
+    }
 }
 
-fn generate_grid_goal<R: Rng + Sized>(rng: &mut R) -> Goal {
-    match rng.gen_range(0, GOAL_COUNT) {
-        0 => AddSomeNumberOfXsToTheGrid,
-        1 => MoveAllXsToALocation,
-        2 => FreeAllTrappedXs,
-        3 => TransformAllXsIntoYs,
-        4 => MakeAllXsTouchTheGroupofXs,
-        _ => MakeAllXsTouchAtLeastOneY,
+impl Distribution<Goal> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Goal {
+        match rng.gen_range(0, GOAL_COUNT) {
+            0 => AddSomeNumberOfXsToTheGrid,
+            1 => MoveAllXsToALocation,
+            2 => FreeAllTrappedXs,
+            3 => TransformAllXsIntoYs,
+            4 => MakeAllXsTouchTheGroupofXs,
+            _ => MakeAllXsTouchAtLeastOneY,
+        }
     }
 }
 
@@ -189,7 +199,7 @@ struct Ontology {
     entity_controls: Vec<Option<EntityControl>>,
 }
 
-fn generate_ontology<R: Rng + Sized>(rng: &mut R, goal: Goal) -> Ontology {
+fn generate_ontology<R: Rng + ?Sized>(rng: &mut R, goal: Goal) -> Ontology {
     let entity_animacies = generate_entity_animacies(rng, goal);
 
     let entity_controls = generate_entity_controls(rng, &entity_animacies);
@@ -200,7 +210,7 @@ fn generate_ontology<R: Rng + Sized>(rng: &mut R, goal: Goal) -> Ontology {
     }
 }
 
-fn generate_entity_controls<R: Rng + Sized>(
+fn generate_entity_controls<R: Rng + ?Sized>(
     rng: &mut R,
     entity_animacies: &Vec<EntityAnimacy>,
 ) -> Vec<Option<EntityControl>> {
@@ -224,7 +234,7 @@ fn generate_entity_controls<R: Rng + Sized>(
     controls
 }
 
-fn generate_entity_control<R: Rng + Sized>(rng: &mut R) -> EntityControl {
+fn generate_entity_control<R: Rng + ?Sized>(rng: &mut R) -> EntityControl {
     EntityControl {
         movement: generate_move_control(rng),
         a: generate_action(rng),
@@ -233,21 +243,21 @@ fn generate_entity_control<R: Rng + Sized>(rng: &mut R) -> EntityControl {
     }
 }
 
-fn generate_move_control<R: Rng + Sized>(rng: &mut R) -> MoveControl {
+fn generate_move_control<R: Rng + ?Sized>(rng: &mut R) -> MoveControl {
     match rng.gen_range(0, MOVE_CONTROL_COUNT) {
         0 => Orthogonal,
         _ => Diagonal,
     }
 }
 
-fn generate_action<R: Rng + Sized>(rng: &mut R) -> Action {
+fn generate_action<R: Rng + ?Sized>(rng: &mut R) -> Action {
     match rng.gen_range(0, MOVE_CONTROL_COUNT) {
         0 => SwapPlayerControlToNext(rng.gen()),
         _ => CopySelf,
     }
 }
 
-fn generate_entity_animacies<R: Rng + Sized>(rng: &mut R, goal: Goal) -> Vec<EntityAnimacy> {
+fn generate_entity_animacies<R: Rng + ?Sized>(rng: &mut R, goal: Goal) -> Vec<EntityAnimacy> {
     let minimum_entity_types_needed = goal.minimum_entity_types_needed();
 
     let entity_animacies_len =
@@ -266,7 +276,7 @@ fn generate_entity_animacies<R: Rng + Sized>(rng: &mut R, goal: Goal) -> Vec<Ent
     entity_animacies
 }
 
-fn generate_entity_animacy<R: Rng + Sized>(rng: &mut R) -> EntityAnimacy {
+fn generate_entity_animacy<R: Rng + ?Sized>(rng: &mut R) -> EntityAnimacy {
     match rng.gen_range(0, ENTITY_ANIMACY_COUNT) {
         0 => PlayerControlled,
         1 => Inanimate,
@@ -563,7 +573,7 @@ impl RenderableGame {
     }
 }
 
-fn render_spec<R: Rng + Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGame> {
+fn render_spec<R: Rng + ?Sized>(rng: &mut R, spec: GameSpec) -> Result<RenderedGame> {
     let result = match spec {
         GameSpec::Guess => render_guess_game(rng),
         GameSpec::Grid(ggs) => render_grid_game(rng, ggs),
