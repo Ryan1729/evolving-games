@@ -4,25 +4,7 @@ use common::*;
 use error::Result;
 
 pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<RenderableGame> {
-    let mut button_responses = ButtonResponses::default();
-
-    button_responses.left = code_string!(
-        state.move_left(id);
-    );
-    button_responses.right = code_string!{
-        state.move_right(id);
-    };
-    button_responses.up = code_string!{
-        state.move_up(id);
-    };
-    button_responses.down = code_string!{
-        state.move_down(id);
-    };
-
-    let responder = InputResponder {
-        button_responses,
-        variety: Default::default(),
-    };
+    let responder = InputResponder::default();
 
     let minimum_card_count = spec.deck.get_minimum_card_count();
 
@@ -81,82 +63,479 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
     };
 
     let custom_code = code_string!{
-        impl GameState {
-            pub fn move_left(&mut self, id: usize) {
-                GameState::move_in_direction(self, id, Direction::Left);
+        use std::cmp::{max, min};
+
+        macro_rules! last_unchecked {
+            ($vec:expr) => {
+                $vec[$vec.len() - 1]
+            };
+        }
+
+        pub type Cells = [Vec<u8>; CELLS_MAX_INDEX as usize + 1];
+
+        pub struct CustomState {
+            pub cells: Cells,
+            pub wins: u8,
+            pub win_done: bool,
+            pub selectdrop: bool,
+            pub selectpos: u8,
+            pub selectdepth: u8,
+            pub grabpos: u8,
+            pub grabdepth: u8,
+            pub movetimer: u8,
+        }
+
+        fn update(state: &mut CustomState, input: Input) {
+            if state.movetimer > 0 {
+                state.movetimer -= 1;
             }
 
-            pub fn move_right(&mut self, id: usize) {
-                GameState::move_in_direction(self, id, Direction::Right);
-            }
+            if state.movetimer == 0 {
+                if automove(state) {
+                    state.movetimer = MOVE_TIMER_MAX;
+                } else {
+                    if input.pressed_this_frame(Button::Left) {
 
-            pub fn move_up(&mut self, id: usize) {
-                GameState::move_in_direction(self, id, Direction::Up);
-            }
+                        state.selectpos = if state.selectpos == 0 {
+                            START_OF_TABLEAU - 1
+                        } else if state.selectpos == START_OF_TABLEAU {
+                            CELLS_MAX_INDEX
+                        } else {
+                            state.selectpos - 1
+                        };
+                        state.selectdepth = if state.selectdrop {
+                            0
+                        } else {
+                            let len = state.cells[state.selectpos as usize].len() as u8;
 
-            pub fn move_down(&mut self, id: usize) {
-                GameState::move_in_direction(self, id, Direction::Down);
-            }
+                            min(max(0, state.selectdepth), len - 1)
+                        };
+                    } else if input.pressed_this_frame(Button::Right) {
 
-            fn move_in_direction(&mut self, id: usize, dir: Direction) {
-                let grid_pos = self.get_cursor_pos(id);
+                        state.selectpos = if state.selectpos == START_OF_TABLEAU - 1 {
+                            0
+                        } else if state.selectpos >= CELLS_MAX_INDEX {
+                            START_OF_TABLEAU
+                        } else {
+                            state.selectpos + 1
+                        };
+                        state.selectdepth = if state.selectdrop {
+                            0
+                        } else {
+                            let len = state.cells[state.selectpos as usize].len() as u8;
 
-                let new_pos = match dir {
-                    Direction::Left => {
-                        match grid_pos {
-                            GridPos::Main(x, y) => {
-                                 GridPos::Main(x - 1, y)
-                            }
-                            GridPos::FoundationLeft => GridPos::FoundationLeft,
-                            GridPos::FoundationMiddle => GridPos::FoundationLeft,
-                            GridPos::FoundationRight => GridPos::FoundationMiddle,
+                            min(max(0, state.selectdepth), len - 1)
+                        };
+                    } else if input.pressed_this_frame(Button::Up) {
+
+                        let changepos = if state.selectpos == BUTTON_COLUMN {
+                            state.selectdepth >= 2
+                        } else {
+                            let len = state.cells[state.selectpos as usize].len();
+                            len == 0 || state.selectdepth >= len as u8 - 1 || state.selectdrop
+                        };
+
+                        if changepos {
+                            state.selectpos = if state.selectpos > END_OF_FOUNDATIONS {
+                                state.selectpos - START_OF_TABLEAU
+                            } else {
+                                state.selectpos + START_OF_TABLEAU
+                            };
+                            state.selectdepth = 0;
+                        } else {
+                            state.selectdepth += 1;
                         }
-                    },
-                    Direction::Right => {
-                        match grid_pos {
-                            GridPos::Main(x, y) => {
-                                 GridPos::Main(x + 1, y)
-                            }
-                            GridPos::FoundationLeft => GridPos::FoundationMiddle,
-                            GridPos::FoundationMiddle => GridPos::FoundationRight,
-                            GridPos::FoundationRight => GridPos::FoundationRight,
-                        }
-                    },
-                    Direction::Up => {
-                        match grid_pos {
-                            GridPos::Main(x, y) => {
-                                 GridPos::Main(x, y - 1)
-                            }
-                            GridPos::FoundationLeft => GridPos::Main(GridX::new(2), GridY::new(GameState::GRID_DIMENSIONS.1 - 1)),
-                            GridPos::FoundationMiddle => GridPos::Main(GridX::new(3), GridY::new(GameState::GRID_DIMENSIONS.1 - 1)),
-                            GridPos::FoundationRight => GridPos::Main(GridX::new(4), GridY::new(GameState::GRID_DIMENSIONS.1 - 1)),
-                        }
-                    },
-                    Direction::Down => {
-                        match grid_pos {
-                            GridPos::Main(x, y) => {
-                                let newY = y + 1;
+                    } else if input.pressed_this_frame(Button::Down) {
 
-                                if newY == y {
-                                    if x >= GridX::new(4) {
-                                        GridPos::FoundationRight
-                                    } else if x <= GridX::new(2) {
-                                        GridPos::FoundationLeft
-                                    } else {
-                                        GridPos::FoundationMiddle
-                                    }
-                                } else {
-                                    GridPos::Main(x, newY)
+                        if state.selectdepth == 0 {
+                            state.selectpos = if state.selectpos > END_OF_FOUNDATIONS {
+                                state.selectpos - START_OF_TABLEAU
+                            } else {
+                                state.selectpos + START_OF_TABLEAU
+                            };
+                            let len = state.cells[state.selectpos as usize].len();
+                            state.selectdepth = if len > 0 && !state.selectdrop {
+                                len as u8 - 1
+                            } else if state.selectpos == BUTTON_COLUMN {
+                                2
+                            } else {
+                                0
+                            };
+                        } else {
+                            state.selectdepth = state.selectdepth - 1;
+                        }
+                    } else if input.pressed_this_frame(Button::A) {
+
+                        if state.selectpos == BUTTON_COLUMN {
+                            if canmovedragons(state, state.selectdepth) {
+                                movedragons(state);
+                                state.selectdrop = false;
+                                state.movetimer = MOVE_TIMER_MAX;
+                            }
+                        } else {
+                            if state.selectdrop {
+                                if candrop(
+                                    &state.cells,
+                                    state.grabpos,
+                                    state.grabdepth,
+                                    state.selectpos,
+                                ) {
+                                    let CustomState {
+                                        grabpos,
+                                        grabdepth,
+                                        selectpos,
+                                        ..
+                                    } = state;
+                                    movecards(state, *grabpos, *grabdepth, *selectpos);
+                                    state.selectdrop = false;
+                                    state.movetimer = MOVE_TIMER_MAX;
+                                }
+                            } else if cangrab(&state.cells, state.selectpos, state.selectdepth) {
+                                state.grabpos = state.selectpos;
+                                state.grabdepth = state.selectdepth;
+                                state.selectdrop = true;
+                            }
+                        }
+                    } else if input.pressed_this_frame(Button::B) {
+
+                        state.selectdrop = false;
+                    }
+                }
+            }
+
+            if haswon(state) {
+                if state.win_done {
+                    if input.pressed_this_frame(Button::Start) {
+                        let wins = state.wins;
+
+                        *state = CustomState::new();
+
+                        state.wins = wins;
+                    }
+                } else {
+                    state.wins += 1;
+                    state.win_done = true;
+                }
+            }
+        }
+
+        fn getselection(cells: &Cells, pos: u8, depth: u8) -> Vec<u8> {
+            let pos = pos as usize;
+            let depth = depth as usize;
+
+            let mut output = Vec::with_capacity(depth);
+            for i in 1..=depth + 1 {
+                let index = cells[pos].len() - (depth + 1) + i - 1;
+                output.push(cells[pos][index]);
+            }
+            return output;
+        }
+
+        fn cangrab(cells: &Cells, pos: u8, depth: u8) -> bool {
+            let selection = getselection(cells, pos, depth);
+            if selection.len() == 0 || (pos >= FLOWER_FOUNDATION && pos < START_OF_TABLEAU) {
+                return false;
+            }
+
+            let mut lastsuit = 255;
+            let mut lastnum = 255;
+            let mut first = true;
+
+            for &card in selection.iter() {
+                if card == CARD_BACK {
+                    return false;
+                }
+
+                let suit = getsuit(card);
+                let num = getcardnum(card);
+
+                if !first {
+                    if suit == lastsuit || num == 0 || num != lastnum - 1 {
+                        return false;
+                    }
+                }
+                lastsuit = suit;
+                lastnum = num;
+                first = false;
+            }
+
+            return true;
+        }
+
+        fn candrop(cells: &Cells, grabpos: u8, grabdepth: u8, droppos: u8) -> bool {
+            let grabpos = grabpos as usize;
+            let grabdepth = grabdepth as usize;
+            let grabcard = {
+                let len = cells[grabpos].len();
+                if len < grabdepth {
+                    return false;
+                }
+
+                cells[grabpos][len - 1 - grabdepth]
+            };
+
+            if droppos < BUTTON_COLUMN {
+                return cells[droppos as usize].len() == 0 && grabdepth == 0;
+            } else if droppos >= BUTTON_COLUMN && droppos <= FLOWER_FOUNDATION {
+                return false;
+            } else if droppos >= START_OF_FOUNDATIONS && droppos < START_OF_TABLEAU {
+                let droppos = droppos as usize;
+                if grabdepth == 0 {
+                    if cells[droppos].len() == 0 {
+                        if getcardnum(grabcard) == 1 {
+                            return true;
+                        }
+                    } else {
+                        let dropcard = last_unchecked!(cells[droppos]);
+                        if getsuit(grabcard) == getsuit(dropcard)
+                            && getcardnum(grabcard) != 0
+                            && getcardnum(grabcard) == getcardnum(dropcard) + 1
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            } else {
+                let droppos = droppos as usize;
+                if cells[droppos].len() == 0 {
+                    return true;
+                } else {
+                    let dropcard = last_unchecked!(cells[droppos]);
+                    if getsuit(grabcard) != getsuit(dropcard)
+                        && getcardnum(grabcard) != 0
+                        && getcardnum(grabcard) == getcardnum(dropcard) - 1
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+        fn getsuit(card: u8) -> u8 {
+            if card >= FLOWER_CARD {
+                3
+            } else if card >= FIRST_BLACK_CARD {
+                2
+            } else if card >= FIRST_GREEN_CARD {
+                1
+            } else {
+                0
+            }
+        }
+
+        fn getcardnum(card: u8) -> u8 {
+            card - (getsuit(card) * 10)
+        }
+
+        fn movecards(state: &mut CustomState, grabpos: u8, grabdepth: u8, droppos: u8) {
+            let grabpos = grabpos as usize;
+            let grabdepth = grabdepth as usize;
+            let droppos = droppos as usize;
+            if droppos <= END_OF_FOUNDATIONS as usize {
+                if let Some(last) = state.cells[grabpos].pop() {
+                    if state.cells[droppos].len() > 0 {
+                        state.cells[droppos][0] = last;
+                    } else {
+                        state.cells[droppos].push(last);
+                    }
+                }
+            } else {
+                let len = state.cells[grabpos].len();
+
+                let temp: Vec<_> = state.cells[grabpos].drain(len - 1 - grabdepth..).collect();
+
+                state.cells[droppos].extend(temp.into_iter());
+            }
+        }
+
+        fn canmovedragons(state: &CustomState, suit: u8) -> bool {
+            let mut count = 0;
+            for i in 0..=CELLS_MAX_INDEX {
+                let i = i as usize;
+                if state.cells[i].len() > 0 && last_unchecked!(state.cells[i]) == suit * 10 {
+                    count += 1;
+                }
+            }
+
+            if count < 4 {
+                return false;
+            }
+
+            for i in 0..BUTTON_COLUMN {
+                let i = i as usize;
+                if state.cells[i].len() == 0 || last_unchecked!(state.cells[i]) == suit * 10 {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        fn movedragons(state: &mut CustomState) {
+            let suit = state.selectdepth;
+            let mut moveto = None;
+
+            for i in 0..BUTTON_COLUMN {
+                let i = i as usize;
+                if state.cells[i].len() != 0
+                    && last_unchecked!(state.cells[i]) == suit * 10
+                    && moveto.is_none()
+                {
+                    moveto = Some(i);
+                }
+            }
+            if moveto.is_none() {
+                for i in 0..BUTTON_COLUMN {
+                    let i = i as usize;
+                    if state.cells[i].len() == 0 {
+                        moveto = Some(i);
+                        break;
+                    }
+                }
+            }
+
+            for i in 0..=CELLS_MAX_INDEX {
+                let i = i as usize;
+                if state.cells[i].len() != 0 && last_unchecked!(state.cells[i]) == suit * 10 {
+                    state.cells[i].pop();
+                }
+            }
+
+            if let Some(moveto) = moveto {
+                let moveto = moveto as usize;
+                state.cells[moveto].push(CARD_BACK);
+            }
+        }
+
+        fn haswon(state: &CustomState) -> bool {
+            for i in START_OF_TABLEAU..=CELLS_MAX_INDEX {
+                let i = i as usize;
+                if state.cells[i].len() > 0 {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        fn automove(state: &mut CustomState) -> bool {
+            let min_free_card_num = {
+                let mut min_foundation_card_num = None;
+
+                for i in START_OF_FOUNDATIONS..START_OF_TABLEAU {
+                    let i = i as usize;
+                    let val = if state.cells[i].len() > 0 {
+                        let card = last_unchecked!(state.cells[i]);
+                        getcardnum(card)
+                    } else {
+                        0
+                    };
+                    if min_foundation_card_num.map(|v| val < v).unwrap_or(true) {
+                        min_foundation_card_num = Some(val);
+                    }
+                }
+
+                min_foundation_card_num.unwrap_or(255).wrapping_add(1)
+            };
+
+            for i in 0..=CELLS_MAX_INDEX {
+                if (i < BUTTON_COLUMN || i >= START_OF_TABLEAU) && state.cells[i as usize].len() > 0 {
+                    let card = last_unchecked!(state.cells[i as usize]);
+                    if card == FLOWER_CARD {
+                        movecards(state, i, 0, FLOWER_FOUNDATION);
+                        return true;
+                    } else if getcardnum(card) == min_free_card_num && card != CARD_BACK {
+                        let suit = getsuit(card);
+                        for i2 in START_OF_FOUNDATIONS..START_OF_TABLEAU {
+                            if state.cells[i2 as usize].len() > 0 {
+                                let card2 = last_unchecked!(state.cells[i2 as usize]);
+                                if getsuit(card2) == suit {
+                                    movecards(state, i, 0, i2);
+                                    return true;
                                 }
                             }
-                            GridPos::FoundationLeft => GridPos::FoundationLeft,
-                            GridPos::FoundationMiddle => GridPos::FoundationMiddle,
-                            GridPos::FoundationRight => GridPos::FoundationRight,
                         }
-                    },
-                };
+                        for i2 in START_OF_FOUNDATIONS..START_OF_TABLEAU {
+                            if state.cells[i2 as usize].len() == 0 {
+                                movecards(state, i, 0, i2);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
 
-                self.set_cursor_pos(id, new_pos);
+            return false;
+        }
+
+        const FIRST_UNUSED_FOR_EXTRA_DATA_INDEX: usize = 8;
+
+        impl GameState {
+            fn get_custom_state(&self) -> CustomState {
+
+                let mut grid_positions = Vec::new();
+
+                for i in FIRST_UNUSED_FOR_EXTRA_DATA_INDEX..GameState::ENTITY_COUNT {
+                    if self.entities[i].is_empty() {
+                        continue;
+                    }
+
+                    match self.varieties[i] {
+                        0 ... FLOWER_CARD => {
+                            let grid_position = ;
+
+                            grid_positions.push((grid_position, value));
+                        },
+                        CURSOR =>,
+                        CURSOR_GHOST =>,
+                        BUTTON_COLUMN_VARIETY =>,
+                    }
+                }
+
+                grid_positions.sort_by(|(position, _)| position);
+
+                let mut cells = [Default::default(); CELLS_MAX_INDEX as usize + 1];
+
+                for ((x, y), value) in grid_positions.iter() {
+                    let x = x as usize;
+
+                    cells[x].push(value);
+                }
+
+                CustomState {
+                    cells,
+                    wins: self.varieties[0],
+                    win_done: self.varieties[1] != 0,
+                    selectdrop: self.varieties[2] != 0,
+                    selectpos: self.varieties[3],
+                    selectdepth: self.varieties[4],
+                    grabpos: self.varieties[5],
+                    grabdepth: self.varieties[6],
+                    movetimer: self.varieties[7],
+                }
+
+            }
+
+            fn set_custom_state(&mut self, custom_state: CustomState) {
+                //I'm wondering if there's a better way than needing to re-derive the appearance of
+                //all entities since usually they will just be moved around. Maybe a delta derived
+                //from between the two custom states could be passed in here instead? That sounds
+                // complicated, but it has the advantage that all a different game would need to
+                //do is create a `GameStateDelta` however is best for that game. In order to
+                //compactly, yet flexibly express the changes, it seems like `GameStateDelta`
+                //should be a `Vec` of a sum type which can express any particular atomic change
+                //to the state.
+                // *self = GameState {
+                //     entities: [Component::Ty; GameState::ENTITY_COUNT],
+                //
+                //     positions: [[Position; GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT],
+                //     appearances: [[Appearance; GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT],
+                //     sizes: [[Position; GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT],
+                //
+                //     varieties: [Variety; GameState::ENTITY_COUNT],
+                //
+                //     player_controlling_variety: Default::default(),
+                // }
             }
 
             fn get_cursor_pos(&self, id: usize) -> GridPos {
@@ -187,156 +566,6 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
                     }
                 }
             }
-        }
-
-        mod foundation {
-            use super::*;
-            pub const LEFT_EDGE: u8 = (2 * (card::WIDTH + card::SPACING) + card::SPACING);
-            pub const TOP_EDGE: u8 = card::HEIGHT * GameState::GRID_DIMENSIONS.1;
-
-            pub const LEFT: (u8,u8) = (
-                LEFT_EDGE,
-                TOP_EDGE
-            );
-            pub const MIDDLE: (u8,u8) = (
-                LEFT_EDGE + ((card::WIDTH + card::SPACING) + card::SPACING),
-                TOP_EDGE
-            );
-            pub const RIGHT: (u8,u8) = (
-                LEFT_EDGE + (2 * (card::WIDTH + card::SPACING) + card::SPACING),
-                TOP_EDGE
-            );
-
-            pub fn from_screen(screen_pos: (u8,u8)) -> Option<GridPos> {
-                if screen_pos == LEFT {
-                    Some(GridPos::FoundationLeft)
-                } else if screen_pos == MIDDLE {
-                    Some(GridPos::FoundationMiddle)
-                } else if screen_pos == RIGHT {
-                    Some(GridPos::FoundationRight)
-                } else {
-                    None
-                }
-            }
-        }
-
-        pub enum Direction {
-            Left,
-            Right,
-            Down,
-            Up,
-        }
-
-        pub enum GridPos {
-            Main(GridX, GridY),
-            FoundationLeft,
-            FoundationMiddle,
-            FoundationRight,
-        }
-
-        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-        pub struct GridX(u8);
-        impl GridX {
-            fn new(n: u8) -> Self {
-                if n >= GameState::GRID_DIMENSIONS.0 - 1 {
-                    GridX(GameState::GRID_DIMENSIONS.0 - 1)
-                } else {
-                    GridX(n)
-                }
-            }
-        }
-
-        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-        pub struct GridY(u8);
-        impl GridY {
-            fn new(n: u8) -> Self {
-                if n >= GameState::GRID_DIMENSIONS.1 - 1 {
-                    GridY(GameState::GRID_DIMENSIONS.1 - 1)
-                } else {
-                    GridY(n)
-                }
-            }
-        }
-
-        use std::ops::Add;
-        use std::ops::Sub;
-
-        macro_rules! add_sub_impl {
-            ($($type:ty),*) => {
-                $(
-                    impl Add<$type> for $type {
-                        type Output = $type;
-
-                        fn add(self, other: $type) -> $type {
-                            let result = self.0.saturating_add(other.0);
-
-                            <$type>::new(result)
-                        }
-                    }
-
-                    impl Add<u8> for $type {
-                        type Output = $type;
-
-                        fn add(self, other: u8) -> $type {
-                            let result = self.0.saturating_add(other);
-
-                            <$type>::new(result)
-                        }
-                    }
-
-                    impl Add<$type> for u8 {
-                        type Output = $type;
-
-                        fn add(self, other: $type) -> $type {
-                            let result = self.saturating_add(other.0);
-
-                            <$type>::new(result)
-                        }
-                    }
-
-                    impl Sub<$type> for $type {
-                        type Output = $type;
-
-                        fn sub(self, other: $type) -> $type {
-                            let result = self.0.saturating_sub(other.0);
-
-                            <$type>::new(result)
-                        }
-                    }
-
-                    impl Sub<u8> for $type {
-                        type Output = $type;
-
-                        fn sub(self, other: u8) -> $type {
-                            let result = self.0.saturating_sub(other);
-
-                            <$type>::new(result)
-                        }
-                    }
-
-                    impl Sub<$type> for u8 {
-                        type Output = $type;
-
-                        fn sub(self, other: $type) -> $type {
-                            let result = self.saturating_sub(other.0);
-
-                            <$type>::new(result)
-                        }
-                    }
-                )*
-            }
-        }
-
-        add_sub_impl!{GridX, GridY}
-
-        fn screen_to_grid(screen_pos: (u8,u8)) -> GridPos {
-            let (x, y) = card::screen_to_grid(screen_pos);
-
-            GridPos::Main(GridX::new(x), GridY::new(y))
-        }
-
-        fn grid_to_screen((x, y): (GridX, GridY)) -> (u8,u8) {
-            card::grid_to_screen((x.0, y.0))
         }
     };
 

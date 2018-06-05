@@ -131,6 +131,7 @@ impl fmt::Display for InputResponders {
     }
 }
 
+#[derive(Default)]
 pub struct InputResponder {
     pub button_responses: ButtonResponses,
     pub variety: Variety,

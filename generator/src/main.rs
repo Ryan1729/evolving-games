@@ -326,11 +326,9 @@ impl RenderableGame {
 
     #[inline]
     pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {{
-        for id in 0..GameState::ENTITY_COUNT {{
-            if state.entities[id].contains(Component::PlayerControlled) {{
-                respond_to_input(state, input, id, Variety::default());
-            }}
-        }}
+        let mut custom_state = state.get_custom_state();
+        update(&mut custom_state, input);
+        state.set_custom_state(custom_state);
 
         framebuffer.clear();
 
