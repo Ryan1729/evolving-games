@@ -1,21 +1,22 @@
 
     use common::*;
+    use common::game_state::*;
 
     fn input_responder_0(state: &mut GameState, input: Input, id: usize) {
                 if input.pressed_this_frame(Button::Left) {
-                    state . move_left ( id ) ;
+                    
                 }
 
                 if input.pressed_this_frame(Button::Right) {
-                    state . move_right ( id ) ;
+                    
                 }
 
                 if input.pressed_this_frame(Button::Up) {
-                    state . move_up ( id ) ;
+                    
                 }
 
                 if input.pressed_this_frame(Button::Down) {
-                    state . move_down ( id ) ;
+                    
                 }
 
                 if input.pressed_this_frame(Button::Select) {
@@ -45,11 +46,14 @@ fn respond_to_input(state: &mut GameState, input: Input, id: usize, variety: Var
 
     #[inline]
     pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {
-        for id in 0..GameState::ENTITY_COUNT {
-            if state.entities[id].contains(Component::PlayerControlled) {
-                respond_to_input(state, input, id, Variety::default());
-            }
-        }
+        let prior_custom_state = state.get_custom_state();
+        let mut custom_state = prior_custom_state.clone();
+
+        update(&mut custom_state, input);
+
+        let mutations = get_mutations(prior_custom_state, custom_state);
+
+        state.set_state(mutations);
 
         framebuffer.clear();
 

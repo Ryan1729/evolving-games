@@ -4,7 +4,7 @@
         impl GameState {
             pub const ENTITY_COUNT: usize = 256;
             pub const ENTITY_PIECE_COUNT: usize = 32;
-            pub const GRID_DIMENSIONS : ( u8 , u8 ) = ( 7 , 4 ) ;
+            pub const GRID_DIMENSIONS : ( u8 , u8 ) = ( 4 , 6 ) ;
 
             pub fn new() -> GameState {
                 let mut entities = [Component::Ty::empty(); GameState::ENTITY_COUNT];
@@ -19,145 +19,130 @@
                 let player_controlling_variety = Variety::default();
 
                     entities[0] = Component::Animate;
-    positions[0] = [(0, 0), (3, 2), (11, 3), (11, 9), (3, 14), (0, 0), (0, 0), (3, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[0] = [(25, 35), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[0] = [Appearance(14), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[0] = [(0, 0), (3, 2), (11, 3), (11, 9), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[0] = [(25, 35), (8, 1), (1, 5), (1, 5), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[0] = [Appearance(11), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[0] = 0;
     entities[1] = Component::Animate;
-    positions[1] = [(29, 0), (0, 0), (40, 3), (40, 9), (0, 0), (0, 0), (31, 3), (32, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[1] = [(25, 35), (0, 0), (1, 5), (1, 5), (0, 0), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[1] = [Appearance(13), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[1] = [(29, 0), (32, 2), (40, 3), (40, 9), (32, 14), (31, 9), (31, 3), (32, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[1] = [(25, 35), (8, 1), (1, 5), (1, 5), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[1] = [Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[1] = 1;
     entities[2] = Component::Animate;
-    positions[2] = [(58, 0), (0, 0), (0, 0), (69, 9), (61, 14), (60, 9), (60, 3), (61, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[2] = [(25, 35), (0, 0), (0, 0), (1, 5), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[2] = [Appearance(10), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[2] = [(58, 0), (61, 2), (0, 0), (69, 9), (61, 14), (0, 0), (60, 3), (61, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[2] = [(25, 35), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[2] = [Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[2] = 2;
     entities[3] = Component::Animate;
-    positions[3] = [(87, 0), (0, 0), (0, 0), (98, 9), (90, 14), (89, 9), (89, 3), (90, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[3] = [(25, 35), (0, 0), (0, 0), (1, 5), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[3] = [Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[3] = [(87, 0), (90, 2), (0, 0), (0, 0), (0, 0), (89, 9), (89, 3), (90, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[3] = [(25, 35), (8, 1), (0, 0), (0, 0), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[3] = [Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[3] = 3;
     entities[4] = Component::Animate;
-    positions[4] = [(116, 0), (0, 0), (127, 3), (127, 9), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[4] = [(25, 35), (0, 0), (1, 5), (1, 5), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[4] = [Appearance(9), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[4] = [(0, 17), (3, 19), (0, 0), (0, 0), (3, 31), (2, 26), (2, 20), (3, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[4] = [(25, 35), (8, 1), (0, 0), (0, 0), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[4] = [Appearance(11), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[4] = 4;
     entities[5] = Component::Animate;
-    positions[5] = [(145, 0), (148, 2), (0, 0), (0, 0), (0, 0), (147, 9), (147, 3), (148, 8), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    positions[5] = [(29, 17), (32, 19), (0, 0), (0, 0), (0, 0), (31, 26), (31, 20), (32, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
     sizes[5] = [(25, 35), (8, 1), (0, 0), (0, 0), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[5] = [Appearance(8), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    appearances[5] = [Appearance(13), Appearance(9), Appearance(9), Appearance(9), Appearance(9), Appearance(9), Appearance(9), Appearance(9), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[5] = 5;
     entities[6] = Component::Animate;
-    positions[6] = [(174, 0), (177, 2), (0, 0), (0, 0), (177, 14), (176, 9), (176, 3), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[6] = [(25, 35), (8, 1), (0, 0), (0, 0), (8, 1), (1, 5), (1, 5), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[6] = [Appearance(10), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[6] = [(58, 17), (61, 19), (69, 20), (69, 26), (0, 0), (60, 26), (60, 20), (61, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[6] = [(25, 35), (8, 1), (1, 5), (1, 5), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[6] = [Appearance(10), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[6] = 6;
     entities[7] = Component::Animate;
-    positions[7] = [(0, 17), (3, 19), (11, 20), (11, 26), (3, 31), (0, 0), (0, 0), (3, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[7] = [(25, 35), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[7] = [Appearance(11), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[7] = [(87, 17), (90, 19), (0, 0), (0, 0), (0, 0), (89, 26), (89, 20), (90, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[7] = [(25, 35), (8, 1), (0, 0), (0, 0), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[7] = [Appearance(14), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[7] = 7;
     entities[8] = Component::Animate;
-    positions[8] = [(29, 17), (0, 0), (0, 0), (40, 26), (32, 31), (31, 26), (31, 20), (32, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[8] = [(25, 35), (0, 0), (0, 0), (1, 5), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[8] = [Appearance(10), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[8] = [(0, 34), (3, 36), (11, 37), (11, 43), (0, 0), (2, 43), (2, 37), (3, 42), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[8] = [(25, 35), (8, 1), (1, 5), (1, 5), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[8] = [Appearance(8), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[8] = 8;
     entities[9] = Component::Animate;
-    positions[9] = [(58, 17), (61, 19), (69, 20), (69, 26), (61, 31), (60, 26), (60, 20), (61, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[9] = [(25, 35), (8, 1), (1, 5), (1, 5), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[9] = [Appearance(10), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[9] = [(29, 34), (0, 0), (40, 37), (40, 43), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[9] = [(25, 35), (0, 0), (1, 5), (1, 5), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[9] = [Appearance(13), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[9] = 9;
     entities[10] = Component::Animate;
-    positions[10] = [(87, 17), (90, 19), (0, 0), (0, 0), (0, 0), (89, 26), (89, 20), (90, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    positions[10] = [(58, 34), (61, 36), (0, 0), (0, 0), (0, 0), (60, 43), (60, 37), (61, 42), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
     sizes[10] = [(25, 35), (8, 1), (0, 0), (0, 0), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[10] = [Appearance(8), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    appearances[10] = [Appearance(13), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[10] = 10;
     entities[11] = Component::Animate;
-    positions[11] = [(116, 17), (119, 19), (0, 0), (0, 0), (0, 0), (118, 26), (118, 20), (119, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[11] = [(25, 35), (8, 1), (0, 0), (0, 0), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[11] = [Appearance(13), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[11] = [(87, 34), (0, 0), (98, 37), (98, 43), (0, 0), (0, 0), (89, 37), (90, 42), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[11] = [(25, 35), (0, 0), (1, 5), (1, 5), (0, 0), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[11] = [Appearance(11), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[11] = 11;
     entities[12] = Component::Animate;
-    positions[12] = [(145, 17), (148, 19), (0, 0), (156, 26), (148, 31), (0, 0), (147, 20), (148, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[12] = [(25, 35), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[12] = [Appearance(9), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[12] = [(0, 51), (0, 0), (0, 0), (11, 60), (3, 65), (2, 60), (2, 54), (3, 59), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[12] = [(25, 35), (0, 0), (0, 0), (1, 5), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[12] = [Appearance(9), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[12] = 12;
     entities[13] = Component::Animate;
-    positions[13] = [(174, 17), (177, 19), (185, 20), (185, 26), (0, 0), (176, 26), (176, 20), (177, 25), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[13] = [(25, 35), (8, 1), (1, 5), (1, 5), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[13] = [Appearance(10), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[13] = [(29, 51), (32, 53), (0, 0), (0, 0), (32, 65), (31, 60), (31, 54), (32, 59), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[13] = [(25, 35), (8, 1), (0, 0), (0, 0), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[13] = [Appearance(9), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[13] = 13;
     entities[14] = Component::Animate;
-    positions[14] = [(0, 34), (3, 36), (11, 37), (11, 43), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[14] = [(25, 35), (8, 1), (1, 5), (1, 5), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[14] = [Appearance(11), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[14] = [(58, 51), (61, 53), (69, 54), (69, 60), (61, 65), (60, 60), (60, 54), (61, 59), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[14] = [(25, 35), (8, 1), (1, 5), (1, 5), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[14] = [Appearance(15), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[14] = 14;
     entities[15] = Component::Animate;
-    positions[15] = [(29, 34), (0, 0), (40, 37), (40, 43), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[15] = [(25, 35), (0, 0), (1, 5), (1, 5), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[15] = [Appearance(11), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[15] = [(87, 51), (90, 53), (98, 54), (0, 0), (90, 65), (89, 60), (0, 0), (90, 59), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[15] = [(25, 35), (8, 1), (1, 5), (0, 0), (8, 1), (1, 5), (0, 0), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[15] = [Appearance(14), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[15] = 15;
     entities[16] = Component::Animate;
-    positions[16] = [(58, 34), (61, 36), (69, 37), (69, 43), (0, 0), (60, 43), (60, 37), (61, 42), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[16] = [(25, 35), (8, 1), (1, 5), (1, 5), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[16] = [Appearance(11), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[16] = [(0, 68), (0, 0), (11, 71), (11, 77), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[16] = [(25, 35), (0, 0), (1, 5), (1, 5), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[16] = [Appearance(11), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[16] = 16;
     entities[17] = Component::Animate;
-    positions[17] = [(87, 34), (90, 36), (98, 37), (98, 43), (90, 48), (0, 0), (89, 37), (90, 42), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[17] = [(25, 35), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[17] = [Appearance(12), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[17] = [(29, 68), (32, 70), (0, 0), (40, 77), (32, 82), (0, 0), (31, 71), (32, 76), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[17] = [(25, 35), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[17] = [Appearance(12), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[17] = 17;
     entities[18] = Component::Animate;
-    positions[18] = [(116, 34), (119, 36), (0, 0), (127, 43), (119, 48), (0, 0), (118, 37), (119, 42), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    positions[18] = [(58, 68), (61, 70), (0, 0), (69, 77), (61, 82), (0, 0), (60, 71), (61, 76), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
     sizes[18] = [(25, 35), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[18] = [Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    appearances[18] = [Appearance(11), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[18] = 18;
     entities[19] = Component::Animate;
-    positions[19] = [(145, 34), (148, 36), (156, 37), (0, 0), (148, 48), (147, 43), (0, 0), (148, 42), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[19] = [(25, 35), (8, 1), (1, 5), (0, 0), (8, 1), (1, 5), (0, 0), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[19] = [Appearance(9), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[19] = [(87, 68), (0, 0), (98, 71), (98, 77), (0, 0), (0, 0), (89, 71), (90, 76), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[19] = [(25, 35), (0, 0), (1, 5), (1, 5), (0, 0), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[19] = [Appearance(14), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(10), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[19] = 19;
     entities[20] = Component::Animate;
-    positions[20] = [(174, 34), (177, 36), (0, 0), (0, 0), (0, 0), (176, 43), (176, 37), (177, 42), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[20] = [(25, 35), (8, 1), (0, 0), (0, 0), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[20] = [Appearance(14), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[20] = [(0, 85), (3, 87), (11, 88), (0, 0), (3, 99), (2, 94), (0, 0), (3, 93), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[20] = [(25, 35), (8, 1), (1, 5), (0, 0), (8, 1), (1, 5), (0, 0), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[20] = [Appearance(8), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(12), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[20] = 20;
     entities[21] = Component::Animate;
-    positions[21] = [(0, 51), (3, 53), (0, 0), (11, 60), (3, 65), (2, 60), (2, 54), (3, 59), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[21] = [(25, 35), (8, 1), (0, 0), (1, 5), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[21] = [Appearance(11), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[21] = [(29, 85), (32, 87), (40, 88), (40, 94), (32, 99), (0, 0), (31, 88), (32, 93), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[21] = [(25, 35), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[21] = [Appearance(10), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(8), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[21] = 21;
     entities[22] = Component::Animate;
-    positions[22] = [(29, 51), (32, 53), (40, 54), (40, 60), (0, 0), (31, 60), (31, 54), (32, 59), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[22] = [(25, 35), (8, 1), (1, 5), (1, 5), (0, 0), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[22] = [Appearance(12), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[22] = [(58, 85), (61, 87), (0, 0), (69, 94), (61, 99), (60, 94), (60, 88), (61, 93), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[22] = [(25, 35), (8, 1), (0, 0), (1, 5), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[22] = [Appearance(15), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[22] = 22;
     entities[23] = Component::Animate;
-    positions[23] = [(58, 51), (61, 53), (0, 0), (0, 0), (61, 65), (60, 60), (60, 54), (61, 59), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[23] = [(25, 35), (8, 1), (0, 0), (0, 0), (8, 1), (1, 5), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[23] = [Appearance(15), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(11), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    positions[23] = [(87, 85), (0, 0), (98, 88), (98, 94), (0, 0), (0, 0), (89, 88), (90, 93), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[23] = [(25, 35), (0, 0), (1, 5), (1, 5), (0, 0), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[23] = [Appearance(12), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(14), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
     varieties[23] = 23;
-    entities[24] = Component::Animate;
-    positions[24] = [(87, 51), (90, 53), (0, 0), (98, 60), (90, 65), (0, 0), (89, 54), (90, 59), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[24] = [(25, 35), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (1, 5), (8, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[24] = [Appearance(9), Appearance(9), Appearance(9), Appearance(9), Appearance(9), Appearance(9), Appearance(9), Appearance(9), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
-    varieties[24] = 24;
-    entities[25] = Component::Animate;
-    positions[25] = [(116, 51), (119, 53), (0, 0), (0, 0), (119, 65), (118, 60), (118, 54), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[25] = [(25, 35), (8, 1), (0, 0), (0, 0), (8, 1), (1, 5), (1, 5), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[25] = [Appearance(9), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(15), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
-    varieties[25] = 25;
-    entities[26] = Component::Animate;
-    positions[26] = [(145, 51), (148, 53), (0, 0), (0, 0), (148, 65), (147, 60), (147, 54), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[26] = [(25, 35), (8, 1), (0, 0), (0, 0), (8, 1), (1, 5), (1, 5), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[26] = [Appearance(8), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(13), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
-    varieties[26] = 26;
-    entities[27] = Component::Player;
-    positions[27] = [(116, 205), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    sizes[27] = [(25, 35), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
-    appearances[27] = [Appearance(3), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
-    varieties[27] = 0;
+    entities[24] = Component::Player;
+    positions[24] = [(116, 205), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    sizes[24] = [(25, 35), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), ];
+    appearances[24] = [Appearance(3), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), Appearance(255), ];
+    varieties[24] = 0;
 
 
                 GameState {
@@ -181,107 +166,199 @@
             }
         }
 
-        impl GameState {
-pub fn move_left ( & mut self , id : usize ) {
-GameState :: move_in_direction ( self , id , Direction :: Left ) ; } pub fn
-move_right ( & mut self , id : usize ) {
-GameState :: move_in_direction ( self , id , Direction :: Right ) ; } pub fn
-move_up ( & mut self , id : usize ) {
-GameState :: move_in_direction ( self , id , Direction :: Up ) ; } pub fn
-move_down ( & mut self , id : usize ) {
-GameState :: move_in_direction ( self , id , Direction :: Down ) ; } fn
-move_in_direction ( & mut self , id : usize , dir : Direction ) {
-let grid_pos = self . get_cursor_pos ( id ) ; let new_pos = match dir {
-Direction :: Left => {
-match grid_pos {
-GridPos :: Main ( x , y ) => { GridPos :: Main ( x - 1 , y ) } GridPos ::
-FoundationLeft => GridPos :: FoundationLeft , GridPos :: FoundationMiddle =>
-GridPos :: FoundationLeft , GridPos :: FoundationRight => GridPos ::
-FoundationMiddle , } } , Direction :: Right => {
-match grid_pos {
-GridPos :: Main ( x , y ) => { GridPos :: Main ( x + 1 , y ) } GridPos ::
-FoundationLeft => GridPos :: FoundationMiddle , GridPos :: FoundationMiddle =>
-GridPos :: FoundationRight , GridPos :: FoundationRight => GridPos ::
-FoundationRight , } } , Direction :: Up => {
-match grid_pos {
-GridPos :: Main ( x , y ) => { GridPos :: Main ( x , y - 1 ) } GridPos ::
-FoundationLeft => GridPos :: Main (
-GridX :: new ( 2 ) , GridY :: new ( GameState :: GRID_DIMENSIONS . 1 - 1 ) ) ,
-GridPos :: FoundationMiddle => GridPos :: Main (
-GridX :: new ( 3 ) , GridY :: new ( GameState :: GRID_DIMENSIONS . 1 - 1 ) ) ,
-GridPos :: FoundationRight => GridPos :: Main (
-GridX :: new ( 4 ) , GridY :: new ( GameState :: GRID_DIMENSIONS . 1 - 1 ) ) ,
-} } , Direction :: Down => {
-match grid_pos {
-GridPos :: Main ( x , y ) => {
-let newY = y + 1 ; if newY == y {
-if x >= GridX :: new ( 4 ) { GridPos :: FoundationRight } else if x <= GridX
-:: new ( 2 ) { GridPos :: FoundationLeft } else { GridPos :: FoundationMiddle
-} } else { GridPos :: Main ( x , newY ) } } GridPos :: FoundationLeft =>
-GridPos :: FoundationLeft , GridPos :: FoundationMiddle => GridPos ::
-FoundationMiddle , GridPos :: FoundationRight => GridPos :: FoundationRight ,
-} } , } ; self . set_cursor_pos ( id , new_pos ) ; } fn get_cursor_pos (
-& self , id : usize ) -> GridPos {
+        use std :: cmp :: { max , min } ; use common :: * ; macro_rules !
+last_unchecked { ( $ vec : expr ) => { $ vec [ $ vec . len (  ) - 1 ] } ; }
+pub const MOVE_TIMER_MAX : u8 = 3 ; pub const MAX_SUIT_NUM : u8 = 9 ; pub
+const BUTTON_COLUMN : u8 = 3 ; pub const FLOWER_FOUNDATION : u8 = 4 ; pub
+const START_OF_FOUNDATIONS : u8 = 5 ; pub const END_OF_FOUNDATIONS : u8 = 7 ;
+pub const START_OF_TABLEAU : u8 = 8 ; pub const CELLS_MAX_INDEX : u8 = 15 ;
+pub const FIRST_GREEN_CARD : u8 = 10 ; pub const FIRST_BLACK_CARD : u8 = 20 ;
+pub const FLOWER_CARD : u8 = 30 ; pub const CARD_BACK : u8 = 31 ; pub type
+Cells = [ Vec < u8 > ; CELLS_MAX_INDEX as usize + 1 ] ; # [ derive ( Clone ) ]
+pub struct CustomState {
+pub cells : Cells , pub wins : u8 , pub win_done : bool , pub selectdrop :
+bool , pub selectpos : u8 , pub selectdepth : u8 , pub grabpos : u8 , pub
+grabdepth : u8 , pub movetimer : u8 , } enum StateMutation {  } pub fn
+get_mutations (
+old_custom_state : CustomState , new_custom_state : CustomState ) -> Vec <
+StateMutation > { let output = Vec :: new (  ) ; return output ; } pub fn
+update ( state : & mut CustomState , input : Input ) {
+if state . movetimer > 0 { state . movetimer -= 1 ; } if state . movetimer ==
+0 {
+if automove ( state ) { state . movetimer = MOVE_TIMER_MAX ; } else {
+if input . pressed_this_frame ( Button :: Left ) {
+state . selectpos = if state . selectpos == 0 { START_OF_TABLEAU - 1 } else if
+state . selectpos == START_OF_TABLEAU { CELLS_MAX_INDEX } else {
+state . selectpos - 1 } ; state . selectdepth = if state . selectdrop { 0 }
+else {
+let len = state . cells [ state . selectpos as usize ] . len (  ) as u8 ; min
+( max ( 0 , state . selectdepth ) , len - 1 ) } ; } else if input .
+pressed_this_frame ( Button :: Right ) {
+state . selectpos = if state . selectpos == START_OF_TABLEAU - 1 { 0 } else if
+state . selectpos >= CELLS_MAX_INDEX { START_OF_TABLEAU } else {
+state . selectpos + 1 } ; state . selectdepth = if state . selectdrop { 0 }
+else {
+let len = state . cells [ state . selectpos as usize ] . len (  ) as u8 ; min
+( max ( 0 , state . selectdepth ) , len - 1 ) } ; } else if input .
+pressed_this_frame ( Button :: Up ) {
+let changepos = if state . selectpos == BUTTON_COLUMN {
+state . selectdepth >= 2 } else {
+let len = state . cells [ state . selectpos as usize ] . len (  ) ; len == 0
+|| state . selectdepth >= len as u8 - 1 || state . selectdrop } ; if changepos
+{
+state . selectpos = if state . selectpos > END_OF_FOUNDATIONS {
+state . selectpos - START_OF_TABLEAU } else {
+state . selectpos + START_OF_TABLEAU } ; state . selectdepth = 0 ; } else {
+state . selectdepth += 1 ; } } else if input . pressed_this_frame (
+Button :: Down ) {
+if state . selectdepth == 0 {
+state . selectpos = if state . selectpos > END_OF_FOUNDATIONS {
+state . selectpos - START_OF_TABLEAU } else {
+state . selectpos + START_OF_TABLEAU } ; let len = state . cells [
+state . selectpos as usize ] . len (  ) ; state . selectdepth = if len > 0 &&
+! state . selectdrop { len as u8 - 1 } else if state . selectpos ==
+BUTTON_COLUMN { 2 } else { 0 } ; } else {
+state . selectdepth = state . selectdepth - 1 ; } } else if input .
+pressed_this_frame ( Button :: A ) {
+if state . selectpos == BUTTON_COLUMN {
+if canmovedragons ( state , state . selectdepth ) {
+movedragons ( state ) ; state . selectdrop = false ; state . movetimer =
+MOVE_TIMER_MAX ; } } else {
+if state . selectdrop {
+if candrop (
+& state . cells , state . grabpos , state . grabdepth , state . selectpos , )
+{
+let CustomState { grabpos , grabdepth , selectpos , .. } = state ; movecards (
+state , * grabpos , * grabdepth , * selectpos ) ; state . selectdrop = false ;
+state . movetimer = MOVE_TIMER_MAX ; } } else if cangrab (
+& state . cells , state . selectpos , state . selectdepth ) {
+state . grabpos = state . selectpos ; state . grabdepth = state . selectdepth
+; state . selectdrop = true ; } } } else if input . pressed_this_frame (
+Button :: B ) { state . selectdrop = false ; } } } if haswon ( state ) {
+if state . win_done {
+if input . pressed_this_frame ( Button :: Start ) {
+let wins = state . wins ; * state = CustomState :: new (  ) ; state . wins =
+wins ; } } else { state . wins += 1 ; state . win_done = true ; } } } fn
+getselection ( cells : & Cells , pos : u8 , depth : u8 ) -> Vec < u8 > {
+let pos = pos as usize ; let depth = depth as usize ; let mut output = Vec ::
+with_capacity ( depth ) ; for i in 1 ..= depth + 1 {
+let index = cells [ pos ] . len (  ) - ( depth + 1 ) + i - 1 ; output . push (
+cells [ pos ] [ index ] ) ; } return output ; } fn cangrab (
+cells : & Cells , pos : u8 , depth : u8 ) -> bool {
+let selection = getselection ( cells , pos , depth ) ; if selection . len (  )
+== 0 || ( pos >= FLOWER_FOUNDATION && pos < START_OF_TABLEAU ) {
+return false ; } let mut lastsuit = 255 ; let mut lastnum = 255 ; let mut
+first = true ; for & card in selection . iter (  ) {
+if card == CARD_BACK { return false ; } let suit = getsuit ( card ) ; let num
+= getcardnum ( card ) ; if ! first {
+if suit == lastsuit || num == 0 || num != lastnum - 1 { return false ; } }
+lastsuit = suit ; lastnum = num ; first = false ; } return true ; } fn candrop
+( cells : & Cells , grabpos : u8 , grabdepth : u8 , droppos : u8 ) -> bool {
+let grabpos = grabpos as usize ; let grabdepth = grabdepth as usize ; let
+grabcard = {
+let len = cells [ grabpos ] . len (  ) ; if len < grabdepth { return false ; }
+cells [ grabpos ] [ len - 1 - grabdepth ] } ; if droppos < BUTTON_COLUMN {
+return cells [ droppos as usize ] . len (  ) == 0 && grabdepth == 0 ; } else
+if droppos >= BUTTON_COLUMN && droppos <= FLOWER_FOUNDATION { return false ; }
+else if droppos >= START_OF_FOUNDATIONS && droppos < START_OF_TABLEAU {
+let droppos = droppos as usize ; if grabdepth == 0 {
+if cells [ droppos ] . len (  ) == 0 {
+if getcardnum ( grabcard ) == 1 { return true ; } } else {
+let dropcard = last_unchecked ! ( cells [ droppos ] ) ; if getsuit ( grabcard
+) == getsuit ( dropcard ) && getcardnum ( grabcard ) != 0 && getcardnum (
+grabcard ) == getcardnum ( dropcard ) + 1 { return true ; } } } return false ;
+} else {
+let droppos = droppos as usize ; if cells [ droppos ] . len (  ) == 0 {
+return true ; } else {
+let dropcard = last_unchecked ! ( cells [ droppos ] ) ; if getsuit ( grabcard
+) != getsuit ( dropcard ) && getcardnum ( grabcard ) != 0 && getcardnum (
+grabcard ) == getcardnum ( dropcard ) - 1 { return true ; } } return false ; }
+} fn getsuit ( card : u8 ) -> u8 {
+if card >= FLOWER_CARD { 3 } else if card >= FIRST_BLACK_CARD { 2 } else if
+card >= FIRST_GREEN_CARD { 1 } else { 0 } } fn getcardnum ( card : u8 ) -> u8
+{ card - ( getsuit ( card ) * 10 ) } fn movecards (
+state : & mut CustomState , grabpos : u8 , grabdepth : u8 , droppos : u8 ) {
+let grabpos = grabpos as usize ; let grabdepth = grabdepth as usize ; let
+droppos = droppos as usize ; if droppos <= END_OF_FOUNDATIONS as usize {
+if let Some ( last ) = state . cells [ grabpos ] . pop (  ) {
+if state . cells [ droppos ] . len (  ) > 0 {
+state . cells [ droppos ] [ 0 ] = last ; } else {
+state . cells [ droppos ] . push ( last ) ; } } } else {
+let len = state . cells [ grabpos ] . len (  ) ; let temp : Vec < _ > = state
+. cells [ grabpos ] . drain ( len - 1 - grabdepth .. ) . collect (  ) ; state
+. cells [ droppos ] . extend ( temp . into_iter (  ) ) ; } } fn canmovedragons
+( state : & CustomState , suit : u8 ) -> bool {
+let mut count = 0 ; for i in 0 ..= CELLS_MAX_INDEX {
+let i = i as usize ; if state . cells [ i ] . len (  ) > 0 && last_unchecked !
+( state . cells [ i ] ) == suit * 10 { count += 1 ; } } if count < 4 {
+return false ; } for i in 0 .. BUTTON_COLUMN {
+let i = i as usize ; if state . cells [ i ] . len (  ) == 0 || last_unchecked
+! ( state . cells [ i ] ) == suit * 10 { return true ; } } return false ; } fn
+movedragons ( state : & mut CustomState ) {
+let suit = state . selectdepth ; let mut moveto = None ; for i in 0 ..
+BUTTON_COLUMN {
+let i = i as usize ; if state . cells [ i ] . len (  ) != 0 && last_unchecked
+! ( state . cells [ i ] ) == suit * 10 && moveto . is_none (  ) {
+moveto = Some ( i ) ; } } if moveto . is_none (  ) {
+for i in 0 .. BUTTON_COLUMN {
+let i = i as usize ; if state . cells [ i ] . len (  ) == 0 {
+moveto = Some ( i ) ; break ; } } } for i in 0 ..= CELLS_MAX_INDEX {
+let i = i as usize ; if state . cells [ i ] . len (  ) != 0 && last_unchecked
+! ( state . cells [ i ] ) == suit * 10 { state . cells [ i ] . pop (  ) ; } }
+if let Some ( moveto ) = moveto {
+let moveto = moveto as usize ; state . cells [ moveto ] . push ( CARD_BACK ) ;
+} } fn haswon ( state : & CustomState ) -> bool {
+for i in START_OF_TABLEAU ..= CELLS_MAX_INDEX {
+let i = i as usize ; if state . cells [ i ] . len (  ) > 0 { return false ; }
+} return true ; } fn automove ( state : & mut CustomState ) -> bool {
+let min_free_card_num = {
+let mut min_foundation_card_num = None ; for i in START_OF_FOUNDATIONS ..
+START_OF_TABLEAU {
+let i = i as usize ; let val = if state . cells [ i ] . len (  ) > 0 {
+let card = last_unchecked ! ( state . cells [ i ] ) ; getcardnum ( card ) }
+else { 0 } ; if min_foundation_card_num . map ( | v | val < v ) . unwrap_or (
+true ) { min_foundation_card_num = Some ( val ) ; } } min_foundation_card_num
+. unwrap_or ( 255 ) . wrapping_add ( 1 ) } ; for i in 0 ..= CELLS_MAX_INDEX {
+if ( i < BUTTON_COLUMN || i >= START_OF_TABLEAU ) && state . cells [
+i as usize ] . len (  ) > 0 {
+let card = last_unchecked ! ( state . cells [ i as usize ] ) ; if card ==
+FLOWER_CARD { movecards ( state , i , 0 , FLOWER_FOUNDATION ) ; return true ;
+} else if getcardnum ( card ) == min_free_card_num && card != CARD_BACK {
+let suit = getsuit ( card ) ; for i2 in START_OF_FOUNDATIONS ..
+START_OF_TABLEAU {
+if state . cells [ i2 as usize ] . len (  ) > 0 {
+let card2 = last_unchecked ! ( state . cells [ i2 as usize ] ) ; if getsuit (
+card2 ) == suit { movecards ( state , i , 0 , i2 ) ; return true ; } } } for
+i2 in START_OF_FOUNDATIONS .. START_OF_TABLEAU {
+if state . cells [ i2 as usize ] . len (  ) == 0 {
+movecards ( state , i , 0 , i2 ) ; return true ; } } } } } return false ; }
+const FIRST_UNUSED_FOR_EXTRA_DATA_INDEX : usize = 8 ; impl GameState {
+pub fn get_custom_state ( & self ) -> CustomState {
+let mut grid_positions = Vec :: new (  ) ; for i in
+FIRST_UNUSED_FOR_EXTRA_DATA_INDEX .. GameState :: ENTITY_COUNT {
+if self . entities [ i ] . is_empty (  ) { continue ; } match self . varieties
+[ i ] {
+0 ... FLOWER_CARD => {
+let grid_position = ; grid_positions . push ( ( grid_position , value ) ) ; }
+, CURSOR => , CURSOR_GHOST => , BUTTON_COLUMN_VARIETY => , } } grid_positions
+. sort_by_key ( | ( position , _ ) | position ) ; let mut cells : Cells =
+Default :: default (  ) ; for ( ( x , y ) , value ) in grid_positions . iter (
+ ) { let x = x as usize ; cells [ x ] . push ( value ) ; } CustomState {
+cells , wins : self . varieties [ 0 ] , win_done : self . varieties [ 1 ] != 0
+, selectdrop : self . varieties [ 2 ] != 0 , selectpos : self . varieties [ 3
+] , selectdepth : self . varieties [ 4 ] , grabpos : self . varieties [ 5 ] ,
+grabdepth : self . varieties [ 6 ] , movetimer : self . varieties [ 7 ] , } }
+pub fn set_state ( & mut self , mutations : Vec < StateMutation > ) {
+for mutation in mutations . iter (  ) { match mutation {  } } } pub fn
+get_cursor_pos ( & self , id : usize ) -> GridPos {
 let positions = & self . positions [ id ] ; if let Some ( pos ) = foundation
 :: from_screen ( positions [ 0 ] ) { return pos ; } screen_to_grid (
-positions [ 0 ] ) } fn set_cursor_pos (
+positions [ 0 ] ) } pub fn set_cursor_pos (
 & mut self , id : usize , grid_pos : GridPos ) {
 let positions = & mut self . positions [ id ] ; match grid_pos {
 GridPos :: Main ( x , y ) => {
 positions [ 0 ] = grid_to_screen ( ( x , y ) ) ; } GridPos :: FoundationLeft
 => { positions [ 0 ] = foundation :: LEFT ; } GridPos :: FoundationMiddle => {
 positions [ 0 ] = foundation :: MIDDLE ; } GridPos :: FoundationRight => {
-positions [ 0 ] = foundation :: RIGHT ; } } } } mod foundation {
-use super :: * ; pub const LEFT_EDGE : u8 = (
-2 * ( card :: WIDTH + card :: SPACING ) + card :: SPACING ) ; pub const
-TOP_EDGE : u8 = card :: HEIGHT * GameState :: GRID_DIMENSIONS . 1 ; pub const
-LEFT : ( u8 , u8 ) = ( LEFT_EDGE , TOP_EDGE ) ; pub const MIDDLE : ( u8 , u8 )
-= (
-LEFT_EDGE + ( ( card :: WIDTH + card :: SPACING ) + card :: SPACING ) ,
-TOP_EDGE ) ; pub const RIGHT : ( u8 , u8 ) = (
-LEFT_EDGE + ( 2 * ( card :: WIDTH + card :: SPACING ) + card :: SPACING ) ,
-TOP_EDGE ) ; pub fn from_screen ( screen_pos : ( u8 , u8 ) ) -> Option <
-GridPos > {
-if screen_pos == LEFT { Some ( GridPos :: FoundationLeft ) } else if
-screen_pos == MIDDLE { Some ( GridPos :: FoundationMiddle ) } else if
-screen_pos == RIGHT { Some ( GridPos :: FoundationRight ) } else { None } } }
-pub enum Direction { Left , Right , Down , Up , } pub enum GridPos {
-Main ( GridX , GridY ) , FoundationLeft , FoundationMiddle , FoundationRight ,
-} # [ derive ( Clone , Copy , PartialEq , Eq , PartialOrd , Ord ) ] pub struct
-GridX ( u8 ) ; impl GridX {
-fn new ( n : u8 ) -> Self {
-if n >= GameState :: GRID_DIMENSIONS . 0 - 1 {
-GridX ( GameState :: GRID_DIMENSIONS . 0 - 1 ) } else { GridX ( n ) } } } # [
-derive ( Clone , Copy , PartialEq , Eq , PartialOrd , Ord ) ] pub struct GridY
-( u8 ) ; impl GridY {
-fn new ( n : u8 ) -> Self {
-if n >= GameState :: GRID_DIMENSIONS . 1 - 1 {
-GridY ( GameState :: GRID_DIMENSIONS . 1 - 1 ) } else { GridY ( n ) } } } use
-std :: ops :: Add ; use std :: ops :: Sub ; macro_rules ! add_sub_impl {
-( $ ( $ type : ty ) , * ) => {
-$ (
-impl Add < $ type > for $ type {
-type Output = $ type ; fn add ( self , other : $ type ) -> $ type {
-let result = self . 0 . saturating_add ( other . 0 ) ; < $ type > :: new (
-result ) } } impl Add < u8 > for $ type {
-type Output = $ type ; fn add ( self , other : u8 ) -> $ type {
-let result = self . 0 . saturating_add ( other ) ; < $ type > :: new ( result
-) } } impl Add < $ type > for u8 {
-type Output = $ type ; fn add ( self , other : $ type ) -> $ type {
-let result = self . saturating_add ( other . 0 ) ; < $ type > :: new ( result
-) } } impl Sub < $ type > for $ type {
-type Output = $ type ; fn sub ( self , other : $ type ) -> $ type {
-let result = self . 0 . saturating_sub ( other . 0 ) ; < $ type > :: new (
-result ) } } impl Sub < u8 > for $ type {
-type Output = $ type ; fn sub ( self , other : u8 ) -> $ type {
-let result = self . 0 . saturating_sub ( other ) ; < $ type > :: new ( result
-) } } impl Sub < $ type > for u8 {
-type Output = $ type ; fn sub ( self , other : $ type ) -> $ type {
-let result = self . saturating_sub ( other . 0 ) ; < $ type > :: new ( result
-) } } ) * } } add_sub_impl ! { GridX , GridY } fn screen_to_grid (
-screen_pos : ( u8 , u8 ) ) -> GridPos {
-let ( x , y ) = card :: screen_to_grid ( screen_pos ) ; GridPos :: Main (
-GridX :: new ( x ) , GridY :: new ( y ) ) } fn grid_to_screen (
-( x , y ) : ( GridX , GridY ) ) -> ( u8 , u8 ) {
-card :: grid_to_screen ( ( x . 0 , y . 0 ) ) }
+positions [ 0 ] = foundation :: RIGHT ; } } } }
         

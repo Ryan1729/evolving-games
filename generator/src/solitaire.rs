@@ -64,6 +64,7 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
 
     let custom_code = code_string!{
         use std::cmp::{max, min};
+        use common::*;
 
         macro_rules! last_unchecked {
             ($vec:expr) => {
@@ -71,8 +72,25 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
             };
         }
 
+        //TODO make these based on the generated spec
+        pub const MOVE_TIMER_MAX: u8 = 3;
+        pub const MAX_SUIT_NUM: u8 = 9;
+
+        pub const BUTTON_COLUMN: u8 = 3;
+        pub const FLOWER_FOUNDATION: u8 = 4;
+        pub const START_OF_FOUNDATIONS: u8 = 5;
+        pub const END_OF_FOUNDATIONS: u8 = 7;
+        pub const START_OF_TABLEAU: u8 = 8;
+        pub const CELLS_MAX_INDEX: u8 = 15;
+
+        pub const FIRST_GREEN_CARD: u8 = 10;
+        pub const FIRST_BLACK_CARD: u8 = 20;
+        pub const FLOWER_CARD: u8 = 30;
+        pub const CARD_BACK: u8 = 31;
+
         pub type Cells = [Vec<u8>; CELLS_MAX_INDEX as usize + 1];
 
+        #[derive(Clone)]
         pub struct CustomState {
             pub cells: Cells,
             pub wins: u8,
@@ -85,7 +103,16 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
             pub movetimer: u8,
         }
 
-        fn update(state: &mut CustomState, input: Input) {
+        enum StateMutation {
+
+        }
+
+        pub fn get_mutations(old_custom_state: CustomState, new_custom_state: CustomState) -> Vec<StateMutation> {
+            let output = Vec::new();
+            return output;
+        }
+
+        pub fn update(state: &mut CustomState, input: Input) {
             if state.movetimer > 0 {
                 state.movetimer -= 1;
             }
@@ -471,7 +498,7 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
         const FIRST_UNUSED_FOR_EXTRA_DATA_INDEX: usize = 8;
 
         impl GameState {
-            fn get_custom_state(&self) -> CustomState {
+            pub fn get_custom_state(&self) -> CustomState {
 
                 let mut grid_positions = Vec::new();
 
@@ -492,9 +519,9 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
                     }
                 }
 
-                grid_positions.sort_by(|(position, _)| position);
+                grid_positions.sort_by_key(|(position, _)| position);
 
-                let mut cells = [Default::default(); CELLS_MAX_INDEX as usize + 1];
+                let mut cells: Cells = Default::default();
 
                 for ((x, y), value) in grid_positions.iter() {
                     let x = x as usize;
@@ -516,29 +543,15 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
 
             }
 
-            fn set_custom_state(&mut self, custom_state: CustomState) {
-                //I'm wondering if there's a better way than needing to re-derive the appearance of
-                //all entities since usually they will just be moved around. Maybe a delta derived
-                //from between the two custom states could be passed in here instead? That sounds
-                // complicated, but it has the advantage that all a different game would need to
-                //do is create a `GameStateDelta` however is best for that game. In order to
-                //compactly, yet flexibly express the changes, it seems like `GameStateDelta`
-                //should be a `Vec` of a sum type which can express any particular atomic change
-                //to the state.
-                // *self = GameState {
-                //     entities: [Component::Ty; GameState::ENTITY_COUNT],
-                //
-                //     positions: [[Position; GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT],
-                //     appearances: [[Appearance; GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT],
-                //     sizes: [[Position; GameState::ENTITY_PIECE_COUNT]; GameState::ENTITY_COUNT],
-                //
-                //     varieties: [Variety; GameState::ENTITY_COUNT],
-                //
-                //     player_controlling_variety: Default::default(),
-                // }
+            pub fn set_state(&mut self, mutations: Vec<StateMutation>) {
+                for mutation in mutations.iter() {
+                    match mutation {
+
+                    }
+                }
             }
 
-            fn get_cursor_pos(&self, id: usize) -> GridPos {
+            pub fn get_cursor_pos(&self, id: usize) -> GridPos {
                 let positions = &self.positions[id];
 
                 if let Some(pos) = foundation::from_screen(positions[0]) {
@@ -548,7 +561,7 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
                 screen_to_grid(positions[0])
             }
 
-            fn set_cursor_pos(&mut self, id: usize, grid_pos: GridPos) {
+            pub fn set_cursor_pos(&mut self, id: usize, grid_pos: GridPos) {
                 let positions = &mut self.positions[id];
 
                 match grid_pos {

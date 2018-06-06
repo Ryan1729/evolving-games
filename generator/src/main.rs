@@ -321,14 +321,20 @@ impl RenderableGame {
         let update_and_render = format!(
             "
     use common::*;
+    use common::game_state::*;
 
     {}
 
     #[inline]
     pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {{
-        let mut custom_state = state.get_custom_state();
+        let prior_custom_state = state.get_custom_state();
+        let mut custom_state = prior_custom_state.clone();
+
         update(&mut custom_state, input);
-        state.set_custom_state(custom_state);
+
+        let mutations = get_mutations(prior_custom_state, custom_state);
+
+        state.set_state(mutations);
 
         framebuffer.clear();
 
