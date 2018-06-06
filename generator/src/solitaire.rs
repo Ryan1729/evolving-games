@@ -88,9 +88,13 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
         pub const FLOWER_CARD: u8 = 30;
         pub const CARD_BACK: u8 = 31;
 
+        pub const CURSOR: u8 = 32;
+        pub const CURSOR_GHOST: u8 = 33;
+        pub const BUTTON_COLUMN_VARIETY: u8 = 34;
+
         pub type Cells = [Vec<u8>; CELLS_MAX_INDEX as usize + 1];
 
-        #[derive(Clone)]
+        #[derive(Clone, Default)]
         pub struct CustomState {
             pub cells: Cells,
             pub wins: u8,
@@ -103,7 +107,13 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
             pub movetimer: u8,
         }
 
-        enum StateMutation {
+        impl CustomState {
+            fn new() -> Self {
+                Default::default()
+            }
+        }
+
+        pub enum StateMutation {
 
         }
 
@@ -201,19 +211,17 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
                             }
                         } else {
                             if state.selectdrop {
+                                let grabpos: u8 = state.grabpos;
+                                let grabdepth: u8 = state.grabdepth;
+                                let selectpos: u8 = state.selectpos;
+
                                 if candrop(
                                     &state.cells,
-                                    state.grabpos,
-                                    state.grabdepth,
-                                    state.selectpos,
+                                    grabpos,
+                                    grabdepth,
+                                    selectpos,
                                 ) {
-                                    let CustomState {
-                                        grabpos,
-                                        grabdepth,
-                                        selectpos,
-                                        ..
-                                    } = state;
-                                    movecards(state, *grabpos, *grabdepth, *selectpos);
+                                    movecards(state, grabpos, grabdepth, selectpos);
                                     state.selectdrop = false;
                                     state.movetimer = MOVE_TIMER_MAX;
                                 }
@@ -500,7 +508,7 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
         impl GameState {
             pub fn get_custom_state(&self) -> CustomState {
 
-                let mut grid_positions = Vec::new();
+                let mut grid_positions: Vec<((u8, u8), u8)> = Vec::new();
 
                 for i in FIRST_UNUSED_FOR_EXTRA_DATA_INDEX..GameState::ENTITY_COUNT {
                     if self.entities[i].is_empty() {
@@ -508,22 +516,25 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
                     }
 
                     match self.varieties[i] {
-                        0 ... FLOWER_CARD => {
-                            let grid_position = ;
+                        value @ 0 ... FLOWER_CARD => {
+                            let grid_position = match self.positions[i][0] {
+                                _ => (0, 0),
+                            };
 
                             grid_positions.push((grid_position, value));
                         },
-                        CURSOR =>,
-                        CURSOR_GHOST =>,
-                        BUTTON_COLUMN_VARIETY =>,
+                        CURSOR => {},
+                        CURSOR_GHOST => {},
+                        BUTTON_COLUMN_VARIETY => {},
+                        _ => {},
                     }
                 }
 
-                grid_positions.sort_by_key(|(position, _)| position);
+                grid_positions.sort_by_key(|&(position, _): &((u8, u8), u8)| position);
 
                 let mut cells: Cells = Default::default();
 
-                for ((x, y), value) in grid_positions.iter() {
+                for &((x, y), value) in grid_positions.iter() {
                     let x = x as usize;
 
                     cells[x].push(value);
@@ -546,36 +557,7 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
             pub fn set_state(&mut self, mutations: Vec<StateMutation>) {
                 for mutation in mutations.iter() {
                     match mutation {
-
-                    }
-                }
-            }
-
-            pub fn get_cursor_pos(&self, id: usize) -> GridPos {
-                let positions = &self.positions[id];
-
-                if let Some(pos) = foundation::from_screen(positions[0]) {
-                    return pos;
-                }
-
-                screen_to_grid(positions[0])
-            }
-
-            pub fn set_cursor_pos(&mut self, id: usize, grid_pos: GridPos) {
-                let positions = &mut self.positions[id];
-
-                match grid_pos {
-                    GridPos::Main(x, y) => {
-                        positions[0] = grid_to_screen((x, y));
-                    }
-                    GridPos::FoundationLeft => {
-                        positions[0] = foundation::LEFT;
-                    }
-                    GridPos::FoundationMiddle => {
-                        positions[0] = foundation::MIDDLE;
-                    }
-                    GridPos::FoundationRight => {
-                        positions[0] = foundation::RIGHT;
+                        _ => {}
                     }
                 }
             }

@@ -173,13 +173,16 @@ const BUTTON_COLUMN : u8 = 3 ; pub const FLOWER_FOUNDATION : u8 = 4 ; pub
 const START_OF_FOUNDATIONS : u8 = 5 ; pub const END_OF_FOUNDATIONS : u8 = 7 ;
 pub const START_OF_TABLEAU : u8 = 8 ; pub const CELLS_MAX_INDEX : u8 = 15 ;
 pub const FIRST_GREEN_CARD : u8 = 10 ; pub const FIRST_BLACK_CARD : u8 = 20 ;
-pub const FLOWER_CARD : u8 = 30 ; pub const CARD_BACK : u8 = 31 ; pub type
-Cells = [ Vec < u8 > ; CELLS_MAX_INDEX as usize + 1 ] ; # [ derive ( Clone ) ]
+pub const FLOWER_CARD : u8 = 30 ; pub const CARD_BACK : u8 = 31 ; pub const
+CURSOR : u8 = 32 ; pub const CURSOR_GHOST : u8 = 33 ; pub const
+BUTTON_COLUMN_VARIETY : u8 = 34 ; pub type Cells = [
+Vec < u8 > ; CELLS_MAX_INDEX as usize + 1 ] ; # [ derive ( Clone , Default ) ]
 pub struct CustomState {
 pub cells : Cells , pub wins : u8 , pub win_done : bool , pub selectdrop :
 bool , pub selectpos : u8 , pub selectdepth : u8 , pub grabpos : u8 , pub
-grabdepth : u8 , pub movetimer : u8 , } enum StateMutation {  } pub fn
-get_mutations (
+grabdepth : u8 , pub movetimer : u8 , } impl CustomState {
+fn new (  ) -> Self { Default :: default (  ) } } pub enum StateMutation {  }
+pub fn get_mutations (
 old_custom_state : CustomState , new_custom_state : CustomState ) -> Vec <
 StateMutation > { let output = Vec :: new (  ) ; return output ; } pub fn
 update ( state : & mut CustomState , input : Input ) {
@@ -225,12 +228,11 @@ if canmovedragons ( state , state . selectdepth ) {
 movedragons ( state ) ; state . selectdrop = false ; state . movetimer =
 MOVE_TIMER_MAX ; } } else {
 if state . selectdrop {
-if candrop (
-& state . cells , state . grabpos , state . grabdepth , state . selectpos , )
-{
-let CustomState { grabpos , grabdepth , selectpos , .. } = state ; movecards (
-state , * grabpos , * grabdepth , * selectpos ) ; state . selectdrop = false ;
-state . movetimer = MOVE_TIMER_MAX ; } } else if cangrab (
+let grabpos : u8 = state . grabpos ; let grabdepth : u8 = state . grabdepth ;
+let selectpos : u8 = state . selectpos ; if candrop (
+& state . cells , grabpos , grabdepth , selectpos , ) {
+movecards ( state , grabpos , grabdepth , selectpos ) ; state . selectdrop =
+false ; state . movetimer = MOVE_TIMER_MAX ; } } else if cangrab (
 & state . cells , state . selectpos , state . selectdepth ) {
 state . grabpos = state . selectpos ; state . grabdepth = state . selectdepth
 ; state . selectdrop = true ; } } } else if input . pressed_this_frame (
@@ -334,31 +336,23 @@ if state . cells [ i2 as usize ] . len (  ) == 0 {
 movecards ( state , i , 0 , i2 ) ; return true ; } } } } } return false ; }
 const FIRST_UNUSED_FOR_EXTRA_DATA_INDEX : usize = 8 ; impl GameState {
 pub fn get_custom_state ( & self ) -> CustomState {
-let mut grid_positions = Vec :: new (  ) ; for i in
-FIRST_UNUSED_FOR_EXTRA_DATA_INDEX .. GameState :: ENTITY_COUNT {
+let mut grid_positions : Vec < ( ( u8 , u8 ) , u8 ) > = Vec :: new (  ) ; for
+i in FIRST_UNUSED_FOR_EXTRA_DATA_INDEX .. GameState :: ENTITY_COUNT {
 if self . entities [ i ] . is_empty (  ) { continue ; } match self . varieties
 [ i ] {
-0 ... FLOWER_CARD => {
-let grid_position = ; grid_positions . push ( ( grid_position , value ) ) ; }
-, CURSOR => , CURSOR_GHOST => , BUTTON_COLUMN_VARIETY => , } } grid_positions
-. sort_by_key ( | ( position , _ ) | position ) ; let mut cells : Cells =
-Default :: default (  ) ; for ( ( x , y ) , value ) in grid_positions . iter (
- ) { let x = x as usize ; cells [ x ] . push ( value ) ; } CustomState {
+value @ 0 ... FLOWER_CARD => {
+let grid_position = match self . positions [ i ] [ 0 ] { _ => ( 0 , 0 ) , } ;
+grid_positions . push ( ( grid_position , value ) ) ; } , CURSOR => {  } ,
+CURSOR_GHOST => {  } , BUTTON_COLUMN_VARIETY => {  } , _ => {  } , } }
+grid_positions . sort_by_key (
+| & ( position , _ ) : & ( ( u8 , u8 ) , u8 ) | position ) ; let mut cells :
+Cells = Default :: default (  ) ; for & ( ( x , y ) , value ) in
+grid_positions . iter (  ) {
+let x = x as usize ; cells [ x ] . push ( value ) ; } CustomState {
 cells , wins : self . varieties [ 0 ] , win_done : self . varieties [ 1 ] != 0
 , selectdrop : self . varieties [ 2 ] != 0 , selectpos : self . varieties [ 3
 ] , selectdepth : self . varieties [ 4 ] , grabpos : self . varieties [ 5 ] ,
 grabdepth : self . varieties [ 6 ] , movetimer : self . varieties [ 7 ] , } }
 pub fn set_state ( & mut self , mutations : Vec < StateMutation > ) {
-for mutation in mutations . iter (  ) { match mutation {  } } } pub fn
-get_cursor_pos ( & self , id : usize ) -> GridPos {
-let positions = & self . positions [ id ] ; if let Some ( pos ) = foundation
-:: from_screen ( positions [ 0 ] ) { return pos ; } screen_to_grid (
-positions [ 0 ] ) } pub fn set_cursor_pos (
-& mut self , id : usize , grid_pos : GridPos ) {
-let positions = & mut self . positions [ id ] ; match grid_pos {
-GridPos :: Main ( x , y ) => {
-positions [ 0 ] = grid_to_screen ( ( x , y ) ) ; } GridPos :: FoundationLeft
-=> { positions [ 0 ] = foundation :: LEFT ; } GridPos :: FoundationMiddle => {
-positions [ 0 ] = foundation :: MIDDLE ; } GridPos :: FoundationRight => {
-positions [ 0 ] = foundation :: RIGHT ; } } } }
+for mutation in mutations . iter (  ) { match mutation { _ => {  } } } } }
         
