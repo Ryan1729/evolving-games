@@ -166,7 +166,60 @@
             }
         }
 
-        use std :: cmp :: { max , min } ; use common :: * ; macro_rules !
+        const SOLITAIRE_ENTITY_PIECE_COUNT : usize = 32 ; struct
+SevenSegmentAppearance {
+positions : [ ( u8 , u8 ) ; 7 ] , sizes : [ ( u8 , u8 ) ; 7 ] , appearances :
+[ Appearance ; 7 ] , } fn digit_to_segment_spec ( digit : u8 ) -> u8 {
+match digit & 0b1111 {
+0 => 0b0111111 , 1 => 0b0000110 , 2 => 0b1011011 , 3 => 0b1001111 , 4 =>
+0b1100110 , 5 => 0b1101101 , 6 => 0b1111101 , 7 => 0b0000111 , 8 => 0b1111111
+, 9 => 0b1101111 , 10 => 0b1110111 , 11 => 0b1111100 , 12 => 0b0111001 , 13 =>
+0b1011110 , 14 => 0b1111001 , 15 => 0b1110001 , _ => 0 , } } fn
+render_seven_segment (
+digit : u8 , ( x , y ) : ( u8 , u8 ) , ( w , h ) : ( u8 , u8 ) , colour :
+Colour , ) -> SevenSegmentAppearance {
+let mut positions = [ Default :: default (  ) ; 7 ] ; let mut sizes = [
+Default :: default (  ) ; 7 ] ; let appearances = [
+colour | FilledRectangle ; 7 ] ; let spec : u8 = digit_to_segment_spec ( digit
+) ; let short_width = 1 ; let long_width = w - ( short_width * 2 ) ; let
+short_height = 1 ; let long_height = ( h / 2 ) - ( short_height * 2 ) ; if
+spec & ( 1 << 0 ) == 1 << 0 {
+positions [ 0 ] = ( x + short_width , y ) ; sizes [ 0 ] = (
+long_width , short_height ) ; } if spec & ( 1 << 1 ) == 1 << 1 {
+positions [ 1 ] = ( x + long_width + short_width , y + short_height ) ; sizes
+[ 1 ] = ( short_width , long_height ) ; } if spec & ( 1 << 2 ) == 1 << 2 {
+positions [ 2 ] = (
+x + long_width + short_width , y + ( short_height * 2 ) + long_height , ) ;
+sizes [ 2 ] = ( short_width , long_height ) ; } if spec & ( 1 << 3 ) == 1 << 3
+{
+positions [ 3 ] = (
+x + short_width , y + ( short_height * 2 ) + ( long_height * 2 ) ) ; sizes [ 3
+] = ( long_width , short_height ) ; } if spec & ( 1 << 4 ) == 1 << 4 {
+positions [ 4 ] = ( x , y + ( short_height * 2 ) + long_height ) ; sizes [ 4 ]
+= ( short_width , long_height ) ; } if spec & ( 1 << 5 ) == 1 << 5 {
+positions [ 5 ] = ( x , y + short_height ) ; sizes [ 5 ] = (
+short_width , long_height ) ; } if spec & ( 1 << 6 ) == 1 << 6 {
+positions [ 6 ] = ( x + short_width , y + short_height + long_height ) ; sizes
+[ 6 ] = ( long_width , short_height ) ; } SevenSegmentAppearance {
+positions , sizes , appearances , } } struct CardAppearance {
+positions : [ ( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT ] , sizes : [
+( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT ] , appearances : [
+Appearance ; SOLITAIRE_ENTITY_PIECE_COUNT ] , } fn get_card_appearance (
+variety : u8 , ( x , y ) : ( u8 , u8 ) , ) -> CardAppearance {
+let mut positions : [ ( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT ] = Default
+:: default (  ) ; let mut sizes : [ ( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT
+] = Default :: default (  ) ; let mut appearances : [
+Appearance ; SOLITAIRE_ENTITY_PIECE_COUNT ] = Default :: default (  ) ; const
+SPACING : u8 = 2 ; let mut i = 0 ; positions [ i ] = ( x , y ) ; sizes [ i ] =
+( card :: WIDTH , card :: HEIGHT ) ; appearances [ i ] = Colour :: from ( 3u32
+) | FilledRectangle ; i += 1 ; let digit = 4 ; let ssa :
+SevenSegmentAppearance = render_seven_segment (
+digit , ( x + SPACING , y + SPACING ) , (
+( card :: WIDTH - ( SPACING * 2 ) ) / 2 , ( card :: HEIGHT - ( SPACING * 2 ) )
+/ 2 , ) , Colour :: from ( 5u32 ) , ) ; for ssa_index in 0 .. 7 {
+positions [ i ] = ssa . positions [ ssa_index ] ; sizes [ i ] = ssa . sizes [
+ssa_index ] ; appearances [ i ] = ssa . appearances [ ssa_index ] ; i += 1 ; }
+CardAppearance { positions , sizes , appearances , } }use std :: cmp :: { max , min } ; use common :: * ; macro_rules !
 last_unchecked { ( $ vec : expr ) => { $ vec [ $ vec . len (  ) - 1 ] } ; }
 pub const MOVE_TIMER_MAX : u8 = 3 ; pub const MAX_SUIT_NUM : u8 = 9 ; pub
 const BUTTON_COLUMN : u8 = 3 ; pub const FLOWER_FOUNDATION : u8 = 4 ; pub
@@ -175,17 +228,8 @@ pub const START_OF_TABLEAU : u8 = 8 ; pub const CELLS_MAX_INDEX : u8 = 15 ;
 pub const FIRST_GREEN_CARD : u8 = 10 ; pub const FIRST_BLACK_CARD : u8 = 20 ;
 pub const FLOWER_CARD : u8 = 30 ; pub const CARD_BACK : u8 = 31 ; pub const
 CURSOR : u8 = 32 ; pub const CURSOR_GHOST : u8 = 33 ; pub const
-BUTTON_COLUMN_VARIETY : u8 = 34 ; pub type Cells = [
-Vec < u8 > ; CELLS_MAX_INDEX as usize + 1 ] ; # [ derive ( Clone , Default ) ]
-pub struct CustomState {
-pub cells : Cells , pub wins : u8 , pub win_done : bool , pub selectdrop :
-bool , pub selectpos : u8 , pub selectdepth : u8 , pub grabpos : u8 , pub
-grabdepth : u8 , pub movetimer : u8 , } impl CustomState {
-fn new (  ) -> Self { Default :: default (  ) } } pub enum StateMutation {  }
-pub fn get_mutations (
-old_custom_state : CustomState , new_custom_state : CustomState ) -> Vec <
-StateMutation > { let output = Vec :: new (  ) ; return output ; } pub fn
-update ( state : & mut CustomState , input : Input ) {
+BUTTON_COLUMN_VARIETY : u8 = 34 ; pub fn update (
+state : & mut CustomState , input : Input ) {
 if state . movetimer > 0 { state . movetimer -= 1 ; } if state . movetimer ==
 0 {
 if automove ( state ) { state . movetimer = MOVE_TIMER_MAX ; } else {
@@ -239,9 +283,10 @@ state . grabpos = state . selectpos ; state . grabdepth = state . selectdepth
 Button :: B ) { state . selectdrop = false ; } } } if haswon ( state ) {
 if state . win_done {
 if input . pressed_this_frame ( Button :: Start ) {
-let wins = state . wins ; * state = CustomState :: new (  ) ; state . wins =
-wins ; } } else { state . wins += 1 ; state . win_done = true ; } } } fn
-getselection ( cells : & Cells , pos : u8 , depth : u8 ) -> Vec < u8 > {
+let wins = state . wins ; * state = GameState :: new (  ) . get_custom_state (
+ ) ; state . wins = wins ; } } else {
+state . wins += 1 ; state . win_done = true ; } } } fn getselection (
+cells : & Cells , pos : u8 , depth : u8 ) -> Vec < u8 > {
 let pos = pos as usize ; let depth = depth as usize ; let mut output = Vec ::
 with_capacity ( depth ) ; for i in 1 ..= depth + 1 {
 let index = cells [ pos ] . len (  ) - ( depth + 1 ) + i - 1 ; output . push (
@@ -334,7 +379,12 @@ card2 ) == suit { movecards ( state , i , 0 , i2 ) ; return true ; } } } for
 i2 in START_OF_FOUNDATIONS .. START_OF_TABLEAU {
 if state . cells [ i2 as usize ] . len (  ) == 0 {
 movecards ( state , i , 0 , i2 ) ; return true ; } } } } } return false ; }
-const FIRST_UNUSED_FOR_EXTRA_DATA_INDEX : usize = 8 ; impl GameState {
+pub type Cells = [ Vec < u8 > ; CELLS_MAX_INDEX as usize + 1 ] ; pub struct
+CustomState {
+pub cells : Cells , pub wins : u8 , pub win_done : bool , pub selectdrop :
+bool , pub selectpos : u8 , pub selectdepth : u8 , pub grabpos : u8 , pub
+grabdepth : u8 , pub movetimer : u8 , } const
+FIRST_UNUSED_FOR_EXTRA_DATA_INDEX : usize = 8 ; impl GameState {
 pub fn get_custom_state ( & self ) -> CustomState {
 let mut grid_positions : Vec < ( ( u8 , u8 ) , u8 ) > = Vec :: new (  ) ; for
 i in FIRST_UNUSED_FOR_EXTRA_DATA_INDEX .. GameState :: ENTITY_COUNT {
@@ -353,6 +403,12 @@ cells , wins : self . varieties [ 0 ] , win_done : self . varieties [ 1 ] != 0
 , selectdrop : self . varieties [ 2 ] != 0 , selectpos : self . varieties [ 3
 ] , selectdepth : self . varieties [ 4 ] , grabpos : self . varieties [ 5 ] ,
 grabdepth : self . varieties [ 6 ] , movetimer : self . varieties [ 7 ] , } }
-pub fn set_state ( & mut self , mutations : Vec < StateMutation > ) {
-for mutation in mutations . iter (  ) { match mutation { _ => {  } } } } }
+pub fn set_custom_state ( & mut self , custom_state : CustomState ) {  } } # [
+cfg ( test ) ] mod tests {
+use super :: * ; use quickcheck :: TestResult ; quickcheck ! {
+fn no_change_causes_no_change ( game_state : GameState ) -> TestResult {
+let custom_state = game_state . get_custom_state (  ) ; let mut
+game_state_copy = game_state . clone (  ) ; game_state_copy . set_custom_state
+( custom_state ) ; TestResult :: from_bool ( game_state == game_state_copy ) }
+} }
         

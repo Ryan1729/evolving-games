@@ -9,11 +9,11 @@ extern crate bitflags;
 extern crate stdweb;
 
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::error::Error;
+use std::rc::Rc;
 
-use stdweb::web::{self, Element, IElement, IEventTarget, INode, INonElementParentNode};
 use stdweb::web::event::{IEvent, IKeyboardEvent, KeyDownEvent, KeyUpEvent, KeyboardLocation};
+use stdweb::web::{self, Element, IElement, IEventTarget, INode, INonElementParentNode};
 
 use stdweb::{UnsafeTypedArray, Value};
 
@@ -61,7 +61,7 @@ fn setup_webgl(canvas: &Element) -> Value {
 
     fn ortho(left: f64, right: f64, bottom: f64, top: f64) -> Vec<f64> {
         let mut m = vec![
-            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
         ];
 
         m[0 * 4 + 0] = 2.0 / (right - left);

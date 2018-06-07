@@ -46,14 +46,11 @@ fn respond_to_input(state: &mut GameState, input: Input, id: usize, variety: Var
 
     #[inline]
     pub fn update_and_render(framebuffer: &mut Framebuffer, state: &mut GameState, input: Input) {
-        let prior_custom_state = state.get_custom_state();
-        let mut custom_state = prior_custom_state.clone();
+        let mut custom_state = state.get_custom_state();
 
         update(&mut custom_state, input);
 
-        let mutations = get_mutations(prior_custom_state, custom_state);
-
-        state.set_state(mutations);
+        state.set_custom_state(custom_state);
 
         framebuffer.clear();
 

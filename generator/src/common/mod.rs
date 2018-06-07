@@ -12,6 +12,14 @@ macro_rules! code_string {
     }
 }
 
+macro_rules! code_and_string {
+    ($const_name: ident = $($token_trees:tt)*) => {
+        $($token_trees)*
+
+        const $const_name: &'static str = stringify!($($token_trees)*);
+    }
+}
+
 #[derive(Debug)]
 pub enum GameSpec {
     Solitaire(SolitaireSpec),
