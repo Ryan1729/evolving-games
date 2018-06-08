@@ -12,6 +12,28 @@ pub struct GameState {
     pub player_controlling_variety: Variety,
 }
 
+struct FullEntity {
+    entity: Component::Ty,
+
+    position: [Position; GameState::ENTITY_PIECE_COUNT],
+    appearance: [Appearance; GameState::ENTITY_PIECE_COUNT,
+    size: [Position; GameState::ENTITY_PIECE_COUNT],
+
+    variety: Variety,
+}
+
+impl GameState {
+    fn set_full_entity(&self, id: usize, full_entity: FullEntity) {
+        self.entities[id] = full_entity.entity;
+
+        self.positions[id] = full_entity.position;
+        self.appearances[id] = full_entity.appearance;
+        self.sizes[id] = full_entity.size;
+
+        self.varieties[id] = full_entity.variety;
+    }
+}
+
 pub mod Component {
     bitflags! {
         pub flags Ty: u16 {

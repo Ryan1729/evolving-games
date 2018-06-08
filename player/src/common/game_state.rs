@@ -206,17 +206,19 @@ positions : [ ( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT ] , sizes : [
 ( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT ] , appearances : [
 Appearance ; SOLITAIRE_ENTITY_PIECE_COUNT ] , } fn get_card_appearance (
 variety : u8 , ( x , y ) : ( u8 , u8 ) , ) -> CardAppearance {
-let mut positions : [ ( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT ] = Default
-:: default (  ) ; let mut sizes : [ ( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT
-] = Default :: default (  ) ; let mut appearances : [
+let variety = variety as u32 ; let mut positions : [
+( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT ] = Default :: default (  ) ; let
+mut sizes : [ ( u8 , u8 ) ; SOLITAIRE_ENTITY_PIECE_COUNT ] = Default ::
+default (  ) ; let mut appearances : [
 Appearance ; SOLITAIRE_ENTITY_PIECE_COUNT ] = Default :: default (  ) ; const
 SPACING : u8 = 2 ; let mut i = 0 ; positions [ i ] = ( x , y ) ; sizes [ i ] =
-( card :: WIDTH , card :: HEIGHT ) ; appearances [ i ] = Colour :: from ( 3u32
-) | FilledRectangle ; i += 1 ; let digit = 4 ; let ssa :
-SevenSegmentAppearance = render_seven_segment (
+( card :: WIDTH , card :: HEIGHT ) ; appearances [ i ] = Colour :: from (
+variety % COLOUR_COUNT as u32 ) | FilledRectangle ; i += 1 ; let digit = 4 ;
+let ssa : SevenSegmentAppearance = render_seven_segment (
 digit , ( x + SPACING , y + SPACING ) , (
 ( card :: WIDTH - ( SPACING * 2 ) ) / 2 , ( card :: HEIGHT - ( SPACING * 2 ) )
-/ 2 , ) , Colour :: from ( 5u32 ) , ) ; for ssa_index in 0 .. 7 {
+/ 2 , ) , Colour :: from ( ( variety >> 3 ) % COLOUR_COUNT as u32 ) , ) ; for
+ssa_index in 0 .. 7 {
 positions [ i ] = ssa . positions [ ssa_index ] ; sizes [ i ] = ssa . sizes [
 ssa_index ] ; appearances [ i ] = ssa . appearances [ ssa_index ] ; i += 1 ; }
 CardAppearance { positions , sizes , appearances , } }use std :: cmp :: { max , min } ; use common :: * ; macro_rules !
@@ -391,7 +393,7 @@ i in FIRST_UNUSED_FOR_EXTRA_DATA_INDEX .. GameState :: ENTITY_COUNT {
 if self . entities [ i ] . is_empty (  ) { continue ; } match self . varieties
 [ i ] {
 value @ 0 ... FLOWER_CARD => {
-let grid_position = match self . positions [ i ] [ 0 ] { _ => ( 0 , 0 ) , } ;
+let grid_position = card_entity_pos_to_grid_pos ( self . positions [ i ] ) ;
 grid_positions . push ( ( grid_position , value ) ) ; } , CURSOR => {  } ,
 CURSOR_GHOST => {  } , BUTTON_COLUMN_VARIETY => {  } , _ => {  } , } }
 grid_positions . sort_by_key (
@@ -403,12 +405,25 @@ cells , wins : self . varieties [ 0 ] , win_done : self . varieties [ 1 ] != 0
 , selectdrop : self . varieties [ 2 ] != 0 , selectpos : self . varieties [ 3
 ] , selectdepth : self . varieties [ 4 ] , grabpos : self . varieties [ 5 ] ,
 grabdepth : self . varieties [ 6 ] , movetimer : self . varieties [ 7 ] , } }
-pub fn set_custom_state ( & mut self , custom_state : CustomState ) {  } } # [
-cfg ( test ) ] mod tests {
-use super :: * ; use quickcheck :: TestResult ; quickcheck ! {
-fn no_change_causes_no_change ( game_state : GameState ) -> TestResult {
-let custom_state = game_state . get_custom_state (  ) ; let mut
-game_state_copy = game_state . clone (  ) ; game_state_copy . set_custom_state
-( custom_state ) ; TestResult :: from_bool ( game_state == game_state_copy ) }
-} }
+pub fn set_custom_state ( & mut self , custom_state : CustomState ) {
+let mut id = FIRST_UNUSED_FOR_EXTRA_DATA_INDEX ; for y in 0 .. CELLS_MAX_INDEX
++ 1 {
+let column = & custom_state . cells [ y ] ; for x in 0 .. column . len (  ) {
+let variety = column [ x ] ; let full_entity = get_card_full_entity (
+variety , ) ; self . set_full_entity ( id , full_entity ) ; id += 1 ; } } self
+. varieties [ 0 ] = custom_state . wins ; self . varieties [ 1 ] = if
+custom_state . win_done { 1 } else { 0 } ; self . varieties [ 2 ] = if
+custom_state . selectdrop { 1 } else { 0 } ; self . varieties [ 3 ] =
+custom_state . selectpos ; self . varieties [ 4 ] = custom_state . selectdepth
+; self . varieties [ 5 ] = custom_state . grabpos ; self . varieties [ 6 ] =
+custom_state . grabdepth ; self . varieties [ 7 ] = custom_state . movetimer ;
+} fn card_entity_pos_to_grid_pos (
+pos : [ Position ; GameState :: ENTITY_PIECE_COUNT ] ) -> ( u8 , u8 ) {
+( 0 , 0 ) } fn grid_pos_to_card_entity_pos ( pos : ( u8 , u8 ) ) -> ( u8 , u8
+) { ( 0 , 0 ) } fn get_card_full_entity (
+variety : Variety , pos : ( u8 , u8 ) , ) -> FullEntity {
+let card_appearance = get_card_appearance ( variety , pos ) ; FullEntity {
+entity : Component :: Ty , position : card_appearance . position , appearance
+: card_appearance . appearance , size : card_appearance . size , variety , } }
+}
         

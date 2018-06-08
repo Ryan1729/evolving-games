@@ -116,6 +116,7 @@ code_and_string!{
         (x, y): (u8, u8),
     ) -> CardAppearance {
         //TODO match on variety and make more shenzhen-y appearance
+        let variety = variety as u32; //probably won't want this when we get to thet TODO
 
         let mut positions: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT] = Default::default();
         let mut sizes: [(u8, u8); SOLITAIRE_ENTITY_PIECE_COUNT] = Default::default();
@@ -127,7 +128,7 @@ code_and_string!{
 
         positions[i] = (x, y);
         sizes[i] = (card::WIDTH, card::HEIGHT);
-        appearances[i] = Colour::from(3u32) | FilledRectangle;
+        appearances[i] = Colour::from(variety % COLOUR_COUNT as u32) | FilledRectangle;
 
         i += 1;
 
@@ -140,7 +141,7 @@ code_and_string!{
                 (card::WIDTH - (SPACING * 2)) / 2,
                 (card::HEIGHT - (SPACING * 2)) / 2,
             ),
-            Colour::from(5u32),
+            Colour::from((variety >> 3) % COLOUR_COUNT as u32),
         );
 
         for ssa_index in 0..7 {
@@ -657,9 +658,7 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
 
                     match self.varieties[i] {
                         value @ 0 ... FLOWER_CARD => {
-                            let grid_position = match self.positions[i][0] {
-                                _ => (0, 0),
-                            };
+                            let grid_position = card_entity_pos_to_grid_pos(self.positions[i]);
 
                             grid_positions.push((grid_position, value));
                         },
@@ -695,24 +694,58 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
             }
 
             pub fn set_custom_state(&mut self, custom_state: CustomState) {
+                let mut id = FIRST_UNUSED_FOR_EXTRA_DATA_INDEX;
 
+                for y in 0..CELLS_MAX_INDEX + 1 {
+                    let column = &custom_state.cells[y];
+                    for x in 0..column.len() {
+                        let variety = column[x];
+
+                        let full_entity = get_card_full_entity(variety, );
+
+                        self.set_full_entity(id, full_entity);
+                        id += 1;
+                    }
+                }
+
+                //TODO draw buttons, cursor etc.
+
+                self.varieties[0] = custom_state.wins;
+                self.varieties[1] = if custom_state.win_done {1} else {0};
+                self.varieties[2] = if custom_state.selectdrop {1} else {0};
+                self.varieties[3] = custom_state.selectpos;
+                self.varieties[4] = custom_state.selectdepth;
+                self.varieties[5] = custom_state.grabpos;
+                self.varieties[6] = custom_state.grabdepth;
+                self.varieties[7] = custom_state.movetimer;
             }
-        }
+            //TODO implemnt these functions
+            fn card_entity_pos_to_grid_pos(
+                pos: [Position; GameState::ENTITY_PIECE_COUNT]
+            ) -> (u8, u8) {
+                (0,0)
+            }
 
-        #[cfg(test)]
-        mod tests {
-            use super::*;
-            use quickcheck::TestResult;
+            fn grid_pos_to_card_entity_pos(
+                pos: (u8, u8)
+            ) -> (u8, u8) {
+                (0,0)
+            }
 
-            quickcheck! {
-                fn no_change_causes_no_change(game_state: GameState) -> TestResult {
-                    let custom_state = game_state.get_custom_state();
+            fn get_card_full_entity(
+                variety: Variety,
+                pos: (u8, u8),
+            ) -> FullEntity {
+                let card_appearance = get_card_appearance(variety, pos);
 
-                    let mut game_state_copy = game_state.clone();
+                FullEntity {
+                    entity: Component::Ty,
 
-                    game_state_copy.set_custom_state(custom_state);
+                    position: card_appearance.position,
+                    appearance: card_appearance.appearance,
+                    size: card_appearance.size,
 
-                    TestResult::from_bool(game_state == game_state_copy)
+                    variety,
                 }
             }
         }
