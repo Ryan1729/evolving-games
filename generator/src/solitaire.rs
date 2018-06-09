@@ -168,7 +168,10 @@ code_and_string!{
 
     pub const TOP_ROW_ENTITY_Y: u8 = 0;
     pub const SECOND_ROW_ENTITY_Y: u8 = 24;
-    pub const CARD_VERTICAL_SPACING: u8 = 8;
+    pub const CARD_HORIZONTAL_OFFSET: u8 = 16;
+    pub const CARD_VERTICAL_OFFSET: u8 = 8;
+
+    pub const FLOWER_CARD_X: u8 = 56;
 
     fn get_card_pos((x, y): (u8, u8)) -> (u8, u8) {
         let (mut pos_x, mut pos_y) = if x > END_OF_FOUNDATIONS {
@@ -178,12 +181,12 @@ code_and_string!{
         };
 
         pos_x = if pos_y == 0 && pos_x == FLOWER_FOUNDATION {
-            56
+            FLOWER_CARD_X
         } else {
-            pos_x * 16
+            pos_x * CARD_HORIZONTAL_OFFSET
         };
 
-        pos_y += y * CARD_VERTICAL_SPACING;
+        pos_y += y * CARD_VERTICAL_OFFSET;
 
         (pos_x, pos_y)
     }
@@ -191,13 +194,19 @@ code_and_string!{
     fn card_entity_base_pos_to_grid_pos(
         (x, y): (u8,u8)
     ) -> (u8, u8) {
-        let (grid_x, mut grid_y) = (x, y);
-
-        grid_y = if y == TOP_ROW_ENTITY_Y {
-            0
+        let mut grid_x = if y == 0 && x == FLOWER_CARD_X {
+            FLOWER_FOUNDATION
         } else {
-            (y - SECOND_ROW_ENTITY_Y) / CARD_VERTICAL_SPACING
+            x / CARD_HORIZONTAL_OFFSET
         };
+
+        if y >= SECOND_ROW_ENTITY_Y {
+            grid_x += START_OF_TABLEAU;
+        }
+
+        let mut grid_y = if grid_x > END_OF_FOUNDATIONS {y - SECOND_ROW_ENTITY_Y} else {y};
+
+        grid_y /= CARD_VERTICAL_OFFSET;
 
         (grid_x, grid_y)
     }
@@ -209,13 +218,42 @@ mod tests {
     use quickcheck::TestResult;
 
     quickcheck! {
-        fn grid_inversion(pos: (u8, u8)) -> TestResult {
-            TestResult::from_bool(pos == get_card_pos(card_entity_base_pos_to_grid_pos(pos)))
-        }
-
         fn card_entity_inversion(pos: (u8, u8)) -> TestResult {
+            if pos.0 > CELLS_MAX_INDEX || pos.1 > 28 || (pos.0 <= END_OF_FOUNDATIONS && pos.1 > 0) {
+                return TestResult::discard();
+            }
+
             TestResult::from_bool(pos == card_entity_base_pos_to_grid_pos(get_card_pos(pos)))
         }
+    }
+
+    #[test]
+    fn get_card_pos_0_0() {
+        assert_eq!((0, 0), get_card_pos((0, 0)))
+    }
+
+    #[test]
+    fn grid_inversion_0_1() {
+        let pos = (0, 1);
+        assert_eq!((0, 8), get_card_pos(pos));
+        assert_eq!(pos, card_entity_base_pos_to_grid_pos(get_card_pos(pos)))
+    }
+
+    #[test]
+    fn grid_inversion_1_0() {
+        let pos = (1, 0);
+        assert_eq!(
+            (CARD_HORIZONTAL_OFFSET, TOP_ROW_ENTITY_Y),
+            get_card_pos(pos)
+        );
+        assert_eq!(pos, card_entity_base_pos_to_grid_pos(get_card_pos(pos)))
+    }
+
+    #[test]
+    fn grid_inversion_8_0() {
+        let pos = (8, 0);
+        assert_eq!((0, SECOND_ROW_ENTITY_Y), get_card_pos(pos));
+        assert_eq!(pos, card_entity_base_pos_to_grid_pos(get_card_pos(pos)))
     }
 }
 
