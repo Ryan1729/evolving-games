@@ -9,6 +9,10 @@ use rand::{
     distributions::{Distribution, Standard}, Rng, SeedableRng, XorShiftRng,
 };
 
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
+
 extern crate project_common;
 
 #[macro_use]

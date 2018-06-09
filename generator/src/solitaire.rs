@@ -7,6 +7,13 @@ code_and_string!{
     GENERATOR_AND_PLAYER_CODE =
     const SOLITAIRE_ENTITY_PIECE_COUNT: usize = 32;
 
+    pub const BUTTON_COLUMN: u8 = 3;
+    pub const FLOWER_FOUNDATION: u8 = 4;
+    pub const START_OF_FOUNDATIONS: u8 = 5;
+    pub const END_OF_FOUNDATIONS: u8 = 7;
+    pub const START_OF_TABLEAU: u8 = 8;
+    pub const CELLS_MAX_INDEX: u8 = 15;
+
     struct SevenSegmentAppearance {
         positions: [(u8, u8); 7],
         sizes: [(u8, u8); 7],
@@ -158,6 +165,58 @@ code_and_string!{
             appearances,
         }
     }
+
+    pub const TOP_ROW_ENTITY_Y: u8 = 0;
+    pub const SECOND_ROW_ENTITY_Y: u8 = 24;
+    pub const CARD_VERTICAL_SPACING: u8 = 8;
+
+    fn get_card_pos((x, y): (u8, u8)) -> (u8, u8) {
+        let (mut pos_x, mut pos_y) = if x > END_OF_FOUNDATIONS {
+            (x - START_OF_TABLEAU, SECOND_ROW_ENTITY_Y)
+        } else {
+            (x, TOP_ROW_ENTITY_Y)
+        };
+
+        pos_x = if pos_y == 0 && pos_x == FLOWER_FOUNDATION {
+            56
+        } else {
+            pos_x * 16
+        };
+
+        pos_y += y * CARD_VERTICAL_SPACING;
+
+        (pos_x, pos_y)
+    }
+
+    fn card_entity_base_pos_to_grid_pos(
+        (x, y): (u8,u8)
+    ) -> (u8, u8) {
+        let (grid_x, mut grid_y) = (x, y);
+
+        grid_y = if y == TOP_ROW_ENTITY_Y {
+            0
+        } else {
+            (y - SECOND_ROW_ENTITY_Y) / CARD_VERTICAL_SPACING
+        };
+
+        (grid_x, grid_y)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use quickcheck::TestResult;
+
+    quickcheck! {
+        fn grid_inversion(pos: (u8, u8)) -> TestResult {
+            TestResult::from_bool(pos == get_card_pos(card_entity_base_pos_to_grid_pos(pos)))
+        }
+
+        fn card_entity_inversion(pos: (u8, u8)) -> TestResult {
+            TestResult::from_bool(pos == card_entity_base_pos_to_grid_pos(get_card_pos(pos)))
+        }
+    }
 }
 
 pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<RenderableGame> {
@@ -232,13 +291,6 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
         //TODO make these based on the generated spec
         pub const MOVE_TIMER_MAX: u8 = 3;
         pub const MAX_SUIT_NUM: u8 = 9;
-
-        pub const BUTTON_COLUMN: u8 = 3;
-        pub const FLOWER_FOUNDATION: u8 = 4;
-        pub const START_OF_FOUNDATIONS: u8 = 5;
-        pub const END_OF_FOUNDATIONS: u8 = 7;
-        pub const START_OF_TABLEAU: u8 = 8;
-        pub const CELLS_MAX_INDEX: u8 = 15;
 
         pub const FIRST_GREEN_CARD: u8 = 10;
         pub const FIRST_BLACK_CARD: u8 = 20;
@@ -696,12 +748,12 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
             pub fn set_custom_state(&mut self, custom_state: CustomState) {
                 let mut id = FIRST_UNUSED_FOR_EXTRA_DATA_INDEX;
 
-                for y in 0..CELLS_MAX_INDEX + 1 {
-                    let column = &custom_state.cells[y];
-                    for x in 0..column.len() {
-                        let variety = column[x];
+                for x in 0..CELLS_MAX_INDEX + 1 {
+                    let column = &custom_state.cells[x];
+                    for y in 0..column.len() {
+                        let variety = column[y];
 
-                        let full_entity = get_card_full_entity(variety, );
+                        let full_entity = get_card_full_entity(variety, get_card_pos(x, y));
 
                         self.set_full_entity(id, full_entity);
                         id += 1;
@@ -719,35 +771,31 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
                 self.varieties[6] = custom_state.grabdepth;
                 self.varieties[7] = custom_state.movetimer;
             }
-            //TODO implemnt these functions
-            fn card_entity_pos_to_grid_pos(
-                pos: [Position; GameState::ENTITY_PIECE_COUNT]
-            ) -> (u8, u8) {
-                (0,0)
+        }
+
+        fn get_card_full_entity(
+            variety: Variety,
+            pos: (u8, u8),
+        ) -> FullEntity {
+            let card_appearance = get_card_appearance(variety, pos);
+
+            FullEntity {
+                entity: Component::Ty,
+
+                position: card_appearance.position,
+                appearance: card_appearance.appearance,
+                size: card_appearance.size,
+
+                variety,
             }
+        }
 
-            fn grid_pos_to_card_entity_pos(
-                pos: (u8, u8)
-            ) -> (u8, u8) {
-                (0,0)
-            }
-
-            fn get_card_full_entity(
-                variety: Variety,
-                pos: (u8, u8),
-            ) -> FullEntity {
-                let card_appearance = get_card_appearance(variety, pos);
-
-                FullEntity {
-                    entity: Component::Ty,
-
-                    position: card_appearance.position,
-                    appearance: card_appearance.appearance,
-                    size: card_appearance.size,
-
-                    variety,
-                }
-            }
+        fn card_entity_pos_to_grid_pos(
+            pos: [Position; GameState::ENTITY_PIECE_COUNT]
+        ) -> (u8, u8) {
+            //we assume the first point coressponds to the
+            // point returned by `get_card_pos`
+            card_entity_base_pos_to_grid_pos(pos[0])
         }
     };
 
