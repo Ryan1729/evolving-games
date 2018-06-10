@@ -12,18 +12,18 @@ pub struct GameState {
     pub player_controlling_variety: Variety,
 }
 
-struct FullEntity {
-    entity: Component::Ty,
+pub struct FullEntity {
+    pub entity: Component::Ty,
 
-    position: [Position; GameState::ENTITY_PIECE_COUNT],
-    appearance: [Appearance; GameState::ENTITY_PIECE_COUNT,
-    size: [Position; GameState::ENTITY_PIECE_COUNT],
+    pub position: [Position; GameState::ENTITY_PIECE_COUNT],
+    pub appearance: [Appearance; GameState::ENTITY_PIECE_COUNT],
+    pub size: [Position; GameState::ENTITY_PIECE_COUNT],
 
-    variety: Variety,
+    pub variety: Variety,
 }
 
 impl GameState {
-    fn set_full_entity(&self, id: usize, full_entity: FullEntity) {
+    pub fn set_full_entity(&mut self, id: usize, full_entity: FullEntity) {
         self.entities[id] = full_entity.entity;
 
         self.positions[id] = full_entity.position;

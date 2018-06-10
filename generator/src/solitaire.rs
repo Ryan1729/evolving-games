@@ -786,12 +786,15 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
             pub fn set_custom_state(&mut self, custom_state: CustomState) {
                 let mut id = FIRST_UNUSED_FOR_EXTRA_DATA_INDEX;
 
-                for x in 0..CELLS_MAX_INDEX + 1 {
+                for x in 0..CELLS_MAX_INDEX as usize + 1 {
                     let column = &custom_state.cells[x];
                     for y in 0..column.len() {
                         let variety = column[y];
 
-                        let full_entity = get_card_full_entity(variety, get_card_pos(x, y));
+                        let full_entity = get_card_full_entity(
+                            variety,
+                            get_card_pos((x as u8, y as u8))
+                        );
 
                         self.set_full_entity(id, full_entity);
                         id += 1;
@@ -818,11 +821,11 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
             let card_appearance = get_card_appearance(variety, pos);
 
             FullEntity {
-                entity: Component::Ty,
+                entity: Component::Animate,
 
-                position: card_appearance.position,
-                appearance: card_appearance.appearance,
-                size: card_appearance.size,
+                position: card_appearance.positions,
+                appearance: card_appearance.appearances,
+                size: card_appearance.sizes,
 
                 variety,
             }
