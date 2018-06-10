@@ -801,7 +801,177 @@ pub fn render_game<R: Rng + ?Sized>(rng: &mut R, spec: SolitaireSpec) -> Result<
                     }
                 }
 
-                //TODO draw buttons, cursor etc.
+
+                fn get_button_full_entity(state: &CustomState, suit: u8, pos: Position) -> FullEntity {
+                    let colour = if canmovedragons(state, suit) {
+                        Yellow
+                    } else {
+                        White
+                    };
+
+                    let symbol_colour = match suit {
+                        0 => Red,
+                        1 => Green,
+                        2 => Black,
+                        _ => Grey,
+                    };
+
+                    const BUTTON_WIDTH: u8 = 8;
+                    const BUTTON_HEIGHT: u8 = 8;
+                    const BUTTON_MARGIN: u8 = 1;
+
+                    let seven_segment_appearance = render_seven_segment(
+                        suit + 10,
+                        (pos.0 + BUTTON_MARGIN, pos.1 + BUTTON_MARGIN),
+                        (BUTTON_WIDTH - 2 * BUTTON_MARGIN, BUTTON_HEIGHT - 2 * BUTTON_MARGIN),
+                        symbol_colour
+                    );
+
+                    let mut position: [Position; GameState::ENTITY_PIECE_COUNT] = Default::default();
+                    position[0] = pos;
+
+                    {
+                        let (left, right) = position.split_at_mut(1);
+                        let (middle, right) = right.split_at_mut(
+                            seven_segment_appearance.positions.len()
+                        );
+
+                        middle.copy_from_slice(&seven_segment_appearance.positions[..]);
+                    }
+
+                    let mut appearance: [Appearance; GameState::ENTITY_PIECE_COUNT] = Default::default();
+                    appearance[0] = colour | FilledRectangle;
+
+                    {
+                        let (left, right) = appearance.split_at_mut(1);
+                        let (middle, right) = right.split_at_mut(
+                            seven_segment_appearance.appearances.len()
+                        );
+
+                        middle.copy_from_slice(&seven_segment_appearance.appearances[..]);
+                    }
+
+                    let mut size: [Position; GameState::ENTITY_PIECE_COUNT] = Default::default();
+                    size[0] = (BUTTON_WIDTH, BUTTON_HEIGHT);
+
+                    {
+                        let (left, right) = size.split_at_mut(1);
+                        let (middle, right) = right.split_at_mut(
+                            seven_segment_appearance.sizes.len()
+                        );
+
+                        middle.copy_from_slice(&seven_segment_appearance.sizes[..]);
+                    }
+
+                    FullEntity {
+                        entity: Component::Animate,
+
+                        position,
+                        appearance,
+                        size,
+
+                        variety: BUTTON_COLUMN_VARIETY,
+                    }
+                }
+
+                {
+                    let suit = 0;
+
+                    let pos = (48, 16);
+
+                    self.set_full_entity(id, get_button_full_entity(&custom_state, suit, pos));
+
+                    id += 1;
+                }
+
+                {
+                    let suit = 1;
+
+                    let pos = (48, 8);
+
+                    self.set_full_entity(id, get_button_full_entity(&custom_state, suit, pos));
+
+                    id += 1;
+                }
+
+                {
+                    let suit = 2;
+
+                    let pos = (48, 0);
+
+                    self.set_full_entity(id, get_button_full_entity(&custom_state, suit, pos));
+
+                    id += 1;
+                }
+
+            //     let selectpos = state.selectpos;
+            //     if state.selectdrop {
+            //         drawselect(
+            //             framebuffer,
+            //             &state.cells,
+            //             state.grabpos,
+            //             state.grabdepth as i8,
+            //             false,
+            //         );
+            //         id += 1;
+            //         if selectpos == BUTTON_COLUMN {
+            //             drawselectbutton(framebuffer, state);
+            //         } else if selectpos <= 8 {
+            //             drawselect(
+            //                 framebuffer,
+            //                 &state.cells,
+            //                 selectpos,
+            //                 state.selectdepth as i8,
+            //                 true,
+            //             );
+            //         } else {
+            //             drawselect(framebuffer, &state.cells, selectpos, -(state.grabdepth as i8) - 1, true);
+            //         }
+            //         id += 1;
+            //     } else if selectpos == BUTTON_COLUMN {
+            //         drawselectbutton(framebuffer, state);
+            //     } else {
+            //         drawselect(
+            //             framebuffer,
+            //             &state.cells,
+            //             selectpos,
+            //             state.selectdepth as i8,
+            //             false,
+            //         );
+            //     }
+            // }
+            //
+            // fn drawselect(framebuffer: &mut Framebuffer, cells: &Cells, pos: u8, depth: i8, drop: bool) {
+            //     let spritex = if drop { 32 } else { 16 };
+            //     let spritey = 32;
+            //
+            //     let (posx, mut posy) = get_card_pos(pos);
+            //
+            //     let len = cells[pos as usize].len() as u8;
+            //     if len > 0 {
+            //         posy = (posy as i8 + ((len as i8 - max(depth, -1) - 1) * 8)) as u8;
+            //     }
+            //
+            //     framebuffer.sspr(spritex, spritey, 16, 8, posx, posy);
+            //
+            //     let truedepth = if depth < 0 {
+            //         i8::abs(depth) - 1
+            //     } else {
+            //         depth
+            //     };
+            //     for _ in 0..=truedepth {
+            //         posy = posy + 8;
+            //         framebuffer.sspr(spritex, spritey + 8, 16, 8, posx, posy);
+            //     }
+            //     posy = posy + 8;
+            //     framebuffer.sspr(spritex, spritey + 16, 16, 8, posx, posy);
+            // }
+            //
+            // fn drawselectbutton(framebuffer: &mut Framebuffer, state: &GameState) {
+            //     let sprite = if state.selectdrop { 71 } else { 70 };
+            //
+            //     framebuffer.spr(sprite, 48, 16 - (state.selectdepth * 8));
+            // }
 
                 self.varieties[0] = custom_state.wins;
                 self.varieties[1] = if custom_state.win_done {1} else {0};
