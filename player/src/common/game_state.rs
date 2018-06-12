@@ -424,8 +424,27 @@ as usize + 1 {
 let column = & custom_state . cells [ x ] ; for y in 0 .. column . len (  ) {
 let variety = column [ y ] ; let full_entity = get_card_full_entity (
 variety , get_card_pos ( ( x as u8 , y as u8 ) ) ) ; self . set_full_entity (
-id , full_entity ) ; id += 1 ; } } fn get_button_full_entity (
-state : & CustomState , suit : u8 , pos : Position ) -> FullEntity {
+id , full_entity ) ; id += 1 ; } } macro_rules ! position {
+( $ ( $ x : expr ) , * ) => {
+{
+let mut position : [ Position ; GameState :: ENTITY_PIECE_COUNT ] = Default ::
+default (  ) ; let mut i = 0 ; $ ( position [ i ] = $ x ; i += 1 ; ) , *
+position } } ; ( $ ( $ x : expr , ) * ) => ( position ! [ $ ( $ x ) , * ] ) }
+macro_rules ! appearance {
+( $ ( $ x : expr ) , * ) => {
+{
+let mut appearance : [ Appearance ; GameState :: ENTITY_PIECE_COUNT ] =
+Default :: default (  ) ; let mut i = 0 ; $ (
+appearance [ i ] = $ x ; i += 1 ; ) , * appearance } } ; (
+$ ( $ x : expr , ) * ) => ( appearance ! [ $ ( $ x ) , * ] ) } macro_rules !
+size {
+( $ ( $ x : expr ) , * ) => {
+{
+let mut size : [ Position ; GameState :: ENTITY_PIECE_COUNT ] = Default ::
+default (  ) ; let mut i = 0 ; $ ( size [ i ] = $ x ; i += 1 ; ) , * size } }
+; ( $ ( $ x : expr , ) * ) => ( size ! [ $ ( $ x ) , * ] ) } fn
+get_button_full_entity ( state : & CustomState , suit : u8 , pos : Position )
+-> FullEntity {
 let colour = if canmovedragons ( state , suit ) { Yellow } else { White } ;
 let symbol_colour = match suit {
 0 => Red , 1 => Green , 2 => Black , _ => Grey , } ; const BUTTON_WIDTH : u8 =
@@ -433,33 +452,67 @@ let symbol_colour = match suit {
 seven_segment_appearance = render_seven_segment (
 suit + 10 , ( pos . 0 + BUTTON_MARGIN , pos . 1 + BUTTON_MARGIN ) , (
 BUTTON_WIDTH - 2 * BUTTON_MARGIN , BUTTON_HEIGHT - 2 * BUTTON_MARGIN ) ,
-symbol_colour ) ; let mut position : [
-Position ; GameState :: ENTITY_PIECE_COUNT ] = Default :: default (  ) ;
-position [ 0 ] = pos ; {
+symbol_colour ) ; let mut position = position ! [ pos , ] ; {
 let ( left , right ) = position . split_at_mut ( 1 ) ; let ( middle , right )
 = right . split_at_mut ( seven_segment_appearance . positions . len (  ) ) ;
 middle . copy_from_slice ( & seven_segment_appearance . positions [ .. ] ) ; }
-let mut appearance : [ Appearance ; GameState :: ENTITY_PIECE_COUNT ] =
-Default :: default (  ) ; appearance [ 0 ] = colour | FilledRectangle ; {
+let mut appearance = appearance ! [ colour | FilledRectangle , ] ; {
 let ( left , right ) = appearance . split_at_mut ( 1 ) ; let ( middle , right
 ) = right . split_at_mut ( seven_segment_appearance . appearances . len (  ) )
 ; middle . copy_from_slice ( & seven_segment_appearance . appearances [ .. ] )
-; } let mut size : [ Position ; GameState :: ENTITY_PIECE_COUNT ] = Default ::
-default (  ) ; size [ 0 ] = ( BUTTON_WIDTH , BUTTON_HEIGHT ) ; {
+; } let mut size = size ! [ ( BUTTON_WIDTH , BUTTON_HEIGHT ) ] ; {
 let ( left , right ) = size . split_at_mut ( 1 ) ; let ( middle , right ) =
 right . split_at_mut ( seven_segment_appearance . sizes . len (  ) ) ; middle
 . copy_from_slice ( & seven_segment_appearance . sizes [ .. ] ) ; } FullEntity
 {
 entity : Component :: Animate , position , appearance , size , variety :
-BUTTON_COLUMN_VARIETY , } } {
+BUTTON_COLUMN_VARIETY , } } fn get_select_full_entity (
+cells : & Cells , pos : u8 , depth : i8 , drop : bool ) -> FullEntity {
+let ( colour , variety ) = if drop { ( Yellow , CURSOR ) } else {
+( Blue , CURSOR_GHOST ) } ; let truedepth = if depth < 0 {
+i8 :: abs ( depth ) - 1 } else { depth } ; let ( posx , mut posy ) =
+get_card_pos ( ( pos , truedepth as u8 ) ) ; let len = cells [ pos as usize ]
+. len (  ) as u8 ; if len > 0 {
+posy = ( posy as i8 + ( ( len as i8 - max ( depth , - 1 ) - 1 ) * 8 ) ) as u8
+; } let top_posy = posy ; let position = position ! [ ( posx , posy ) ] ; for
+_ in 0 ..= truedepth { posy = posy + 8 ; } posy = posy + 8 ; let appearance =
+appearance ! [ colour | Rectangle ] ; let size = size ! [
+( card :: WIDTH , posy - top_posy ) ] ; FullEntity {
+entity : Component :: Animate , position , appearance , size , variety , } }
+fn get_select_button_full_entity ( state : & CustomState ) -> FullEntity {
+let ( colour , variety ) = if state . selectdrop { ( Yellow , CURSOR ) } else
+{ ( Blue , CURSOR_GHOST ) } ; let position = position ! [
+( 48 , 16 - ( state . selectdepth * 8 ) ) ] ; let appearance = appearance ! [
+colour | Rectangle ] ; let size = size ! [ ( 8 , 8 ) ] ; FullEntity {
+entity : Component :: Animate , position , appearance , size , variety , } } {
 let suit = 0 ; let pos = ( 48 , 16 ) ; self . set_full_entity (
 id , get_button_full_entity ( & custom_state , suit , pos ) ) ; id += 1 ; } {
 let suit = 1 ; let pos = ( 48 , 8 ) ; self . set_full_entity (
 id , get_button_full_entity ( & custom_state , suit , pos ) ) ; id += 1 ; } {
 let suit = 2 ; let pos = ( 48 , 0 ) ; self . set_full_entity (
 id , get_button_full_entity ( & custom_state , suit , pos ) ) ; id += 1 ; }
-self . varieties [ 0 ] = custom_state . wins ; self . varieties [ 1 ] = if
-custom_state . win_done { 1 } else { 0 } ; self . varieties [ 2 ] = if
+let selectpos = custom_state . selectpos ; if custom_state . selectdrop {
+self . set_full_entity (
+id , get_select_full_entity (
+& custom_state . cells , custom_state . grabpos , custom_state . grabdepth as
+i8 , false , ) ) ; id += 1 ; if selectpos == BUTTON_COLUMN {
+self . set_full_entity ( id , get_select_button_full_entity ( & custom_state )
+) ; } else if selectpos <= 8 {
+self . set_full_entity (
+id , get_select_full_entity (
+& custom_state . cells , selectpos , custom_state . selectdepth as i8 , true ,
+) ) ; } else {
+self . set_full_entity (
+id , get_select_full_entity (
+& custom_state . cells , selectpos , - ( custom_state . grabdepth as i8 ) - 1
+, true ) ) ; } id += 1 ; } else if selectpos == BUTTON_COLUMN {
+self . set_full_entity ( id , get_select_button_full_entity ( & custom_state )
+) ; } else {
+self . set_full_entity (
+id , get_select_full_entity (
+& custom_state . cells , selectpos , custom_state . selectdepth as i8 , false
+, ) ) ; } self . varieties [ 0 ] = custom_state . wins ; self . varieties [ 1
+] = if custom_state . win_done { 1 } else { 0 } ; self . varieties [ 2 ] = if
 custom_state . selectdrop { 1 } else { 0 } ; self . varieties [ 3 ] =
 custom_state . selectpos ; self . varieties [ 4 ] = custom_state . selectdepth
 ; self . varieties [ 5 ] = custom_state . grabpos ; self . varieties [ 6 ] =
