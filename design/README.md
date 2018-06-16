@@ -57,3 +57,7 @@ So the current plan (revised as a result of this research) is as follows:
 * start generating games and consider how to evaluate them, in order to improve the generator's output.
 
 Coming back to this project after a while has made me see the uglyness in having game in one massive file, and not having a clear decoupling between the different game types. So, I want to pull all the different game-specific stuff in their own separate files.
+
+___ 
+
+Coming back to this project after a (different) while, and reading about the The General Video Game AI (GVGAI) competition and the Video Game Description Language (VGDL) it uses, I want to take this project in a different direction, while still holding to the general idea of producing games, and also keeping the Shenzhen Solitaire inspiration. I'm also not seeing a lot of value in the creation of separate executables for the generated games, at least right now. While the macro-heavy code-gen code is fun it takes too long to produce. Creating a language that is parsed by an executable at run time seems like it would be less work and produce results faster. 
