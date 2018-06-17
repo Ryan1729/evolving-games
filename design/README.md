@@ -8,4 +8,4 @@ Since this language, (even if it turns out to have a binary/other non-text repre
 
 Then we should ensure the design the language can capture the rules of a solitaire game in a reasonably short manner, but at the same time we should allow room for representing a sufficient number of distinct games.
 
-
+I've now re-read [this book chapter](http://gameprogrammingpatterns.com/bytecode.html) and I think a stack-based VM is the way to go. A good design for a stack-based VM for solitaire of any sort does not spring readily to my mind. So, once a again I think the path forward on this project is to do some more research/experimentation by making a Shenzhen Solitaire specific implementation. THis time instead of porting the pico-8 implementation, I will start from that ported version and make it work like it's running on a stack-based VM, (I'll basically pretend I'm writing in Forth.) Hopefully that will make the design for a general solitaire VM clear.
